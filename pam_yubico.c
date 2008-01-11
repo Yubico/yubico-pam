@@ -298,13 +298,12 @@ pam_sm_setcred (pam_handle_t * pamh, int flags, int argc, const char **argv)
 
   D (("called."));
 
+  /* TODO: ? */
+
   retval = pam_get_data (pamh, "yubico_setcred_return",
 			 (const void **) &auth_retval);
   if (retval != PAM_SUCCESS)
     return PAM_CRED_UNAVAIL;
-
-  /* XXX save ticket in user's file here
-     XXX support CRED_EXPIRED */
 
   switch (auth_retval)
     {
@@ -334,7 +333,7 @@ pam_sm_acct_mgmt (pam_handle_t * pamh, int flags, int argc, const char **argv)
 
   D (("called."));
 
-  /* TODO: check if password expired? */
+  /* TODO: ? */
   retval = PAM_SUCCESS;
 
   D (("done. [%s]", pam_strerror (pamh, retval)));
@@ -350,7 +349,7 @@ pam_sm_open_session (pam_handle_t * pamh,
 
   D (("called."));
 
-  /* TODO: afslog()? */
+  /* TODO: ? */
   retval = PAM_SUCCESS;
 
   D (("done. [%s]", pam_strerror (pamh, retval)));
@@ -366,7 +365,7 @@ pam_sm_close_session (pam_handle_t * pamh,
 
   D (("called."));
 
-  /* TODO: destroy tickets? destroy AFS tokens? */
+  /* TODO: ? */
   retval = PAM_SUCCESS;
 
   D (("done. [%s]", pam_strerror (pamh, retval)));
@@ -381,7 +380,7 @@ pam_sm_chauthtok (pam_handle_t * pamh, int flags, int argc, const char **argv)
 
   D (("called."));
 
-  /* TODO: Change password */
+  /* TODO: ? */
   retval = PAM_SUCCESS;
 
   D (("done. [%s]", pam_strerror (pamh, retval)));
