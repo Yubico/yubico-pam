@@ -1,0 +1,46 @@
+Version 1.5
+-----------
+
+Clarify that license is the same as Linux-PAM (GPLv2 or modified BSD).
+This is likely the last internal release, source moving to code.google.com.
+
+Version 1.4
+-----------
+
+Don't free CURL's user agent string before we're done.
+
+Version 1.3
+-----------
+
+Disable echo'ing of password, for FreeRadius.
+
+Version 1.2
+-----------
+
+Added PDF/HTML manual, see yubico-pam.pdf and yubico-pam.html.
+Fixes to use new web service API.
+Add "url" parameter.
+Fix "alwaysok" parameter.
+Fix crash on empty server responses.
+Parse "status" properly.
+Better debug info.
+
+Version 1.1
+-----------
+
+Fix ws-api usage.
+Support "alwaysok".
+
+Version 1.0
+-----------
+
+Initial release.
+
+Legal
+-----
+
+Copyright (C) 2007, 2008 Simon Josefsson
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
