@@ -19,11 +19,27 @@ it can reach production quality:
 * HTTPS support
 * Multi-user mappings from Yubikey to username.
 
-Building from CVS
+The development community is co-ordinated via Google Code:
+
+  http://code.google.com/p/yubico-pam/
+
+The license for pam_yubico is the same as for Linux-PAM, namely a
+dual-license between 3-clause BSD and the GPL.  See the file COPYING
+for more information.
+
+Building from SVN
 -----------------
 
 Skip to the next section if you are using an official packaged
 version.
+
+You may check out the sources using SVN with the following command:
+
+  svn checkout http://yubico-pam.googlecode.com/svn/trunk/ yubico-pam
+
+This will create a directory 'yubico-pam'.  Enter the directory:
+
+  cd yubico-pam
 
 Autoconf and automake must be installed.  For the documentation,
 asciidoc and docbook are also required.
