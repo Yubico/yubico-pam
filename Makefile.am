@@ -63,3 +63,11 @@ LDADD = ./pam_yubico.la -lpam
 
 check_PROGRAMS = test
 TESTS = $(check_PROGRAMS)
+
+# Release
+
+release:
+	make distcheck
+	svn copy https://yubico-pam.googlecode.com/svn/trunk/ \
+	 https://yubico-pam.googlecode.com/svn/tags/$(PACKAGE)-$(VERSION) \
+	 -m "Tagging the $(VERSION) release of the $(PACKAGE) project."
