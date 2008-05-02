@@ -70,9 +70,9 @@ in /etc/pam.d/:
 
   auth sufficient pam_yubico.so id=16 debug
 
-and create a symlink for pam_yubico.so in /lib/security/:
+and move pam_yubico.so into /lib/security/:
 
-  ln -s /usr/local/lib/security/pam_yubico.so /lib/security/
+  mv /usr/local/lib/security/pam_yubico.so /lib/security/
 
 Supported PAM module parameters are:
 
