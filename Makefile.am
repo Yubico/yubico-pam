@@ -41,7 +41,7 @@ AM_CPPFLAGS = @LIBCURL_CPPFLAGS@
 
 pam_yubico_la_SOURCES = pam_yubico.c
 # XXX add -Wl,-x too?  PAM documentation suggests it.
-pam_yubico_la_LIBADD = @LIBCURL@
+pam_yubico_la_LIBADD = @LIBCURL@ @LTLIBYUBIKEY_CLIENT@
 pam_yubico_la_LDFLAGS = -module -avoid-version
 
 DEFS = -DDEBUG_PAM @DEFS@
