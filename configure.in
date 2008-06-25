@@ -40,7 +40,9 @@ AC_PROG_LIBTOOL
 
 AC_CHECK_HEADERS([security/pam_appl.h security/pam_modules.h security/_pam_macros.h], [], [AC_MSG_ERROR([[PAM header files not found, install libpam-dev.]])])
 
-LIBCURL_CHECK_CONFIG([yes], [], [], [AC_MSG_ERROR([[Libcurl header files not found, install libcurl-dev.]])])
+AC_LIB_HAVE_LINKFLAGS([yubikey-client],,
+                      [#include <libykclient.h>],
+                      [yubikey_client_init ();])
 
 AC_SUBST(PAMDIR, "\$(exec_prefix)/lib/security")
 AC_ARG_WITH(pam-dir,

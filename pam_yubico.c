@@ -63,7 +63,7 @@
 #define D(x)			/* nothing */
 #endif
 
-#include <curl/curl.h>
+#include <libykclient.h>
 
 #ifndef PAM_EXTERN
 #ifdef PAM_STATIC
@@ -72,32 +72,6 @@
 #define PAM_EXTERN extern
 #endif
 #endif
-
-struct MemoryStruct {
-  char *memory;
-  size_t size;
-};
-
-static size_t
-curl_callback (void *ptr, size_t size, size_t nmemb, void *data)
-{
-  size_t realsize = size * nmemb;
-  struct MemoryStruct *mem = (struct MemoryStruct *)data;
-
-  if (mem->memory)
-    mem->memory = realloc (mem->memory, mem->size + realsize + 1);
-  else
-    mem->memory = malloc (mem->size + realsize + 1);
-
-  if (mem->memory)
-    {
-      memcpy(&(mem->memory[mem->size]), ptr, realsize);
-      mem->size += realsize;
-      mem->memory[mem->size] = 0;
-    }
-
-  return realsize;
-}
 
 PAM_EXTERN int
 pam_sm_authenticate (pam_handle_t * pamh,
@@ -114,20 +88,12 @@ pam_sm_authenticate (pam_handle_t * pamh,
   int id = -1;
   int debug = 0;
   int alwaysok = 0;
-  CURL *curl = NULL;
-  CURLcode res;
-  char *url;
-  const char *url_template = "http://api.yubico.com/wsapi/verify?id=%d&otp=%s";
-  struct MemoryStruct chunk = { NULL, 0 };
-  char *status;
-  char *user_agent = NULL;
+  yubikey_client_t ykc;
 
   for (i = 0; i < argc; i++)
     {
       if (strncmp (argv[i], "id=", 3) == 0)
 	sscanf (argv[i], "id=%d", &id);
-      if (strncmp (argv[i], "url=", 4) == 0)
-	url_template = argv[i] + 4;
       if (strcmp (argv[i], "debug") == 0)
 	debug = 1;
       if (strcmp (argv[i], "alwaysok") == 0)
@@ -140,9 +106,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
       D (("flags %d argc %d", flags, argc));
       for (i = 0; i < argc; i++)
 	D (("argv[%d]=%s", i, argv[i]));
-
       D (("id=%d", id));
-      D (("url=%s", url_template));
       D (("debug=%d", debug));
       D (("alwaysok=%d", alwaysok));
     }
@@ -208,67 +172,29 @@ pam_sm_authenticate (pam_handle_t * pamh,
 	}
     }
 
-  curl = curl_easy_init ();
-  if (!curl)
+  ykc = yubikey_client_init ();
+  if (!ykc)
     {
       if (debug)
-	D (("curl_easy_init() failed"));
+	D (("yubikey_client_init() failed"));
       retval = PAM_AUTHINFO_UNAVAIL;
       goto done;
     }
 
-  asprintf (&url, url_template, id, password);
-  if (!url)
-    {
-      retval = PAM_BUF_ERR;
-      goto done;
-    }
+  yubikey_client_set_info (ykc, id, 0, NULL);
 
-  curl_easy_setopt (curl, CURLOPT_URL, url);
-  curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, curl_callback);
-  curl_easy_setopt (curl, CURLOPT_WRITEDATA, (void *)&chunk);
-
-  asprintf (&user_agent, "%s/%s", PACKAGE, PACKAGE_VERSION);
-  if (user_agent)
-    curl_easy_setopt(curl, CURLOPT_USERAGENT, user_agent);
-
-  curl_easy_perform (curl);
-
+  rc = yubikey_client_request (ykc, password);
   if (debug)
-    D (("server response (%d): %.*s", chunk.size, chunk.size, chunk.memory));
+    D (("libyubikey-client return value (%d): %s", rc,
+	yubikey_client_strerror (rc)));
 
-  if (chunk.size == 0 || chunk.memory == NULL)
+  if (rc != YUBIKEY_CLIENT_OK)
     {
-      if (debug)
-	D (("did not receive anything from server"));
       retval = PAM_SERVICE_ERR;
       goto done;
     }
 
-  status = strstr (chunk.memory, "status=");
-  if (!status)
-    {
-      if (debug)
-	D (("no status in server response"));
-      retval = PAM_SERVICE_ERR;
-      goto done;
-    }
-
-  if (strchr (status, '\r'))
-    *strchr (status, '\r') = '\0';
-  if (strchr (status, '\n'))
-    *strchr (status, '\n') = '\0';
-
-  if (debug)
-    D (("server status (%d): %s", strlen (status), status));
-
-  if (strcmp (status, "status=OK") != 0)
-    {
-      if (debug)
-	D (("status not ok"));
-      retval = PAM_SERVICE_ERR;
-      goto done;
-    }
+  yubikey_client_done (&ykc);
 
   retval = PAM_SUCCESS;
 
@@ -276,13 +202,9 @@ done:
   if (alwaysok && retval != PAM_SUCCESS)
     {
       if (debug)
-	D (("alwaysok needed for %d", retval));
+	D (("alwaysok needed (otherwise return with %d)", retval));
       retval = PAM_SUCCESS;
     }
-  if (curl)
-    curl_easy_cleanup (curl);
-  if (user_agent)
-    free (user_agent);
   pam_set_data (pamh, "yubico_setcred_return", (void *) retval, NULL);
   if (debug)
     D (("done. [%s]", pam_strerror (pamh, retval)));
