@@ -95,11 +95,6 @@ Supported PAM module parameters are:
   "debug":    to enable debug output to stdout,
   "alwaysok": to enable that all authentication attempts should succeed
               (aka presentation mode).
-  "url":      specify URL to use for verification, by default it is
-              "http://api.yubico.com/wsapi/verify?id=%d&otp=%s"
-              Be sure to have only two printf tokens in the string
- 	      and that %d comes before %s.  The %d will be replaced
-	      with the "id" value and %s with the user's OTP.
 }}}
 
 If you are using "debug" you may find it useful to create a
