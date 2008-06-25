@@ -1,5 +1,7 @@
 Version 1.7 (unreleased)
 
+* Use libyubikey-client instead of direct use of libcurl.
+
 * Move *.m4's to m4/.
 
 Version 1.6 (released  2008-01-11)
