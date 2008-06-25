@@ -1,46 +1,51 @@
-Version 1.6
------------
+Version 1.7 (unreleased)
 
-First release from code.google.com repository.
-Clarify documentation with regard to license and development info.
+* Move *.m4's to m4/.
 
-Version 1.5
------------
+Version 1.6 (released  2008-01-11)
 
-Clarify that license is the same as Linux-PAM (GPLv2 or modified BSD).
+* First release from code.google.com repository.
+
+* Clarify documentation with regard to license and development info.
+
+Version 1.5 (internal release)
+
+* Clarify that license is the same as Linux-PAM (GPLv2 or modified BSD).
 This is likely the last internal release, source moving to code.google.com.
 
-Version 1.4
------------
+Version 1.4 (internal release)
 
-Don't free CURL's user agent string before we're done.
+* Don't free CURL's user agent string before we're done.
 
-Version 1.3
------------
+Version 1.3 (internal release)
 
-Disable echo'ing of password, for FreeRadius.
+* Disable echo'ing of password, for FreeRadius.
 
-Version 1.2
------------
+Version 1.2 (internal release)
 
-Added PDF/HTML manual, see yubico-pam.pdf and yubico-pam.html.
-Fixes to use new web service API.
-Add "url" parameter.
-Fix "alwaysok" parameter.
-Fix crash on empty server responses.
-Parse "status" properly.
-Better debug info.
+* Added PDF/HTML manual, see yubico-pam.pdf and yubico-pam.html.
 
-Version 1.1
------------
+* Fixes to use new web service API.
 
-Fix ws-api usage.
-Support "alwaysok".
+* Add "url" parameter.
 
-Version 1.0
------------
+* Fix "alwaysok" parameter.
 
-Initial release.
+* Fix crash on empty server responses.
+
+* Parse "status" properly.
+
+* Better debug info.
+
+Version 1.1 (internal release)
+
+* Fix ws-api usage.
+
+* Support "alwaysok".
+
+Version 1.0 (internal release)
+
+* Initial release.
 
 Legal
 -----
