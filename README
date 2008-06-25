@@ -1,4 +1,5 @@
 #summary Installation and configuration of the Yubico PAM module
+#labels Featured,Phase-Deploy
 
 = Yubico PAM module =
 
@@ -14,13 +15,9 @@ The module is working for single-user systems.
 Several items have been identified that needs to be implemented before
 it can reach production quality:
 
-* Verification of server signature
+  * Multi-user mappings from Yubikey to username.
 
-* Generating signature on request
-
-* HTTPS support
-
-* Multi-user mappings from Yubikey to username.
+  * Support disconnected AES key usage.
 
 The development community is co-ordinated via Google Code:
 
@@ -58,8 +55,11 @@ Generate the build system using:
 
 == Building ==
 
-You will need to have libcurl (curl.h, libcurl.so) and libpam-dev
-(security/pam_appl.h, libpam.so) installed.
+You will need to have libyubikey-client (libykclient.h,
+libyubikey-client.so) and libpam-dev (security/pam_appl.h, libpam.so)
+installed.  Get the libyubikey-client library from:
+
+http://code.google.com/p/yubico-c-client/
 
 The build system uses Autoconf, to set up the build system run:
 
@@ -108,6 +108,15 @@ world-writable log file:
 {{{
   touch /var/run/pam-debug.log 
   chmod go+w /var/run/pam-debug.log 
+}}}
+
+== Examples ==
+
+If you want to use the Yubikey to authenticate you on linux console
+logins, add the following to the top of /etc/pam.d/login:
+
+{{{
+auth sufficient pam_yubico.so id=16 debug
 }}}
 
 == Feedback ==
