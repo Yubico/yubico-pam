@@ -49,6 +49,9 @@
 #define PAM_SM_SESSION
 #define PAM_SM_PASSWORD
 
+/* Enable 2 fector authentication for SSH */
+#define PAM_2FECT_AUTH_SSH
+
 #ifdef HAVE_SECURITY_PAM_APPL_H
 #include <security/pam_appl.h>
 #endif
@@ -73,6 +76,105 @@
 #endif
 #endif
 
+/* PAM_2FECT_AUTH_SSH flag will enable 2 fector authentication for SSH or any othe module */
+#ifdef PAM_2FECT_AUTH_SSH
+#include <sys/types.h>
+#include <pwd.h>
+
+#define TOKEN_LEN 44
+#define TOKEN_ID_LEN 12
+#endif
+
+#ifdef PAM_2FECT_AUTH_SSH
+
+/*
+ * This function will look for users name with valid user token id. It will returns 0 for failure and 1 for success.
+ * File format is as follows:
+ * <user-name>:<token_id>:<token_id>
+ * <user-name>:<token_id>
+ *
+ */
+static int check_user_token(const char *authfile, const char *username, const char *usertoken)
+{
+  static char buf[1024];
+  char *s_user, *s_token;
+  int retval = 0;
+  FILE *opwfile;
+
+  opwfile = fopen(authfile, "r");
+  if (opwfile == NULL)
+  {
+     D ((" %s file does not exists.", authfile));
+     return retval;
+  }
+
+  while (fgets(buf, 1024, opwfile))
+  {
+    if (!strncmp(buf, username, strlen(username)))
+    {
+      buf[strlen(buf) - 1] = '\0';
+      D (("Got user record :: %s", buf));
+      s_user = strtok(buf, ":");
+      s_token = strtok(NULL, ":");
+      while (s_token != NULL)
+      {
+        if (!strncmp(usertoken, s_token, strlen(usertoken)))
+        {
+          D (("Token Found :: %s", s_token));
+          retval = 1;
+          break;
+        }
+        s_token = strtok(NULL, ":");
+      }
+      break;
+    }
+  }
+  fclose(opwfile);
+
+  return retval;
+}
+
+/*
+ * This F'n will get the configuration file name either from argument list or from user home directory
+ */
+static int validate_user_token(const char *authfile, const char *username, const char *usertoken)
+{
+  int retval = 0;
+  if (NULL != authfile)
+   {
+      /* Administrator had configured the file and specified is name as an argument for this module.
+      */
+      retval = check_user_token(authfile, username, usertoken);
+   }
+  else
+   {
+      /* Getting file from user home directory ..... i.e. ~/.yubico/authorized_yubikeys
+      */
+      struct passwd *p;
+      char *home_dir = NULL;
+
+      p = getpwnam (username);
+      if (p != NULL)
+       {
+          home_dir =  (char *) malloc(strlen(p->pw_dir) + 29) ;
+          if(NULL != home_dir)
+           {
+             strcpy(home_dir, p->pw_dir);
+             strcat(home_dir, "/.yubico/authorized_yubikeys");
+           }
+       }
+      retval = check_user_token(home_dir, username, usertoken);
+      if(NULL != home_dir)
+       {
+         free(home_dir);
+       }
+   }
+
+  return retval;
+}
+
+#endif
+
 PAM_EXTERN int
 pam_sm_authenticate (pam_handle_t * pamh,
 		     int flags, int argc, const char** argv)
@@ -80,6 +182,15 @@ pam_sm_authenticate (pam_handle_t * pamh,
   int retval, rc;
   const char *user = NULL;
   const char *password = NULL;
+#ifdef PAM_2FECT_AUTH_SSH
+  char *auth_file = NULL;
+  const char *token_otp[TOKEN_LEN+1] = {0};
+  const char *token_id[TOKEN_ID_LEN+1] = {0};
+  char *token_otp_with_password = NULL;
+  char *token_password = NULL;
+  int password_len = 0 ;
+  int valid_token = 0 ;
+#endif
   int i;
   struct pam_conv *conv;
   struct pam_message *pmsg[1], msg[1];
@@ -98,6 +209,12 @@ pam_sm_authenticate (pam_handle_t * pamh,
 	debug = 1;
       if (strcmp (argv[i], "alwaysok") == 0)
 	alwaysok = 1;
+#ifdef PAM_2FECT_AUTH_SSH
+      if (strncmp (argv[i], "authfile=", 9) == 0)
+       {
+         auth_file = (char *)argv[i] + 9;
+       }
+#endif
     }
 
   if (debug)
@@ -109,6 +226,9 @@ pam_sm_authenticate (pam_handle_t * pamh,
       D (("id=%d", id));
       D (("debug=%d", debug));
       D (("alwaysok=%d", alwaysok));
+#ifdef PAM_2FECT_AUTH_SSH
+      D (("authfile=%s", auth_file));
+#endif
     }
 
   retval = pam_get_user (pamh, &user, NULL);
@@ -183,7 +303,61 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
   yubikey_client_set_info (ykc, id, 0, NULL);
 
+#ifdef PAM_2FECT_AUTH_SSH
+  /* user will enter there system paasword followed by generated OTP */
+  token_otp_with_password = (char *) password;
+  password_len = strlen(token_otp_with_password);
+
+  /* Getting Token value and SSH password */
+  strncpy((char *)token_otp, token_otp_with_password + ( password_len - TOKEN_LEN ), TOKEN_LEN);
+  token_password = malloc((password_len - TOKEN_LEN) + 1); // need to free this memory
+
+  if(token_password != NULL)
+   {
+     strncpy(token_password, token_otp_with_password, (password_len - TOKEN_LEN));
+     token_password[(password_len - TOKEN_LEN)] = 0;
+     password = token_password;
+   }
+  strncpy((char *)token_id, token_otp_with_password + ( password_len - TOKEN_LEN ), TOKEN_ID_LEN);
+
+  if (debug)
+   {
+      D ((" Token is : %s and password is %s ",token_otp, password));
+      D ((" Token ID is: %s ",token_id));
+   }
+
+  /* validate the user with supplied token id */
+  valid_token = validate_user_token(auth_file, (const char *)user, (const char *)token_id);
+
+  if(password != NULL)
+   {
+      retval = pam_set_item(pamh, PAM_AUTHTOK, password);
+      if (retval != PAM_SUCCESS)
+        {
+          if (debug)
+            D (("set_item returned error: %s", pam_strerror (pamh, retval)));
+          goto done;
+        }
+    }
+
+  if (valid_token == 0)
+    {
+      if (debug)
+        D (("Invalid Token for user "));
+      retval = PAM_SERVICE_ERR;
+      goto done;
+    }
+
+  rc = yubikey_client_request (ykc, (const char *)token_otp);
+
+  if(token_password != NULL)
+   {
+     free(token_password);
+   }
+#else
   rc = yubikey_client_request (ykc, password);
+#endif
+
   if (debug)
     D (("libyubikey-client return value (%d): %s", rc,
 	yubikey_client_strerror (rc)));
@@ -323,3 +497,4 @@ struct pam_module _pam_yubico_modstruct = {
 };
 
 #endif
+
