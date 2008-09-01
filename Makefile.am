@@ -44,16 +44,6 @@ pam_yubico_la_LDFLAGS = -module -avoid-version
 
 DEFS = -DDEBUG_PAM @DEFS@
 
-# Manual
-
-EXTRA_DIST = yubico-pam.pdf yubico-pam.html
-
-yubico-pam.pdf yubico-pam.html: README
-	cp README yubico-pam.txt
-	a2x yubico-pam.txt
-	docbook2pdf yubico-pam.xml
-	rm -f yubico-pam.txt yubico-pam.xml
-
 # Self tests.
 
 AM_LDFLAGS = -no-install
