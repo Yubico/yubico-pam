@@ -1,4 +1,4 @@
-Version 1.7 (unreleased)
+Version 1.7 (released 2008-09-01)
 
 * Support two-factor mode to provide a password.
 
@@ -8,7 +8,7 @@ Version 1.7 (unreleased)
 
 * Move *.m4's to m4/.
 
-Version 1.6 (released  2008-01-11)
+Version 1.6 (released 2008-01-11)
 
 * First release from code.google.com repository.
 
