@@ -31,7 +31,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 
-AC_INIT([pam_yubico], [1.6], [simon@yubico.com])
+AC_INIT([pam_yubico], [1.7], [simon@yubico.com])
 AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE([foreign])
 AC_PROG_CC
