@@ -1,5 +1,9 @@
 Version 1.7 (unreleased)
 
+* Support two-factor mode to provide a password.
+
+* Support a user-specific configuration file to allow yubikeys per user.
+
 * Use libyubikey-client instead of direct use of libcurl.
 
 * Move *.m4's to m4/.
