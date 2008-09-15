@@ -63,3 +63,5 @@ release:
 	svn copy https://yubico-pam.googlecode.com/svn/trunk/ \
 	 https://yubico-pam.googlecode.com/svn/tags/$(PACKAGE)-$(VERSION) \
 	 -m "Tagging the $(VERSION) release of the $(PACKAGE) project."
+	googlecode_upload.py -s "pam_yubico $(VERSION)" \
+	 -p yubico-pam -u simon75j $(PACKAGE)-$(VERSION).tar.gz 
