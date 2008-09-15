@@ -188,6 +188,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
   const char *token_id[TOKEN_ID_LEN + 1] = { 0 };
   char *token_otp_with_password = NULL;
   char *token_password = NULL;
+  char *url_template = NULL;
   int password_len = 0;
   int valid_token = 0;
   int i;
@@ -210,6 +211,8 @@ pam_sm_authenticate (pam_handle_t * pamh,
 	alwaysok = 1;
       if (strncmp (argv[i], "authfile=", 9) == 0)
 	auth_file = (char *) argv[i] + 9;
+      if (strncmp (argv[i], "url=", 4) == 0)
+	url_template = (char *) argv[i] + 4;
     }
 
   if (debug)
@@ -295,6 +298,9 @@ pam_sm_authenticate (pam_handle_t * pamh,
     }
 
   yubikey_client_set_info (ykc, id, 0, NULL);
+
+  if (url_template)
+    yubikey_client_set_url_template (ykc, url_template);
 
   /* user will enter there system paasword followed by generated OTP */
   token_otp_with_password = (char *) password;

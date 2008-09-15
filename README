@@ -95,6 +95,9 @@ Supported PAM module parameters are:
   "debug":    to enable debug output to stdout,
   "alwaysok": to enable that all authentication attempts should succeed
               (aka presentation mode).
+  "url":      specify the URL template to use, this is set by calling
+              yubikey_client_set_url_template, which uses by default:
+	      http://api.yubico.com/wsapi/verify?id=%d&otp=%s
 }}}
 
 If you are using "debug" you may find it useful to create a
