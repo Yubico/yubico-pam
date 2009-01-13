@@ -1,72 +1,71 @@
-Version 1.9 (released 2009-01-13)
+pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
-* Solaris portability improvements.
+* Version 1.10 (unreleased)
+
+** Change license to 2-clause BSD.
+The Linux-PAM license is unclear, and in any case, the 2-clause BSD
+license is compatible with 3-clause BSD and GPL.
+
+* Version 1.9 (released 2009-01-13)
+
+** Solaris portability improvements.
 Suggested by Martin Englund <Martin.Englund@Sun.COM>.
 
-Version 1.8 (released 2008-09-15)
+* Version 1.8 (released 2008-09-15)
 
-* Add new parameter 'url' to specify the server template URL.
+** Add new parameter 'url' to specify the server template URL.
 
-Version 1.7 (released 2008-09-01)
+* Version 1.7 (released 2008-09-01)
 
-* Support two-factor mode to provide a password.
+** Support two-factor mode to provide a password.
 
-* Support a user-specific configuration file to allow yubikeys per user.
+** Support a user-specific configuration file to allow yubikeys per user.
 
-* Use libyubikey-client instead of direct use of libcurl.
+** Use libyubikey-client instead of direct use of libcurl.
 
-* Move *.m4's to m4/.
+** Move *.m4's to m4/.
 
-Version 1.6 (released 2008-01-11)
+* Version 1.6 (released 2008-01-11)
 
-* First release from code.google.com repository.
+** First release from code.google.com repository.
 
-* Clarify documentation with regard to license and development info.
+** Clarify documentation with regard to license and development info.
 
-Version 1.5 (internal release)
+* Version 1.5 (internal release)
 
-* Clarify that license is the same as Linux-PAM (GPLv2 or modified BSD).
+** Clarify that license is the same as Linux-PAM (GPLv2 or modified BSD).
 This is likely the last internal release, source moving to code.google.com.
 
-Version 1.4 (internal release)
+* Version 1.4 (internal release)
 
-* Don't free CURL's user agent string before we're done.
+** Don't free CURL's user agent string before we're done.
 
-Version 1.3 (internal release)
+** Version 1.3 (internal release)
 
-* Disable echo'ing of password, for FreeRadius.
+** Disable echo'ing of password, for FreeRadius.
 
-Version 1.2 (internal release)
+* Version 1.2 (internal release)
 
-* Added PDF/HTML manual, see yubico-pam.pdf and yubico-pam.html.
+** Added PDF/HTML manual, see yubico-pam.pdf and yubico-pam.html.
 
-* Fixes to use new web service API.
+** Fixes to use new web service API.
 
-* Add "url" parameter.
+** Add "url" parameter.
 
-* Fix "alwaysok" parameter.
+** Fix "alwaysok" parameter.
 
-* Fix crash on empty server responses.
+** Fix crash on empty server responses.
 
-* Parse "status" properly.
+** Parse "status" properly.
 
-* Better debug info.
+** Better debug info.
 
-Version 1.1 (internal release)
+* Version 1.1 (internal release)
 
-* Fix ws-api usage.
+** Fix ws-api usage.
 
-* Support "alwaysok".
+** Support "alwaysok".
 
-Version 1.0 (internal release)
+* Version 1.0 (internal release)
 
-* Initial release.
-
-Legal
------
-
-Copyright (C) 2007, 2008, 2009 Simon Josefsson
-
-Copying and distribution of this file, with or without modification,
-are permitted in any medium without royalty provided the copyright
-notice and this notice are preserved.
+** Initial release.

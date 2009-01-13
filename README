@@ -23,8 +23,8 @@ The development community is co-ordinated via Google Code:
 
   http://code.google.com/p/yubico-pam/
 
-The license for pam_yubico is the same as for Linux-PAM, namely a
-dual-license between 3-clause BSD and the GPL.  See the file COPYING
+The license for pam_yubico is the 2-clause BSD license, which is
+compatible with the Linux-PAM BSD/GPL license.  See the file COPYING
 for more information.
 
 == Building from SVN ==
