@@ -1,3 +1,5 @@
+Version 1.9 (unreleased)
+
 Version 1.8 (released 2008-09-15)
 
 * Add new parameter 'url' to specify the server template URL.
@@ -60,7 +62,7 @@ Version 1.0 (internal release)
 Legal
 -----
 
-Copyright (C) 2007, 2008 Simon Josefsson
+Copyright (C) 2007, 2008, 2009 Simon Josefsson
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
