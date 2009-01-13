@@ -1,5 +1,8 @@
 Version 1.9 (unreleased)
 
+* Solaris portability improvements.
+Suggested by Martin Englund <Martin.Englund@Sun.COM>.
+
 Version 1.8 (released 2008-09-15)
 
 * Add new parameter 'url' to specify the server template URL.
