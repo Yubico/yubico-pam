@@ -1,5 +1,5 @@
 /*
- * Copyright 2007, 2008 Simon Josefsson.
+ * Copyright 2007, 2008, 2009 Simon Josefsson.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -258,7 +258,25 @@ pam_sm_authenticate (pam_handle_t * pamh,
 	}
 
       pmsg[0] = &msg[0];
-      asprintf ((char **) &msg[0].msg, "Yubikey for `%s': ", user);
+      {
+	const char *query_template = "Yubikey for `%s': ";
+	size_t len = strlen (query_template) + strlen (user);
+	size_t wrote;
+
+	msg[0].msg = malloc (len);
+	if (!msg[0].msg)
+	  {
+	    retval = PAM_BUF_ERR;
+	    goto done;
+	  }
+
+	wrote = snprintf ((char *) msg[0].msg, len, query_template, user);
+	if (wrote < 0 || wrote >= len)
+	  {
+	    retval = PAM_BUF_ERR;
+	    goto done;
+	  }
+      }
       msg[0].msg_style = PAM_PROMPT_ECHO_OFF;
       resp = NULL;
 
@@ -329,9 +347,8 @@ pam_sm_authenticate (pam_handle_t * pamh,
     }
 
   /* validate the user with supplied token id */
-  valid_token =
-    validate_user_token (auth_file, (const char *) user,
-			 (const char *) token_id);
+  valid_token = validate_user_token (auth_file, (const char *) user,
+				     (const char *) token_id);
 
   if (password != NULL)
     {
