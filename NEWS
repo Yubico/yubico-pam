@@ -1,6 +1,6 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
-* Version 1.10 (unreleased)
+* Version 1.10 (released 2009-01-13)
 
 ** Change license to 2-clause BSD.
 The Linux-PAM license is unclear, and in any case, the 2-clause BSD
