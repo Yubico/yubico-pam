@@ -1,5 +1,5 @@
 /*
- * Copyright 2007, 2008 Simon Josefsson.
+ * Copyright 2007, 2008, 2009 Simon Josefsson.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,6 @@
 #include <stdlib.h>
 
 #include <security/pam_appl.h>
-#include <security/pam_misc.h>
 
 int main(int argc, char **argv)
 {
