@@ -56,11 +56,17 @@
 #include <security/pam_modules.h>
 #endif
 
-#if defined(DEBUG_PAM) && defined(HAVE_SECURITY__PAM_MACROS_H)
-#define DEBUG
-#include <security/_pam_macros.h>
-#else
-#define D(x)			/* nothing */
+#if defined(DEBUG_PAM)
+# if defined(HAVE_SECURITY__PAM_MACROS_H)
+#  define DEBUG
+#  include <security/_pam_macros.h>
+# else
+#  define D(x) do {							\
+    printf ("debug: %s:%d (%s): ", __FILE__, __LINE__, __FUNCTION__);	\
+    printf x;								\
+    printf ("\n");							\
+  } while (0)
+# endif
 #endif
 
 #include <libykclient.h>
@@ -224,7 +230,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
       D (("id=%d", id));
       D (("debug=%d", debug));
       D (("alwaysok=%d", alwaysok));
-      D (("authfile=%s", auth_file));
+      D (("authfile=%s", auth_file ? auth_file : "(null)"));
     }
 
   retval = pam_get_user (pamh, &user, NULL);
@@ -395,9 +401,9 @@ done:
 	D (("alwaysok needed (otherwise return with %d)", retval));
       retval = PAM_SUCCESS;
     }
-  pam_set_data (pamh, "yubico_setcred_return", (void *) retval, NULL);
   if (debug)
     D (("done. [%s]", pam_strerror (pamh, retval)));
+  pam_set_data (pamh, "yubico_setcred_return", (void *) retval, NULL);
 
   return retval;
 }
