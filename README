@@ -10,14 +10,9 @@ specialized applications such as NCSA !MyProxy.
 
 == Status and Roadmap ==
 
-The module is working for single-user systems.
-
-Several items have been identified that needs to be implemented before
-it can reach production quality:
-
-  * Multi-user mappings from Yubikey to username.
-
-  * Support disconnected AES key usage.
+The module is working for multi-user systems.  It does not support
+disconnected mode, for that there is another Yubico PAM module that
+uses the AES key.
 
 The development community is co-ordinated via Google Code:
 
@@ -73,6 +68,8 @@ Then build the code, run the self-test and install the binaries:
   make check install
 }}}
 
+It in turn requires Curl, which you need to have installed.
+
 == Configuration ==
 
 Install it in your PAM setup by adding a line to an appropriate file
@@ -87,6 +84,8 @@ and move pam_yubico.so into /lib/security/:
 {{{
   mv /usr/local/lib/security/pam_yubico.so /lib/security/
 }}}
+
+For more information, see the project Wiki page.
 
 Supported PAM module parameters are:
 
@@ -120,4 +119,4 @@ auth sufficient pam_yubico.so id=16 debug
 == Feedback ==
 
 If you want to discuss anything related to the Yubico PAM module,
-please contact <simon@yubico.com>.
+please contact Simon Josefsson <simon@yubico.com>.
