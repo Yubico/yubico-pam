@@ -33,15 +33,18 @@
 
 AC_INIT([pam_yubico], [1.9], [simon@yubico.com])
 AC_CONFIG_AUX_DIR([build-aux])
+AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([foreign])
 AC_PROG_CC
 AC_LIBTOOL_WIN32_DLL
 AC_PROG_LIBTOOL
 
-AC_CHECK_HEADERS([security/pam_appl.h security/pam_modules.h security/_pam_macros.h], [], [AC_MSG_ERROR([[PAM header files not found, install libpam-dev.]])])
+AC_CHECK_HEADERS([security/pam_appl.h], [],
+  [AC_MSG_ERROR([[PAM header files not found, install libpam-dev.]])])
+AC_CHECK_HEADERS([security/pam_modules.h security/_pam_macros.h], [], [],
+  [#include <security/pam_appl.h>])
 
-AC_LIB_HAVE_LINKFLAGS([yubikey-client],,
-                      [#include <libykclient.h>],
+AC_LIB_HAVE_LINKFLAGS([yubikey-client],, [#include <libykclient.h>],
                       [yubikey_client_init ();])
 
 AC_SUBST(PAMDIR, "\$(exec_prefix)/lib/security")
