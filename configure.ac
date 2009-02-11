@@ -49,7 +49,7 @@ AC_ARG_WITH([ldap],
           
           LIBLDAP=
           AS_IF([test "x$with_ldap" != xno],
-            [AC_CHECK_LIB([ldap], [main],
+            [AC_CHECK_LIB([ldap], [ldap_init],
               [AC_SUBST([LIBLDAP], ["-lldap -llber"])
                AC_DEFINE([HAVE_LIBLDAP], [1],
                          [Define if you have libldap])
