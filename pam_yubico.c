@@ -69,7 +69,7 @@
 
 #ifdef HAVE_LIBLDAP
 #include <ldap.h>
-#define PORT_NUMBER  LDAP_PORT 
+#define PORT_NUMBER  LDAP_PORT
 #endif
 
 
@@ -200,87 +200,98 @@ validate_user_token (const char *authfile,
  * yubi_attr=
  *
  */
-static int validate_user_token_ldap (const char * ldapserver,
-			  const char * ldapdn, const char * user_attr, 
-			  const char * yubi_attr, const char * user, 
-			  const char * token_id)
+static int
+validate_user_token_ldap (const char *ldapserver,
+			  const char *ldapdn, const char *user_attr,
+			  const char *yubi_attr, const char *user,
+			  const char *token_id)
 {
-  
+
   int retval = 0;
 #ifdef HAVE_LIBLDAP
-  LDAP         *ld; 
-  LDAPMessage  *result, *e;
-  BerElement   *ber; 
-  char         *a; 
-  char         **vals; 
-  int          i, rc; 
-  char find[256]="";
-  char sr[128]="(";
-  char sep[2]=",";
-  char eq[2]="=";
-  char sren[4]="=*)";
+  LDAP *ld;
+  LDAPMessage *result, *e;
+  BerElement *ber;
+  char *a;
+  char **vals;
+  int i, rc;
+  /* FIXME: dont' use hard coded buffers here. */
+  char find[256] = "";
+  char sr[128] = "(";
+  char sep[2] = ",";
+  char eq[2] = "=";
+  char sren[4] = "=*)";
 
 
-  
-  strcat(find,user_attr);
-  strcat(find,eq);
-  strcat(find,user);
-  strcat(find,sep);
-  strcat(find,ldapdn);
-  
-  strcat(sr,yubi_attr);
-  strcat(sr,sren);
-    
-  /* Get a handle to an LDAP connection. */ 
-  if ( (ld = ldap_init( ldapserver, PORT_NUMBER )) == NULL ) { 
-    D(( "ldap_init" )); 
-    return( 0 ); 
-  }
-  
-  /* Bind anonymously to the LDAP server. */ 
-  rc = ldap_simple_bind_s( ld, NULL, NULL ); 
-  if ( rc != LDAP_SUCCESS ) { 
-    D(( "ldap_simple_bind_s: %s", ldap_err2string(rc))); 
-    return( 0 ); 
-  }
-  
-  /* Search for the entry. */ 
-  D (( "ldap-dn: %s", find )); 
-  D (( "ldap-filter: %s", sr));
-  
-  if ( ( rc = ldap_search_ext_s( ld, find, LDAP_SCOPE_BASE, 
-				 sr, NULL, 0, NULL, NULL, LDAP_NO_LIMIT, 
-				 LDAP_NO_LIMIT, &result ) ) != LDAP_SUCCESS ) { 
-    D(( "ldap_search_ext_s: %s", ldap_err2string(rc)));
-    
-    return( 0 ); 
-  } 
 
-  e = ldap_first_entry( ld, result ); 
-  if ( e != NULL ) {
-    
-    /* Iterate through each attribute in the entry. */ 
-    for ( a = ldap_first_attribute( ld, e, &ber ); 
-	  a != NULL; a = ldap_next_attribute( ld, e, ber ) ) { 
-      if ((vals = ldap_get_values( ld, e, a)) != NULL ) { 
-	for ( i = 0; vals[i] != NULL; i++ ) { 
-	  if (!strncmp (token_id, vals[i], strlen (token_id))) {
-	    D (("Token Found :: %s",vals[i] ));
-	    retval = 1;
-	  }
-	} 
-	ldap_value_free( vals ); 
-      } 
-      ldap_memfree( a ); 
-    } 
-    if ( ber != NULL ) { 
-      ber_free( ber, 0 ); 
+  strcat (find, user_attr);
+  strcat (find, eq);
+  strcat (find, user);
+  strcat (find, sep);
+  strcat (find, ldapdn);
+
+  strcat (sr, yubi_attr);
+  strcat (sr, sren);
+
+  /* Get a handle to an LDAP connection. */
+  if ((ld = ldap_init (ldapserver, PORT_NUMBER)) == NULL)
+    {
+      D (("ldap_init"));
+      return (0);
     }
 
-  } 
+  /* Bind anonymously to the LDAP server. */
+  rc = ldap_simple_bind_s (ld, NULL, NULL);
+  if (rc != LDAP_SUCCESS)
+    {
+      D (("ldap_simple_bind_s: %s", ldap_err2string (rc)));
+      return (0);
+    }
 
-  ldap_msgfree( result ); 
-  ldap_unbind( ld ); 
+  /* Search for the entry. */
+  D (("ldap-dn: %s", find));
+  D (("ldap-filter: %s", sr));
+
+  if ((rc = ldap_search_ext_s (ld, find, LDAP_SCOPE_BASE,
+			       sr, NULL, 0, NULL, NULL, LDAP_NO_LIMIT,
+			       LDAP_NO_LIMIT, &result)) != LDAP_SUCCESS)
+    {
+      D (("ldap_search_ext_s: %s", ldap_err2string (rc)));
+
+      return (0);
+    }
+
+  e = ldap_first_entry (ld, result);
+  if (e != NULL)
+    {
+
+      /* Iterate through each attribute in the entry. */
+      for (a = ldap_first_attribute (ld, e, &ber);
+	   a != NULL; a = ldap_next_attribute (ld, e, ber))
+	{
+	  if ((vals = ldap_get_values (ld, e, a)) != NULL)
+	    {
+	      for (i = 0; vals[i] != NULL; i++)
+		{
+		  if (!strncmp (token_id, vals[i], strlen (token_id)))
+		    {
+		      D (("Token Found :: %s", vals[i]));
+		      retval = 1;
+		    }
+		}
+	      ldap_value_free (vals);
+	    }
+	  ldap_memfree (a);
+	}
+      if (ber != NULL)
+	{
+	  ber_free (ber, 0);
+	}
+
+    }
+
+  ldap_msgfree (result);
+  ldap_unbind (ld);
 #else
   D (("Trying to use LDAP, but this function is not compiled in pam_yubico!!"));
   D (("Install libldap-dev and then recompile pam_yubico."));
@@ -349,10 +360,10 @@ pam_sm_authenticate (pam_handle_t * pamh,
       D (("debug=%d", debug));
       D (("alwaysok=%d", alwaysok));
       D (("authfile=%s", auth_file ? auth_file : "(null)"));
-      D (("ldapserver=%s", ldapserver));
-      D (("ldapdn=%s", ldapdn));
-      D (("user_attr=%s", user_attr));
-      D (("yubi_attr=%s", yubi_attr));
+      D (("ldapserver=%s", ldapserver ? ldapserver : "(null")));
+      D (("ldapdn=%s", ldapdn ? ldapdn : "(null")));
+      D (("user_attr=%s", user_attr ? user_attr : "(null)"));
+      D (("yubi_attr=%s", yubi_attr ? yubi_attr : "(null)"));
     }
 
   retval = pam_get_user (pamh, &user, NULL);
@@ -475,15 +486,20 @@ pam_sm_authenticate (pam_handle_t * pamh,
     }
 
   /* validate the user with supplied token id */
-  if(ldapserver!=NULL) {
-    valid_token = validate_user_token_ldap ((const char *) ldapserver,
-					    (const char *) ldapdn, (const char *) user_attr, 
-					    (const char *) yubi_attr, (const char *) user, 
-					    (const char *) token_id);
-  } else {
-    valid_token = validate_user_token (auth_file, (const char *) user,
-				     (const char *) token_id);
-  }
+  if (ldapserver != NULL)
+    {
+      valid_token = validate_user_token_ldap ((const char *) ldapserver,
+					      (const char *) ldapdn,
+					      (const char *) user_attr,
+					      (const char *) yubi_attr,
+					      (const char *) user,
+					      (const char *) token_id);
+    }
+  else
+    {
+      valid_token = validate_user_token (auth_file, (const char *) user,
+					 (const char *) token_id);
+    }
   if (password != NULL)
     {
       retval = pam_set_item (pamh, PAM_AUTHTOK, password);
