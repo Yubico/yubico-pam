@@ -26,7 +26,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-AC_INIT([pam_yubico], [1.10], [simon@yubico.com])
+AC_INIT([pam_yubico], [1.11], [simon@yubico.com])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([foreign])
@@ -39,6 +39,25 @@ AC_CHECK_HEADERS([security/pam_appl.h], [],
   [AC_MSG_ERROR([[PAM header files not found, install libpam-dev.]])])
 AC_CHECK_HEADERS([security/pam_modules.h security/_pam_macros.h], [], [],
   [#include <security/pam_appl.h>])
+
+
+AC_ARG_WITH([ldap],
+            [AS_HELP_STRING([--without-ldap],
+              [disable support for ldap])],
+            [],
+            [with_ldap=yes])
+          
+          LIBLDAP=
+          AS_IF([test "x$with_ldap" != xno],
+            [AC_CHECK_LIB([ldap], [main],
+              [AC_SUBST([LIBLDAP], ["-lldap -llber"])
+               AC_DEFINE([HAVE_LIBLDAP], [1],
+                         [Define if you have libldap])
+              ],
+              [AC_MSG_WARN(
+                 [libldap not found, will not be compiled (--without-ldap to disable ldap support)])],
+              [])])
+
 
 AC_LIB_HAVE_LINKFLAGS([yubikey-client],, [#include <libykclient.h>],
                       [yubikey_client_init ();])

@@ -32,6 +32,8 @@
 #include <stdarg.h>
 #include <ctype.h>
 
+
+
 /* Libtool defines PIC for shared objects */
 #ifndef PIC
 #define PAM_STATIC
@@ -65,6 +67,12 @@
 
 #include <libykclient.h>
 
+#ifdef HAVE_LIBLDAP
+#include <ldap.h>
+#define PORT_NUMBER  LDAP_PORT 
+#endif
+
+
 #ifndef PAM_EXTERN
 #ifdef PAM_STATIC
 #define PAM_EXTERN static
@@ -72,6 +80,8 @@
 #define PAM_EXTERN extern
 #endif
 #endif
+
+
 
 #include <sys/types.h>
 #include <pwd.h>
@@ -176,6 +186,108 @@ validate_user_token (const char *authfile,
   return retval;
 }
 
+/*
+ * This function will look in ldap id the token correspond to the
+ * requested user. It will returns 0 for failure and 1 for success.
+ *
+ * For the moment ldaps is not supported. ldap serve can be on a
+ * remote host.
+ *
+ * You need the following parameters in you pam config:
+ * ldapsever=
+ * ldapdn=
+ * user_attr=
+ * yubi_attr=
+ *
+ */
+static int validate_user_token_ldap (const char * ldapserver,
+			  const char * ldapdn, const char * user_attr, 
+			  const char * yubi_attr, const char * user, 
+			  const char * token_id)
+{
+  
+  int retval = 0;
+#ifdef HAVE_LIBLDAP
+  LDAP         *ld; 
+  LDAPMessage  *result, *e;
+  BerElement   *ber; 
+  char         *a; 
+  char         **vals; 
+  int          i, rc; 
+  char find[256]="";
+  char sr[128]="(";
+  char sep[2]=",";
+  char eq[2]="=";
+  char sren[4]="=*)";
+
+
+  
+  strcat(find,user_attr);
+  strcat(find,eq);
+  strcat(find,user);
+  strcat(find,sep);
+  strcat(find,ldapdn);
+  
+  strcat(sr,yubi_attr);
+  strcat(sr,sren);
+    
+  /* Get a handle to an LDAP connection. */ 
+  if ( (ld = ldap_init( ldapserver, PORT_NUMBER )) == NULL ) { 
+    D(( "ldap_init" )); 
+    return( 0 ); 
+  }
+  
+  /* Bind anonymously to the LDAP server. */ 
+  rc = ldap_simple_bind_s( ld, NULL, NULL ); 
+  if ( rc != LDAP_SUCCESS ) { 
+    D(( "ldap_simple_bind_s: %s", ldap_err2string(rc))); 
+    return( 0 ); 
+  }
+  
+  /* Search for the entry. */ 
+  D (( "ldap-dn: %s", find )); 
+  D (( "ldap-filter: %s", sr));
+  
+  if ( ( rc = ldap_search_ext_s( ld, find, LDAP_SCOPE_BASE, 
+				 sr, NULL, 0, NULL, NULL, LDAP_NO_LIMIT, 
+				 LDAP_NO_LIMIT, &result ) ) != LDAP_SUCCESS ) { 
+    D(( "ldap_search_ext_s: %s", ldap_err2string(rc)));
+    
+    return( 0 ); 
+  } 
+
+  e = ldap_first_entry( ld, result ); 
+  if ( e != NULL ) {
+    
+    /* Iterate through each attribute in the entry. */ 
+    for ( a = ldap_first_attribute( ld, e, &ber ); 
+	  a != NULL; a = ldap_next_attribute( ld, e, ber ) ) { 
+      if ((vals = ldap_get_values( ld, e, a)) != NULL ) { 
+	for ( i = 0; vals[i] != NULL; i++ ) { 
+	  if (!strncmp (token_id, vals[i], strlen (token_id))) {
+	    D (("Token Found :: %s",vals[i] ));
+	    retval = 1;
+	  }
+	} 
+	ldap_value_free( vals ); 
+      } 
+      ldap_memfree( a ); 
+    } 
+    if ( ber != NULL ) { 
+      ber_free( ber, 0 ); 
+    }
+
+  } 
+
+  ldap_msgfree( result ); 
+  ldap_unbind( ld ); 
+#else
+  D (("Trying to use LDAP, but this function is not compiled in pam_yubico!!"));
+  D (("Install libldap-dev and then recompile pam_yubico."));
+#endif
+  return retval;
+}
+
 PAM_EXTERN int
 pam_sm_authenticate (pam_handle_t * pamh,
 		     int flags, int argc, const char **argv)
@@ -200,6 +312,10 @@ pam_sm_authenticate (pam_handle_t * pamh,
   int debug = 0;
   int alwaysok = 0;
   yubikey_client_t ykc;
+  char *ldapserver = NULL;
+  char *ldapdn = NULL;
+  char *user_attr = NULL;
+  char *yubi_attr = NULL;
 
   for (i = 0; i < argc; i++)
     {
@@ -213,6 +329,14 @@ pam_sm_authenticate (pam_handle_t * pamh,
 	auth_file = (char *) argv[i] + 9;
       if (strncmp (argv[i], "url=", 4) == 0)
 	url_template = (char *) argv[i] + 4;
+      if (strncmp (argv[i], "ldapserver=", 11) == 0)
+	ldapserver = (char *) argv[i] + 11;
+      if (strncmp (argv[i], "ldapdn=", 7) == 0)
+	ldapdn = (char *) argv[i] + 7;
+      if (strncmp (argv[i], "user_attr=", 10) == 0)
+	user_attr = (char *) argv[i] + 10;
+      if (strncmp (argv[i], "yubi_attr=", 10) == 0)
+	yubi_attr = (char *) argv[i] + 10;
     }
 
   if (debug)
@@ -225,6 +349,10 @@ pam_sm_authenticate (pam_handle_t * pamh,
       D (("debug=%d", debug));
       D (("alwaysok=%d", alwaysok));
       D (("authfile=%s", auth_file ? auth_file : "(null)"));
+      D (("ldapserver=%s", ldapserver));
+      D (("ldapdn=%s", ldapdn));
+      D (("user_attr=%s", user_attr));
+      D (("yubi_attr=%s", yubi_attr));
     }
 
   retval = pam_get_user (pamh, &user, NULL);
@@ -347,9 +475,15 @@ pam_sm_authenticate (pam_handle_t * pamh,
     }
 
   /* validate the user with supplied token id */
-  valid_token = validate_user_token (auth_file, (const char *) user,
+  if(ldapserver!=NULL) {
+    valid_token = validate_user_token_ldap ((const char *) ldapserver,
+					    (const char *) ldapdn, (const char *) user_attr, 
+					    (const char *) yubi_attr, (const char *) user, 
+					    (const char *) token_id);
+  } else {
+    valid_token = validate_user_token (auth_file, (const char *) user,
 				     (const char *) token_id);
-
+  }
   if (password != NULL)
     {
       retval = pam_set_item (pamh, PAM_AUTHTOK, password);

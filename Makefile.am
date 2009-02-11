@@ -34,7 +34,7 @@ lib_LTLIBRARIES = pam_yubico.la
 
 pam_yubico_la_SOURCES = pam_yubico.c
 # XXX add -Wl,-x too?  PAM documentation suggests it.
-pam_yubico_la_LIBADD = @LTLIBYUBIKEY_CLIENT@
+pam_yubico_la_LIBADD = @LTLIBYUBIKEY_CLIENT@ @LIBLDAP@
 pam_yubico_la_LDFLAGS = -module -avoid-version
 
 DEFS = -DDEBUG_PAM @DEFS@
