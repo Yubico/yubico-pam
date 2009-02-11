@@ -1,5 +1,10 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
+* Version 1.11 (unreleased)
+
+** Added support to store user:keyid mapping in LDAP.
+Contributed by Gregory Brusick <gregory@brusick.ch>.
+
 * Version 1.10 (released 2009-01-13)
 
 ** Change license to 2-clause BSD.
