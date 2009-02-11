@@ -360,8 +360,8 @@ pam_sm_authenticate (pam_handle_t * pamh,
       D (("debug=%d", debug));
       D (("alwaysok=%d", alwaysok));
       D (("authfile=%s", auth_file ? auth_file : "(null)"));
-      D (("ldapserver=%s", ldapserver ? ldapserver : "(null")));
-      D (("ldapdn=%s", ldapdn ? ldapdn : "(null")));
+      D (("ldapserver=%s", ldapserver ? ldapserver : "(null)"));
+      D (("ldapdn=%s", ldapdn ? ldapdn : "(null)"));
       D (("user_attr=%s", user_attr ? user_attr : "(null)"));
       D (("yubi_attr=%s", yubi_attr ? yubi_attr : "(null)"));
     }
