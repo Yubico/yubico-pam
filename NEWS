@@ -2,6 +2,9 @@ pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
 * Version 1.13 (unreleased)
 
+** Fix parsing of password into OTP/ID/password.
+Earlier string handling may have been incorrect for short strings.
+
 ** Don't pass integers via pam_set_data/pam_get_data.
 May solve problems on 64-bit platforms.  Based on patch from
 forum.yubico.com.
