@@ -61,7 +61,8 @@ The build system uses Autoconf, to set up the build system run:
 {{{
   ./configure
 }}}
-use --without-ldap to disable ldap support
+
+Use --without-ldap to disable ldap support.
 
 Then build the code, run the self-test and install the binaries:
 
