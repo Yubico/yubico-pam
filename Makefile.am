@@ -57,8 +57,8 @@ PROJECT=yubico-pam
 release:
 	rm -f ChangeLog
 	make ChangeLog distcheck
-	gpg -b $(PACKAGE)-$(VERSION).tgz
-	gpg --verify $(PACKAGE)-$(VERSION).tgz.sig
+	gpg -b $(PACKAGE)-$(VERSION).tar.gz
+	gpg --verify $(PACKAGE)-$(VERSION).tar.gz.sig
 	svn copy https://$(PROJECT).googlecode.com/svn/trunk/ \
 	 https://$(PROJECT).googlecode.com/svn/tags/$(PACKAGE)-$(VERSION) \
 	 -m "Tagging the $(VERSION) release of the $(PACKAGE) project."
