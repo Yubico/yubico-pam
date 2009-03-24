@@ -1,12 +1,12 @@
-# lib-link.m4 serial 15 (gettext-0.18)
-dnl Copyright (C) 2001-2008 Free Software Foundation, Inc.
+# lib-link.m4 serial 18 (gettext-0.18)
+dnl Copyright (C) 2001-2009 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 dnl From Bruno Haible.
 
-AC_PREREQ(2.54)
+AC_PREREQ([2.54])
 
 dnl AC_LIB_LINKFLAGS(name [, dependencies]) searches for libname and
 dnl the libraries corresponding to explicit and implicit dependencies.
@@ -114,7 +114,7 @@ AC_DEFUN([AC_LIB_RPATH],
   AC_REQUIRE([AC_LIB_PROG_LD])            dnl we use $LD, $with_gnu_ld
   AC_REQUIRE([AC_CANONICAL_HOST])         dnl we use $host
   AC_REQUIRE([AC_CONFIG_AUX_DIR_DEFAULT]) dnl we use $ac_aux_dir
-  AC_CACHE_CHECK([for shared library run path origin], acl_cv_rpath, [
+  AC_CACHE_CHECK([for shared library run path origin], [acl_cv_rpath], [
     CC="$CC" GCC="$GCC" LDFLAGS="$LDFLAGS" LD="$LD" with_gnu_ld="$with_gnu_ld" \
     ${CONFIG_SHELL-/bin/sh} "$ac_aux_dir/config.rpath" "$host" > conftest.sh
     . ./conftest.sh
@@ -131,7 +131,7 @@ AC_DEFUN([AC_LIB_RPATH],
   acl_hardcode_direct="$acl_cv_hardcode_direct"
   acl_hardcode_minus_L="$acl_cv_hardcode_minus_L"
   dnl Determine whether the user wants rpath handling at all.
-  AC_ARG_ENABLE(rpath,
+  AC_ARG_ENABLE([rpath],
     [  --disable-rpath         do not hardcode runtime library paths],
     :, enable_rpath=yes)
 ])
@@ -194,6 +194,10 @@ AC_DEFUN([AC_LIB_LINKFLAGS_BODY],
       else
         additional_includedir="$withval/include"
         additional_libdir="$withval/$acl_libdirstem"
+        if test "$acl_libdirstem2" != "$acl_libdirstem" \
+           && ! test -d "$withval/$acl_libdirstem"; then
+          additional_libdir="$withval/$acl_libdirstem2"
+        fi
       fi
     fi
 ])
@@ -352,7 +356,9 @@ AC_DEFUN([AC_LIB_LINKFLAGS_BODY],
               dnl Linking with a shared library. We attempt to hardcode its
               dnl directory into the executable's runpath, unless it's the
               dnl standard /usr/lib.
-              if test "$enable_rpath" = no || test "X$found_dir" = "X/usr/$acl_libdirstem"; then
+              if test "$enable_rpath" = no \
+                 || test "X$found_dir" = "X/usr/$acl_libdirstem" \
+                 || test "X$found_dir" = "X/usr/$acl_libdirstem2"; then
                 dnl No hardcoding is needed.
                 LIB[]NAME="${LIB[]NAME}${LIB[]NAME:+ }$found_so"
               else
@@ -440,7 +446,16 @@ AC_DEFUN([AC_LIB_LINKFLAGS_BODY],
             case "$found_dir" in
               */$acl_libdirstem | */$acl_libdirstem/)
                 basedir=`echo "X$found_dir" | sed -e 's,^X,,' -e "s,/$acl_libdirstem/"'*$,,'`
-                LIB[]NAME[]_PREFIX="$basedir"
+                if test "$name" = '$1'; then
+                  LIB[]NAME[]_PREFIX="$basedir"
+                fi
+                additional_includedir="$basedir/include"
+                ;;
+              */$acl_libdirstem2 | */$acl_libdirstem2/)
+                basedir=`echo "X$found_dir" | sed -e 's,^X,,' -e "s,/$acl_libdirstem2/"'*$,,'`
+                if test "$name" = '$1'; then
+                  LIB[]NAME[]_PREFIX="$basedir"
+                fi
                 additional_includedir="$basedir/include"
                 ;;
             esac
@@ -501,9 +516,11 @@ AC_DEFUN([AC_LIB_LINKFLAGS_BODY],
                     dnl   3. if it's already present in $LDFLAGS or the already
                     dnl      constructed $LIBNAME,
                     dnl   4. if it doesn't exist as a directory.
-                    if test "X$additional_libdir" != "X/usr/$acl_libdirstem"; then
+                    if test "X$additional_libdir" != "X/usr/$acl_libdirstem" \
+                       && test "X$additional_libdir" != "X/usr/$acl_libdirstem2"; then
                       haveit=
-                      if test "X$additional_libdir" = "X/usr/local/$acl_libdirstem"; then
+                      if test "X$additional_libdir" = "X/usr/local/$acl_libdirstem" \
+                         || test "X$additional_libdir" = "X/usr/local/$acl_libdirstem2"; then
                         if test -n "$GCC"; then
                           case $host_os in
                             linux* | gnu* | k*bsd*-gnu) haveit=yes;;
@@ -684,7 +701,8 @@ AC_DEFUN([AC_LIB_LINKFLAGS_FROM_LIBS],
         if test -n "$next"; then
           dir="$next"
           dnl No need to hardcode the standard /usr/lib.
-          if test "X$dir" != "X/usr/$acl_libdirstem"; then
+          if test "X$dir" != "X/usr/$acl_libdirstem" \
+             && test "X$dir" != "X/usr/$acl_libdirstem2"; then
             rpathdirs="$rpathdirs $dir"
           fi
           next=
@@ -693,7 +711,8 @@ AC_DEFUN([AC_LIB_LINKFLAGS_FROM_LIBS],
             -L) next=yes ;;
             -L*) dir=`echo "X$opt" | sed -e 's,^X-L,,'`
                  dnl No need to hardcode the standard /usr/lib.
-                 if test "X$dir" != "X/usr/$acl_libdirstem"; then
+                 if test "X$dir" != "X/usr/$acl_libdirstem" \
+                    && test "X$dir" != "X/usr/$acl_libdirstem2"; then
                    rpathdirs="$rpathdirs $dir"
                  fi
                  next= ;;
