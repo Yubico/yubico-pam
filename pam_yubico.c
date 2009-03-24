@@ -426,6 +426,14 @@ pam_sm_authenticate (pam_handle_t * pamh,
       goto done;
     }
 
+  ykc = yubikey_client_init ();
+  if (!ykc)
+    {
+      DBG (("yubikey_client_init() failed"));
+      retval = PAM_AUTHINFO_UNAVAIL;
+      goto done;
+    }
+
   if (password == NULL)
     {
       retval = pam_get_item (pamh, PAM_CONV, (const void **) &conv);
@@ -479,14 +487,6 @@ pam_sm_authenticate (pam_handle_t * pamh,
 	  DBG (("set_item returned error: %s", pam_strerror (pamh, retval)));
 	  goto done;
 	}
-    }
-
-  ykc = yubikey_client_init ();
-  if (!ykc)
-    {
-      DBG (("yubikey_client_init() failed"));
-      retval = PAM_AUTHINFO_UNAVAIL;
-      goto done;
     }
 
   yubikey_client_set_info (ykc, cfg.client_id, 0, NULL);
