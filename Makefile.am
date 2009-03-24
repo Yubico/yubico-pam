@@ -57,10 +57,12 @@ PROJECT=yubico-pam
 release:
 	rm -f ChangeLog
 	make ChangeLog distcheck
+	gpg -b $(PACKAGE)-$(VERSION).tgz
+	gpg --verify $(PACKAGE)-$(VERSION).tgz.sig
 	svn copy https://$(PROJECT).googlecode.com/svn/trunk/ \
 	 https://$(PROJECT).googlecode.com/svn/tags/$(PACKAGE)-$(VERSION) \
 	 -m "Tagging the $(VERSION) release of the $(PACKAGE) project."
 	googlecode_upload.py -s "$(PACKAGE) $(VERSION)" \
-	 -p yubico-pam -u simon75j $(PACKAGE)-$(VERSION).tar.gz 
+	 -p $(PROJECT) -u simon75j $(PACKAGE)-$(VERSION).tar.gz 
 	googlecode_upload.py -s "OpenPGP signature for $(PACKAGE) $(VERSION)." \
-	 -p php-yubico -u simon75j $(PACKAGE)-$(VERSION).tar.gz.sig
+	 -p $(PROJECT) -u simon75j $(PACKAGE)-$(VERSION).tar.gz.sig
