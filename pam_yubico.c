@@ -139,22 +139,22 @@ check_user_token (const char *authfile,
 }
 
 /*
- * This F'n will get the configuration file name either from argument
- * list or from user home directory
+ * Authorize authenticated OTP_ID for login as USERNAME using
+ * AUTHFILE.  Return 0 on failures, otherwise success.
  */
 static int
 authorize_user_token (const char *authfile,
 		      const char *username,
-		      const char *usertoken)
+		      const char *otp_id)
 {
-  int retval = 0;
+  int retval;
 
-  if (NULL != authfile)
+  if (authfile)
     {
       /* Administrator had configured the file and specified is name
          as an argument for this module.
        */
-      retval = check_user_token (authfile, username, usertoken);
+      retval = check_user_token (authfile, username, otp_id);
     }
   else
     {
@@ -162,24 +162,25 @@ authorize_user_token (const char *authfile,
          ..... i.e. ~/.yubico/authorized_yubikeys
        */
       struct passwd *p;
-      char *home_dir = NULL;
+      char *userfile = NULL;
+
+#define USERFILE "/.yubico/authorized_yubikeys"
 
       p = getpwnam (username);
-      if (p != NULL)
+      if (p)
 	{
-	  home_dir = (char *) malloc (strlen (p->pw_dir) + 29);
-	  if (NULL != home_dir)
-	    {
-	      strcpy (home_dir, p->pw_dir);
-	      strcat (home_dir, "/.yubico/authorized_yubikeys");
-	    }
+	  userfile = malloc ((p->pw_dir ? strlen (p->pw_dir) : 0)
+			     + strlen (USERFILE) + 1);
+	  if (!userfile)
+	    return 0;
+
+	  strcpy (userfile, p->pw_dir);
+	  strcat (userfile, USERFILE);
 	}
 
-      retval = check_user_token (home_dir, username, usertoken);
-      if (NULL != home_dir)
-	{
-	  free (home_dir);
-	}
+      retval = check_user_token (userfile, username, otp_id);
+
+      free (userfile);
     }
 
   return retval;
