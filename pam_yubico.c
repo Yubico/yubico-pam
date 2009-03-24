@@ -143,8 +143,9 @@ check_user_token (const char *authfile,
  * list or from user home directory
  */
 static int
-validate_user_token (const char *authfile,
-		     const char *username, const char *usertoken)
+authorize_user_token (const char *authfile,
+		      const char *username,
+		      const char *usertoken)
 {
   int retval = 0;
 
@@ -199,10 +200,10 @@ validate_user_token (const char *authfile,
  *
  */
 static int
-validate_user_token_ldap (const char *ldapserver,
-			  const char *ldapdn, const char *user_attr,
-			  const char *yubi_attr, const char *user,
-			  const char *token_id)
+authorize_user_token_ldap (const char *ldapserver,
+			   const char *ldapdn, const char *user_attr,
+			   const char *yubi_attr, const char *user,
+			   const char *token_id)
 {
 
   int retval = 0;
@@ -383,13 +384,10 @@ pam_sm_authenticate (pam_handle_t * pamh,
   int retval, rc;
   const char *user = NULL;
   const char *password = NULL;
-  const char *token_otp[TOKEN_LEN + 1] = { 0 };
-  const char *token_id[TOKEN_ID_LEN + 1] = { 0 };
-  char *token_otp_with_password = NULL;
-  char *token_password = NULL;
+  char otp[TOKEN_LEN + 1] = { 0 };
+  char otp_id[TOKEN_ID_LEN + 1] = { 0 };
   int password_len = 0;
   int valid_token = 0;
-  int i;
   struct pam_conv *conv;
   struct pam_message *pmsg[1], msg[1];
   struct pam_response *resp;
@@ -484,81 +482,73 @@ pam_sm_authenticate (pam_handle_t * pamh,
       DBG (("conv returned: %s", resp->resp));
 
       password = resp->resp;
-
-      retval = pam_set_item (pamh, PAM_AUTHTOK, password);
-      if (retval != PAM_SUCCESS)
-	{
-	  DBG (("set_item returned error: %s", pam_strerror (pamh, retval)));
-	  goto done;
-	}
     }
 
-  /* user will enter there system paasword followed by generated OTP */
-  token_otp_with_password = (char *) password;
-  password_len = strlen (token_otp_with_password);
-
-  /* Getting Token value and SSH password */
-  strncpy ((char *) token_otp,
-	   token_otp_with_password + (password_len - TOKEN_LEN), TOKEN_LEN);
-  token_password = malloc ((password_len - TOKEN_LEN) + 1);
-
-  if (token_password != NULL)
+  password_len = strlen (password);
+  if (password_len < TOKEN_LEN)
     {
-      strncpy (token_password, token_otp_with_password,
-	       (password_len - TOKEN_LEN));
-      token_password[(password_len - TOKEN_LEN)] = 0;
-      password = token_password;
-    }
-  strncpy ((char *) token_id,
-	   token_otp_with_password + (password_len - TOKEN_LEN),
-	   TOKEN_ID_LEN);
-
-  DBG ((" Token is : %s and password is %s ", token_otp, password));
-  DBG ((" Token ID is: %s ", token_id));
-
-  /* validate the user with supplied token id */
-  if (cfg.ldapserver != NULL)
-    {
-      valid_token = validate_user_token_ldap ((const char *) cfg.ldapserver,
-					      (const char *) cfg.ldapdn,
-					      (const char *) cfg.user_attr,
-					      (const char *) cfg.yubi_attr,
-					      (const char *) user,
-					      (const char *) token_id);
-    }
-  else
-    {
-      valid_token = validate_user_token (cfg.auth_file, (const char *) user,
-					 (const char *) token_id);
-    }
-  if (password != NULL)
-    {
-      retval = pam_set_item (pamh, PAM_AUTHTOK, password);
-      if (retval != PAM_SUCCESS)
-	{
-	  DBG (("set_item returned error: %s", pam_strerror (pamh, retval)));
-	  goto done;
-	}
-    }
-
-  if (valid_token == 0)
-    {
-      DBG (("Invalid Token for user "));
-      retval = PAM_SERVICE_ERR;
+      DBG (("OTP too short: %s", password));
+      retval = PAM_AUTH_ERR;
       goto done;
     }
 
-  rc = yubikey_client_request (ykc, (const char *) token_otp);
+  strncpy (otp, password + (password_len - TOKEN_LEN), TOKEN_LEN);
+  strncpy (otp_id, password + (password_len - TOKEN_LEN), TOKEN_ID_LEN);
+
+  DBG (("OTP: %s ID: %s ", otp, otp_id));
+
+  /* user entered their system password followed by generated OTP? */
+  if (password_len > TOKEN_LEN)
+    {
+      char *onlypasswd = strdup (password);
+
+      onlypasswd[password_len - TOKEN_LEN] = '\0';
+
+      DBG (("Password: %s ", onlypasswd));
+
+      retval = pam_set_item (pamh, PAM_AUTHTOK, onlypasswd);
+      free (onlypasswd);
+      if (retval != PAM_SUCCESS)
+	{
+	  DBG (("set_item returned error: %s", pam_strerror (pamh, retval)));
+	  goto done;
+	}
+    }
+  else
+    password = NULL;
+
+  rc = yubikey_client_request (ykc, otp);
 
   DBG (("libyubikey-client return value (%d): %s", rc,
 	yubikey_client_strerror (rc)));
 
-  if (token_password != NULL)
-    free (token_password);
-
-  if (rc != YUBIKEY_CLIENT_OK)
+  switch (rc)
     {
-      retval = PAM_SERVICE_ERR;
+    case YUBIKEY_CLIENT_OK:
+      break;
+
+    case YUBIKEY_CLIENT_BAD_OTP:
+    case YUBIKEY_CLIENT_REPLAYED_OTP:
+      retval = PAM_AUTH_ERR;
+      goto done;
+
+    default:
+      retval = PAM_AUTHINFO_UNAVAIL;
+      goto done;
+    }
+
+  /* authorize the user with supplied token id */
+  if (cfg.ldapserver != NULL)
+    valid_token = authorize_user_token_ldap (cfg.ldapserver, cfg.ldapdn,
+					     cfg.user_attr, cfg.yubi_attr,
+					     user, otp_id);
+  else
+    valid_token = authorize_user_token (cfg.auth_file, user, otp_id);
+
+  if (valid_token == 0)
+    {
+      DBG (("Yubikey not authorized to login as user"));
+      retval = PAM_AUTHINFO_UNAVAIL;
       goto done;
     }
 
@@ -573,7 +563,7 @@ done:
       retval = PAM_SUCCESS;
     }
   DBG (("done. [%s]", pam_strerror (pamh, retval)));
-  pam_set_data (pamh, "yubico_setcred_return", &retval, NULL);
+  pam_set_data (pamh, "yubico_setcred_return", (void*) (intptr_t) retval, NULL);
 
   return retval;
 }
@@ -590,6 +580,7 @@ pam_sm_setcred (pam_handle_t * pamh, int flags, int argc, const char **argv)
 
   retval = pam_get_data (pamh, "yubico_setcred_return",
 			 &auth_retval);
+  D (("retval: %d", auth_retval));
   if (retval != PAM_SUCCESS)
     return PAM_CRED_UNAVAIL;
 
