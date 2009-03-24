@@ -1,6 +1,6 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
-* Version 1.14 (unreleased)
+* Version 1.14 (released 2009-03-24)
 
 ** Quick release to sync release archive with svn code.
 
