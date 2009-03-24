@@ -1,6 +1,6 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
-* Version 1.12 (unreleased)
+* Version 1.12 (released 2009-03-24)
 
 ** Add support for "use_first_pass" and "try_first_pass".
 They work similar to other PAM modules, see README for more
