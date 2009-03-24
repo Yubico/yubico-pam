@@ -6,6 +6,10 @@ pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 They work similar to other PAM modules, see README for more
 documentation.
 
+Upgrade notice: If you are relying on getting the Yubikey OTP from an
+earlier PAM module, and no prompting by the pam_yubico module, you
+need to add "try_first_pass" to preserve the same behaviour.
+
 * Version 1.11 (released 2009-02-11)
 
 ** Added support to store user:keyid mapping in LDAP.
