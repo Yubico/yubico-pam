@@ -394,7 +394,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
   struct pam_message *pmsg[1], msg[1];
   struct pam_response *resp;
   int nargs = 1;
-  yubikey_client_t ykc;
+  yubikey_client_t ykc = NULL;
   struct cfg cfg;
 
   parse_cfg (flags, argc, argv, &cfg);
@@ -433,6 +433,10 @@ pam_sm_authenticate (pam_handle_t * pamh,
       retval = PAM_AUTHINFO_UNAVAIL;
       goto done;
     }
+
+  yubikey_client_set_info (ykc, cfg.client_id, 0, NULL);
+  if (cfg.url)
+    yubikey_client_set_url_template (ykc, cfg.url);
 
   if (password == NULL)
     {
@@ -488,11 +492,6 @@ pam_sm_authenticate (pam_handle_t * pamh,
 	  goto done;
 	}
     }
-
-  yubikey_client_set_info (ykc, cfg.client_id, 0, NULL);
-
-  if (cfg.url)
-    yubikey_client_set_url_template (ykc, cfg.url);
 
   /* user will enter there system paasword followed by generated OTP */
   token_otp_with_password = (char *) password;
@@ -551,11 +550,11 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
   rc = yubikey_client_request (ykc, (const char *) token_otp);
 
+  DBG (("libyubikey-client return value (%d): %s", rc,
+	yubikey_client_strerror (rc)));
+
   if (token_password != NULL)
     free (token_password);
-
-  DBG (("libyubikey-client return value (%d): %s", rc,
-      yubikey_client_strerror (rc)));
 
   if (rc != YUBIKEY_CLIENT_OK)
     {
@@ -563,11 +562,11 @@ pam_sm_authenticate (pam_handle_t * pamh,
       goto done;
     }
 
-  yubikey_client_done (&ykc);
-
   retval = PAM_SUCCESS;
 
 done:
+  if (ykc)
+    yubikey_client_done (&ykc);
   if (cfg.alwaysok && retval != PAM_SUCCESS)
     {
       DBG (("alwaysok needed (otherwise return with %d)", retval));
