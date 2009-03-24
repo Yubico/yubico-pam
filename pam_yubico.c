@@ -98,9 +98,10 @@
  */
 static int
 check_user_token (const char *authfile,
-		  const char *username, const char *usertoken)
+		  const char *username,
+		  const char *otp_id)
 {
-  static char buf[1024];
+  char buf[1024];
   char *s_user, *s_token;
   int retval = 0;
   FILE *opwfile;
@@ -108,34 +109,37 @@ check_user_token (const char *authfile,
   opwfile = fopen (authfile, "r");
   if (opwfile == NULL)
     {
-      D ((" %s file does not exists.", authfile));
+      D (("Cannot open file: %s", authfile));
       return retval;
     }
 
   while (fgets (buf, 1024, opwfile))
     {
-      if (!strncmp (buf, username, strlen (username)))
+      if (buf[strlen (buf) - 1] == '\n')
+	buf[strlen (buf) - 1] = '\0';
+      D (("Authorization line: %s", buf));
+      s_user = strtok (buf, ":");
+      if (s_user && strcmp (username, s_user) == 0)
 	{
-	  buf[strlen (buf) - 1] = '\0';
-	  D (("Got user record :: %s", buf));
-	  s_user = strtok (buf, ":");
-	  s_token = strtok (NULL, ":");
-	  while (s_token != NULL)
+	  D (("Matched user: %s", s_user));
+	  do
 	    {
-	      if (!strncmp (usertoken, s_token, strlen (usertoken)))
-		{
-		  D (("Token Found :: %s", s_token));
-		  retval = 1;
-		  break;
-		}
 	      s_token = strtok (NULL, ":");
+	      D (("Authorization token: %s", s_token));
+	      if (s_token && strcmp (otp_id, s_token) == 0)
+		{
+		  D (("Match user/token as %s/%s", username, otp_id));
+		  fclose (opwfile);
+		  return 1;
+		}
 	    }
-	  break;
+	  while (s_token != NULL);
 	}
     }
+
   fclose (opwfile);
 
-  return retval;
+  return 0;
 }
 
 /*
