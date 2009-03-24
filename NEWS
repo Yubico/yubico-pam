@@ -2,6 +2,10 @@ pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
 * Version 1.12 (unreleased)
 
+** Add support for "use_first_pass" and "try_first_pass".
+They work similar to other PAM modules, see README for more
+documentation.
+
 * Version 1.11 (released 2009-02-11)
 
 ** Added support to store user:keyid mapping in LDAP.

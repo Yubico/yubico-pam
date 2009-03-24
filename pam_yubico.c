@@ -322,6 +322,8 @@ pam_sm_authenticate (pam_handle_t * pamh,
   int id = -1;
   int debug = 0;
   int alwaysok = 0;
+  int try_first_pass = 0;
+  int use_first_pass = 0;
   yubikey_client_t ykc;
   char *ldapserver = NULL;
   char *ldapdn = NULL;
@@ -336,6 +338,10 @@ pam_sm_authenticate (pam_handle_t * pamh,
 	debug = 1;
       if (strcmp (argv[i], "alwaysok") == 0)
 	alwaysok = 1;
+      if (strcmp (argv[i], "try_first_pass") == 0)
+	try_first_pass = 1;
+      if (strcmp (argv[i], "use_first_pass") == 0)
+	use_first_pass = 1;
       if (strncmp (argv[i], "authfile=", 9) == 0)
 	auth_file = (char *) argv[i] + 9;
       if (strncmp (argv[i], "url=", 4) == 0)
@@ -359,6 +365,8 @@ pam_sm_authenticate (pam_handle_t * pamh,
       D (("id=%d", id));
       D (("debug=%d", debug));
       D (("alwaysok=%d", alwaysok));
+      D (("try_first_pass=%d", try_first_pass));
+      D (("use_first_pass=%d", use_first_pass));
       D (("authfile=%s", auth_file ? auth_file : "(null)"));
       D (("ldapserver=%s", ldapserver ? ldapserver : "(null)"));
       D (("ldapdn=%s", ldapdn ? ldapdn : "(null)"));
@@ -376,15 +384,27 @@ pam_sm_authenticate (pam_handle_t * pamh,
   if (debug)
     D (("get user returned: %s", user));
 
-  retval = pam_get_item (pamh, PAM_AUTHTOK, (const void **) &password);
-  if (retval != PAM_SUCCESS)
+  if (try_first_pass || use_first_pass)
+    {
+      retval = pam_get_item (pamh, PAM_AUTHTOK, (const void **) &password);
+      if (retval != PAM_SUCCESS)
+	{
+	  if (debug)
+	    D (("get password returned error: %s",
+		pam_strerror (pamh, retval)));
+	  goto done;
+	}
+      if (debug)
+	D (("get password returned: %s", password));
+    }
+
+  if (use_first_pass && password == NULL)
     {
       if (debug)
-	D (("get password returned error: %s", pam_strerror (pamh, retval)));
+	D (("use_first_pass set and no password, giving up"));
+      retval = PAM_AUTH_ERR;
       goto done;
     }
-  if (debug)
-    D (("get password returned: %s", password));
 
   if (password == NULL)
     {
