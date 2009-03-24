@@ -52,11 +52,15 @@ TESTS = $(check_PROGRAMS)
 ChangeLog:
 	svn2cl
 
+PROJECT=yubico-pam
+
 release:
 	rm -f ChangeLog
 	make ChangeLog distcheck
-	svn copy https://yubico-pam.googlecode.com/svn/trunk/ \
-	 https://yubico-pam.googlecode.com/svn/tags/$(PACKAGE)-$(VERSION) \
+	svn copy https://$(PROJECT).googlecode.com/svn/trunk/ \
+	 https://$(PROJECT).googlecode.com/svn/tags/$(PACKAGE)-$(VERSION) \
 	 -m "Tagging the $(VERSION) release of the $(PACKAGE) project."
-	googlecode_upload.py -s "pam_yubico $(VERSION)" \
+	googlecode_upload.py -s "$(PACKAGE) $(VERSION)" \
 	 -p yubico-pam -u simon75j $(PACKAGE)-$(VERSION).tar.gz 
+	googlecode_upload.py -s "OpenPGP signature for $(PACKAGE) $(VERSION)." \
+	 -p php-yubico -u simon75j $(PACKAGE)-$(VERSION).tar.gz.sig
