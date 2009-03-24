@@ -567,7 +567,7 @@ done:
     }
   if (debug)
     D (("done. [%s]", pam_strerror (pamh, retval)));
-  pam_set_data (pamh, "yubico_setcred_return", (void *) retval, NULL);
+  pam_set_data (pamh, "yubico_setcred_return", &retval, NULL);
 
   return retval;
 }
@@ -583,7 +583,7 @@ pam_sm_setcred (pam_handle_t * pamh, int flags, int argc, const char **argv)
   /* TODO: ? */
 
   retval = pam_get_data (pamh, "yubico_setcred_return",
-			 (const void **) &auth_retval);
+			 &auth_retval);
   if (retval != PAM_SUCCESS)
     return PAM_CRED_UNAVAIL;
 

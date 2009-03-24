@@ -2,6 +2,10 @@ pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
 * Version 1.13 (unreleased)
 
+** Don't pass integers via pam_set_data/pam_get_data.
+May solve problems on 64-bit platforms.  Based on patch from
+forum.yubico.com.
+
 * Version 1.12 (released 2009-03-24)
 
 ** Add support for "use_first_pass" and "try_first_pass".
