@@ -32,8 +32,6 @@
 #include <stdarg.h>
 #include <ctype.h>
 
-
-
 /* Libtool defines PIC for shared objects */
 #ifndef PIC
 #define PAM_STATIC
@@ -299,6 +297,85 @@ validate_user_token_ldap (const char *ldapserver,
   return retval;
 }
 
+struct cfg
+{
+  int client_id;
+  int debug;
+  int alwaysok;
+  int try_first_pass;
+  int use_first_pass;
+  char *auth_file;
+  char *url;
+  char *ldapserver;
+  char *ldapdn;
+  char *user_attr;
+  char *yubi_attr;
+};
+
+static void
+parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
+{
+  int i;
+
+  cfg->client_id = -1;
+  cfg->debug = 0;
+  cfg->alwaysok = 0;
+  cfg->try_first_pass = 0;
+  cfg->use_first_pass = 0;
+  cfg->auth_file = NULL;
+  cfg->url = NULL;
+  cfg->ldapserver = NULL;
+  cfg->ldapdn = NULL;
+  cfg->user_attr = NULL;
+  cfg->yubi_attr = NULL;
+
+  for (i = 0; i < argc; i++)
+    {
+      if (strncmp (argv[i], "id=", 3) == 0)
+	sscanf (argv[i], "id=%d", &cfg->client_id);
+      if (strcmp (argv[i], "debug") == 0)
+	cfg->debug = 1;
+      if (strcmp (argv[i], "alwaysok") == 0)
+	cfg->alwaysok = 1;
+      if (strcmp (argv[i], "try_first_pass") == 0)
+	cfg->try_first_pass = 1;
+      if (strcmp (argv[i], "use_first_pass") == 0)
+	cfg->use_first_pass = 1;
+      if (strncmp (argv[i], "authfile=", 9) == 0)
+	cfg->auth_file = (char *) argv[i] + 9;
+      if (strncmp (argv[i], "url=", 4) == 0)
+	cfg->url = (char *) argv[i] + 4;
+      if (strncmp (argv[i], "ldapserver=", 11) == 0)
+	cfg->ldapserver = (char *) argv[i] + 11;
+      if (strncmp (argv[i], "ldapdn=", 7) == 0)
+	cfg->ldapdn = (char *) argv[i] + 7;
+      if (strncmp (argv[i], "user_attr=", 10) == 0)
+	cfg->user_attr = (char *) argv[i] + 10;
+      if (strncmp (argv[i], "yubi_attr=", 10) == 0)
+	cfg->yubi_attr = (char *) argv[i] + 10;
+    }
+
+  if (cfg->debug)
+    {
+      D (("called."));
+      D (("flags %d argc %d", flags, argc));
+      for (i = 0; i < argc; i++)
+	D (("argv[%d]=%s", i, argv[i]));
+      D (("id=%d", cfg->client_id));
+      D (("debug=%d", cfg->debug));
+      D (("alwaysok=%d", cfg->alwaysok));
+      D (("try_first_pass=%d", cfg->try_first_pass));
+      D (("use_first_pass=%d", cfg->use_first_pass));
+      D (("authfile=%s", cfg->auth_file ? cfg->auth_file : "(null)"));
+      D (("ldapserver=%s", cfg->ldapserver ? cfg->ldapserver : "(null)"));
+      D (("ldapdn=%s", cfg->ldapdn ? cfg->ldapdn : "(null)"));
+      D (("user_attr=%s", cfg->user_attr ? cfg->user_attr : "(null)"));
+      D (("yubi_attr=%s", cfg->yubi_attr ? cfg->yubi_attr : "(null)"));
+    }
+}
+
+#define DBG(x) if (cfg.debug) { D(x); }
+
 PAM_EXTERN int
 pam_sm_authenticate (pam_handle_t * pamh,
 		     int flags, int argc, const char **argv)
@@ -306,12 +383,10 @@ pam_sm_authenticate (pam_handle_t * pamh,
   int retval, rc;
   const char *user = NULL;
   const char *password = NULL;
-  char *auth_file = NULL;
   const char *token_otp[TOKEN_LEN + 1] = { 0 };
   const char *token_id[TOKEN_ID_LEN + 1] = { 0 };
   char *token_otp_with_password = NULL;
   char *token_password = NULL;
-  char *url_template = NULL;
   int password_len = 0;
   int valid_token = 0;
   int i;
@@ -319,89 +394,34 @@ pam_sm_authenticate (pam_handle_t * pamh,
   struct pam_message *pmsg[1], msg[1];
   struct pam_response *resp;
   int nargs = 1;
-  int id = -1;
-  int debug = 0;
-  int alwaysok = 0;
-  int try_first_pass = 0;
-  int use_first_pass = 0;
   yubikey_client_t ykc;
-  char *ldapserver = NULL;
-  char *ldapdn = NULL;
-  char *user_attr = NULL;
-  char *yubi_attr = NULL;
+  struct cfg cfg;
 
-  for (i = 0; i < argc; i++)
-    {
-      if (strncmp (argv[i], "id=", 3) == 0)
-	sscanf (argv[i], "id=%d", &id);
-      if (strcmp (argv[i], "debug") == 0)
-	debug = 1;
-      if (strcmp (argv[i], "alwaysok") == 0)
-	alwaysok = 1;
-      if (strcmp (argv[i], "try_first_pass") == 0)
-	try_first_pass = 1;
-      if (strcmp (argv[i], "use_first_pass") == 0)
-	use_first_pass = 1;
-      if (strncmp (argv[i], "authfile=", 9) == 0)
-	auth_file = (char *) argv[i] + 9;
-      if (strncmp (argv[i], "url=", 4) == 0)
-	url_template = (char *) argv[i] + 4;
-      if (strncmp (argv[i], "ldapserver=", 11) == 0)
-	ldapserver = (char *) argv[i] + 11;
-      if (strncmp (argv[i], "ldapdn=", 7) == 0)
-	ldapdn = (char *) argv[i] + 7;
-      if (strncmp (argv[i], "user_attr=", 10) == 0)
-	user_attr = (char *) argv[i] + 10;
-      if (strncmp (argv[i], "yubi_attr=", 10) == 0)
-	yubi_attr = (char *) argv[i] + 10;
-    }
-
-  if (debug)
-    {
-      D (("called."));
-      D (("flags %d argc %d", flags, argc));
-      for (i = 0; i < argc; i++)
-	D (("argv[%d]=%s", i, argv[i]));
-      D (("id=%d", id));
-      D (("debug=%d", debug));
-      D (("alwaysok=%d", alwaysok));
-      D (("try_first_pass=%d", try_first_pass));
-      D (("use_first_pass=%d", use_first_pass));
-      D (("authfile=%s", auth_file ? auth_file : "(null)"));
-      D (("ldapserver=%s", ldapserver ? ldapserver : "(null)"));
-      D (("ldapdn=%s", ldapdn ? ldapdn : "(null)"));
-      D (("user_attr=%s", user_attr ? user_attr : "(null)"));
-      D (("yubi_attr=%s", yubi_attr ? yubi_attr : "(null)"));
-    }
+  parse_cfg (flags, argc, argv, &cfg);
 
   retval = pam_get_user (pamh, &user, NULL);
   if (retval != PAM_SUCCESS)
     {
-      if (debug)
-	D (("get user returned error: %s", pam_strerror (pamh, retval)));
+      DBG (("get user returned error: %s", pam_strerror (pamh, retval)));
       goto done;
     }
-  if (debug)
-    D (("get user returned: %s", user));
+  DBG (("get user returned: %s", user));
 
-  if (try_first_pass || use_first_pass)
+  if (cfg.try_first_pass || cfg.use_first_pass)
     {
       retval = pam_get_item (pamh, PAM_AUTHTOK, (const void **) &password);
       if (retval != PAM_SUCCESS)
 	{
-	  if (debug)
-	    D (("get password returned error: %s",
-		pam_strerror (pamh, retval)));
+	  DBG (("get password returned error: %s",
+	      pam_strerror (pamh, retval)));
 	  goto done;
 	}
-      if (debug)
-	D (("get password returned: %s", password));
+      DBG (("get password returned: %s", password));
     }
 
-  if (use_first_pass && password == NULL)
+  if (cfg.use_first_pass && password == NULL)
     {
-      if (debug)
-	D (("use_first_pass set and no password, giving up"));
+      DBG (("use_first_pass set and no password, giving up"));
       retval = PAM_AUTH_ERR;
       goto done;
     }
@@ -411,8 +431,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
       retval = pam_get_item (pamh, PAM_CONV, (const void **) &conv);
       if (retval != PAM_SUCCESS)
 	{
-	  if (debug)
-	    D (("get conv returned error: %s", pam_strerror (pamh, retval)));
+	  DBG (("get conv returned error: %s", pam_strerror (pamh, retval)));
 	  goto done;
 	}
 
@@ -446,21 +465,18 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
       if (retval != PAM_SUCCESS)
 	{
-	  if (debug)
-	    D (("conv returned error: %s", pam_strerror (pamh, retval)));
+	  DBG (("conv returned error: %s", pam_strerror (pamh, retval)));
 	  goto done;
 	}
 
-      if (debug)
-	D (("conv returned: %s", resp->resp));
+      DBG (("conv returned: %s", resp->resp));
 
       password = resp->resp;
 
       retval = pam_set_item (pamh, PAM_AUTHTOK, password);
       if (retval != PAM_SUCCESS)
 	{
-	  if (debug)
-	    D (("set_item returned error: %s", pam_strerror (pamh, retval)));
+	  DBG (("set_item returned error: %s", pam_strerror (pamh, retval)));
 	  goto done;
 	}
     }
@@ -468,16 +484,15 @@ pam_sm_authenticate (pam_handle_t * pamh,
   ykc = yubikey_client_init ();
   if (!ykc)
     {
-      if (debug)
-	D (("yubikey_client_init() failed"));
+      DBG (("yubikey_client_init() failed"));
       retval = PAM_AUTHINFO_UNAVAIL;
       goto done;
     }
 
-  yubikey_client_set_info (ykc, id, 0, NULL);
+  yubikey_client_set_info (ykc, cfg.client_id, 0, NULL);
 
-  if (url_template)
-    yubikey_client_set_url_template (ykc, url_template);
+  if (cfg.url)
+    yubikey_client_set_url_template (ykc, cfg.url);
 
   /* user will enter there system paasword followed by generated OTP */
   token_otp_with_password = (char *) password;
@@ -499,25 +514,22 @@ pam_sm_authenticate (pam_handle_t * pamh,
 	   token_otp_with_password + (password_len - TOKEN_LEN),
 	   TOKEN_ID_LEN);
 
-  if (debug)
-    {
-      D ((" Token is : %s and password is %s ", token_otp, password));
-      D ((" Token ID is: %s ", token_id));
-    }
+  DBG ((" Token is : %s and password is %s ", token_otp, password));
+  DBG ((" Token ID is: %s ", token_id));
 
   /* validate the user with supplied token id */
-  if (ldapserver != NULL)
+  if (cfg.ldapserver != NULL)
     {
-      valid_token = validate_user_token_ldap ((const char *) ldapserver,
-					      (const char *) ldapdn,
-					      (const char *) user_attr,
-					      (const char *) yubi_attr,
+      valid_token = validate_user_token_ldap ((const char *) cfg.ldapserver,
+					      (const char *) cfg.ldapdn,
+					      (const char *) cfg.user_attr,
+					      (const char *) cfg.yubi_attr,
 					      (const char *) user,
 					      (const char *) token_id);
     }
   else
     {
-      valid_token = validate_user_token (auth_file, (const char *) user,
+      valid_token = validate_user_token (cfg.auth_file, (const char *) user,
 					 (const char *) token_id);
     }
   if (password != NULL)
@@ -525,16 +537,14 @@ pam_sm_authenticate (pam_handle_t * pamh,
       retval = pam_set_item (pamh, PAM_AUTHTOK, password);
       if (retval != PAM_SUCCESS)
 	{
-	  if (debug)
-	    D (("set_item returned error: %s", pam_strerror (pamh, retval)));
+	  DBG (("set_item returned error: %s", pam_strerror (pamh, retval)));
 	  goto done;
 	}
     }
 
   if (valid_token == 0)
     {
-      if (debug)
-	D (("Invalid Token for user "));
+      DBG (("Invalid Token for user "));
       retval = PAM_SERVICE_ERR;
       goto done;
     }
@@ -544,9 +554,8 @@ pam_sm_authenticate (pam_handle_t * pamh,
   if (token_password != NULL)
     free (token_password);
 
-  if (debug)
-    D (("libyubikey-client return value (%d): %s", rc,
-	yubikey_client_strerror (rc)));
+  DBG (("libyubikey-client return value (%d): %s", rc,
+      yubikey_client_strerror (rc)));
 
   if (rc != YUBIKEY_CLIENT_OK)
     {
@@ -559,14 +568,12 @@ pam_sm_authenticate (pam_handle_t * pamh,
   retval = PAM_SUCCESS;
 
 done:
-  if (alwaysok && retval != PAM_SUCCESS)
+  if (cfg.alwaysok && retval != PAM_SUCCESS)
     {
-      if (debug)
-	D (("alwaysok needed (otherwise return with %d)", retval));
+      DBG (("alwaysok needed (otherwise return with %d)", retval));
       retval = PAM_SUCCESS;
     }
-  if (debug)
-    D (("done. [%s]", pam_strerror (pamh, retval)));
+  DBG (("done. [%s]", pam_strerror (pamh, retval)));
   pam_set_data (pamh, "yubico_setcred_return", &retval, NULL);
 
   return retval;
