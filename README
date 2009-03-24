@@ -56,6 +56,8 @@ installed.  Get the libyubikey-client library from:
 
 http://code.google.com/p/yubico-c-client/
 
+It in turn requires Curl, which you need to have installed.
+
 The build system uses Autoconf, to set up the build system run:
 
 {{{
@@ -69,8 +71,6 @@ Then build the code, run the self-test and install the binaries:
 {{{
   make check install
 }}}
-
-It in turn requires Curl, which you need to have installed.
 
 == Configuration ==
 
