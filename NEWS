@@ -1,5 +1,7 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
+* Version 1.12 (unreleased)
+
 * Version 1.11 (released 2009-02-11)
 
 ** Added support to store user:keyid mapping in LDAP.
