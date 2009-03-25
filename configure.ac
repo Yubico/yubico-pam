@@ -26,7 +26,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-AC_INIT([pam_yubico], [1.15], [simon@yubico.com])
+AC_INIT([pam_yubico], [2.0], [simon@yubico.com])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([foreign])
@@ -59,8 +59,11 @@ AC_ARG_WITH([ldap],
               [])])
 
 
-AC_LIB_HAVE_LINKFLAGS([yubikey-client],, [#include <libykclient.h>],
-                      [yubikey_client_init ();])
+AC_LIB_HAVE_LINKFLAGS([ykclient],, [#include <ykclient.h>],
+                      [ykclient_init (0);])
+if test "$ac_cv_libykclient" != yes; then
+   AC_MSG_ERROR([[Libykclient not found, get it from http://code.google.com/p/yubico-c-client/]])
+fi
 
 AC_SUBST(PAMDIR, "\$(exec_prefix)/lib/security")
 AC_ARG_WITH(pam-dir,

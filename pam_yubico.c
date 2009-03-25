@@ -63,7 +63,7 @@
 # endif
 #endif
 
-#include <libykclient.h>
+#include <ykclient.h>
 
 #ifdef HAVE_LIBLDAP
 #include <ldap.h>
@@ -397,7 +397,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
   struct pam_message *pmsg[1], msg[1];
   struct pam_response *resp;
   int nargs = 1;
-  yubikey_client_t ykc = NULL;
+  ykclient_t *ykc = NULL;
   struct cfg cfg;
 
   parse_cfg (flags, argc, argv, &cfg);
@@ -429,17 +429,17 @@ pam_sm_authenticate (pam_handle_t * pamh,
       goto done;
     }
 
-  ykc = yubikey_client_init ();
-  if (!ykc)
+  rc = ykclient_init (&ykc);
+  if (rc != YKCLIENT_OK)
     {
-      DBG (("yubikey_client_init() failed"));
+      DBG (("ykclient_init() failed (%d): %s", rc, ykclient_strerror (rc)));
       retval = PAM_AUTHINFO_UNAVAIL;
       goto done;
     }
 
-  yubikey_client_set_info (ykc, cfg.client_id, 0, NULL);
+  ykclient_set_client (ykc, cfg.client_id, 0, NULL);
   if (cfg.url)
-    yubikey_client_set_url_template (ykc, cfg.url);
+    ykclient_set_url_template (ykc, cfg.url);
 
   if (password == NULL)
     {
@@ -522,18 +522,18 @@ pam_sm_authenticate (pam_handle_t * pamh,
   else
     password = NULL;
 
-  rc = yubikey_client_request (ykc, otp);
+  rc = ykclient_request (ykc, otp);
 
-  DBG (("libyubikey-client return value (%d): %s", rc,
-	yubikey_client_strerror (rc)));
+  DBG (("ykclient return value (%d): %s", rc,
+	ykclient_strerror (rc)));
 
   switch (rc)
     {
-    case YUBIKEY_CLIENT_OK:
+    case YKCLIENT_OK:
       break;
 
-    case YUBIKEY_CLIENT_BAD_OTP:
-    case YUBIKEY_CLIENT_REPLAYED_OTP:
+    case YKCLIENT_BAD_OTP:
+    case YKCLIENT_REPLAYED_OTP:
       retval = PAM_AUTH_ERR;
       goto done;
 
@@ -561,7 +561,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
 done:
   if (ykc)
-    yubikey_client_done (&ykc);
+    ykclient_done (&ykc);
   if (cfg.alwaysok && retval != PAM_SUCCESS)
     {
       DBG (("alwaysok needed (otherwise return with %d)", retval));

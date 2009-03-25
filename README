@@ -50,9 +50,9 @@ Generate the build system using:
 
 == Building ==
 
-You will need to have libyubikey-client (libykclient.h,
-libyubikey-client.so) and libpam-dev (security/pam_appl.h, libpam.so)
-installed.  Get the libyubikey-client library from:
+You will need to have libykclient (ykclient.h, libykclient.so) and
+libpam-dev (security/pam_appl.h, libpam.so) installed.  Get the
+ykclient library from:
 
 http://code.google.com/p/yubico-c-client/
 

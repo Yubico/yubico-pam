@@ -1,6 +1,9 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
-* Version 1.15 (unreleased)
+* Version 2.0 (unreleased)
+
+** Requires libykclient v2.0 or later.
+See <http://code.google.com/p/yubico-c-client/>.
 
 * Version 1.14 (released 2009-03-24)
 
