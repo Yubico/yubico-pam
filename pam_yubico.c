@@ -584,7 +584,7 @@ pam_sm_setcred (pam_handle_t * pamh, int flags, int argc, const char **argv)
   /* TODO: ? */
 
   retval = pam_get_data (pamh, "yubico_setcred_return",
-			 &auth_retval);
+			 (void*) (intptr_t) &auth_retval);
   D (("retval: %d", auth_retval));
   if (retval != PAM_SUCCESS)
     return PAM_CRED_UNAVAIL;
