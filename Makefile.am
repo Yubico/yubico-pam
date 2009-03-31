@@ -66,3 +66,6 @@ release:
 	 -p $(PROJECT) -u simon75j $(PACKAGE)-$(VERSION).tar.gz.sig
 	googlecode_upload.py -s "$(PACKAGE) $(VERSION)" \
 	 -p $(PROJECT) -u simon75j $(PACKAGE)-$(VERSION).tar.gz 
+	cp README ../wiki-$(PROJECT)/ReadMe.wiki && \
+		cd ../wiki-$(PROJECT) && \
+		svn commit -m Sync. ReadMe.wiki
