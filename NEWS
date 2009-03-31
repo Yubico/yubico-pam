@@ -1,5 +1,7 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
+* Version 2.2 (unreleased)
+
 * Version 2.1 (released 2009-03-31)
 
 ** Fix documentation.
