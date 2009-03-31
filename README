@@ -39,8 +39,7 @@ This will create a directory 'yubico-pam'.  Enter the directory:
   cd yubico-pam
 }}}
 
-Autoconf, automake and libtool must be installed.  For the
-documentation, asciidoc and docbook are also required.
+Autoconf, automake and libtool must be installed.
 
 Generate the build system using:
 
