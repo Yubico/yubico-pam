@@ -198,6 +198,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
   int nargs = 1;
   int id = -1;
   int debug = 0;
+  int userauth = 0;
   int alwaysok = 0;
   yubikey_client_t ykc;
 
@@ -213,6 +214,8 @@ pam_sm_authenticate (pam_handle_t * pamh,
 	auth_file = (char *) argv[i] + 9;
       if (strncmp (argv[i], "url=", 4) == 0)
 	url_template = (char *) argv[i] + 4;
+      if (strncmp (argv[i], "userauth", 9) == 0)
+	userauth = 1;
     }
 
   if (debug)
@@ -225,6 +228,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
       D (("debug=%d", debug));
       D (("alwaysok=%d", alwaysok));
       D (("authfile=%s", auth_file));
+      D (("userauth=%d", userauth));
     }
 
   retval = pam_get_user (pamh, &user, NULL);
@@ -329,9 +333,20 @@ pam_sm_authenticate (pam_handle_t * pamh,
     }
 
   /* validate the user with supplied token id */
-  valid_token =
-    validate_user_token (auth_file, (const char *) user,
-			 (const char *) token_id);
+  if (!userauth)
+    {
+      valid_token =
+        validate_user_token (auth_file, (const char *) user,
+  			 (const char *) token_id);
+
+      if (valid_token == 0)
+        {
+          if (debug)
+    	    D (("Invalid Token for user "));
+          retval = PAM_SERVICE_ERR;
+          goto done;
+        }
+    }
 
   if (password != NULL)
     {
@@ -344,15 +359,14 @@ pam_sm_authenticate (pam_handle_t * pamh,
 	}
     }
 
-  if (valid_token == 0)
-    {
-      if (debug)
-	D (("Invalid Token for user "));
-      retval = PAM_SERVICE_ERR;
-      goto done;
-    }
-
-  rc = yubikey_client_request (ykc, (const char *) token_otp);
+  if (!userauth) {
+      rc = yubikey_client_request (ykc, (const char *) token_otp, NULL, 0);
+  }
+  else {
+      rc = yubikey_client_request (ykc, (const char *) token_otp, (char *)user, 0);
+      if (rc == YUBIKEY_CLIENT_NO_USERKEY_MAP) 
+        rc = yubikey_client_request (ykc, (const char *) token_otp, (char *)user, 1);
+  }
 
   if (token_password != NULL)
     free (token_password);
