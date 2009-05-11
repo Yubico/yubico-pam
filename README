@@ -91,8 +91,12 @@ For more information, see the project Wiki page.
 Supported PAM module parameters are:
 
 {{{
-  "id":         to indicate your client identity,
-  "debug":      to enable debug output to stdout,
+  "id":         to indicate your client identity.
+
+  "key":        to indicate your client key in base64 format.
+
+  "debug":      to enable debug output to stdout.
+
   "alwaysok":   to enable that all authentication attempts should succeed
                 (aka presentation mode).
 
@@ -110,10 +114,15 @@ Supported PAM module parameters are:
   "url":        specify the URL template to use, this is set by calling
                 yubikey_client_set_url_template, which uses by default:
 	        http://api.yubico.com/wsapi/verify?id=%d&otp=%s
-  "ldapserver": specifiy the ldap server host (default ldap port is used)
-  "ldapdn":     specify the dn where the users are stored (eg: ou=users,dc=domain,dc=com)
-  "user_attr":  specify the attribute used to store usernames (eg:cn)
-  "yubi_attr":  specify the attribute used to store the yubikey id
+
+  "ldapserver": specifiy the ldap server host (default ldap port is used).
+
+  "ldapdn":     specify the dn where the users are stored
+                (eg: ou=users,dc=domain,dc=com).
+
+  "user_attr":  specify the attribute used to store usernames (eg:cn).
+
+  "yubi_attr":  specify the attribute used to store the yubikey id.
 }}}
 
 If you are using "debug" you may find it useful to create a

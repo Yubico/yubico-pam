@@ -40,7 +40,6 @@ AC_CHECK_HEADERS([security/pam_appl.h], [],
 AC_CHECK_HEADERS([security/pam_modules.h security/_pam_macros.h], [], [],
   [#include <security/pam_appl.h>])
 
-
 AC_ARG_WITH([ldap],
             [AS_HELP_STRING([--without-ldap],
               [disable support for ldap])],
@@ -60,9 +59,9 @@ AC_ARG_WITH([ldap],
 
 
 AC_LIB_HAVE_LINKFLAGS([ykclient],, [#include <ykclient.h>],
-                      [ykclient_init (0);])
+                      [ykclient_set_client_b64 (0, 0, 0);])
 if test "$ac_cv_libykclient" != yes; then
-   AC_MSG_ERROR([[Libykclient not found, get it from http://code.google.com/p/yubico-c-client/]])
+   AC_MSG_ERROR([[Libykclient v2.3+ required, see http://code.google.com/p/yubico-c-client/]])
 fi
 
 AC_SUBST(PAMDIR, "\$(exec_prefix)/lib/security")

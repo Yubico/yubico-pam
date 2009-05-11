@@ -70,7 +70,6 @@
 #define PORT_NUMBER  LDAP_PORT
 #endif
 
-
 #ifndef PAM_EXTERN
 #ifdef PAM_STATIC
 #define PAM_EXTERN static
@@ -78,8 +77,6 @@
 #define PAM_EXTERN extern
 #endif
 #endif
-
-
 
 #include <sys/types.h>
 #include <pwd.h>
@@ -306,6 +303,7 @@ authorize_user_token_ldap (const char *ldapserver,
 struct cfg
 {
   int client_id;
+  char *client_key;
   int debug;
   int alwaysok;
   int try_first_pass;
@@ -339,6 +337,8 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
     {
       if (strncmp (argv[i], "id=", 3) == 0)
 	sscanf (argv[i], "id=%d", &cfg->client_id);
+      if (strncmp (argv[i], "key=", 4) == 0)
+	cfg->client_key = (char *) argv[i] + 4;
       if (strcmp (argv[i], "debug") == 0)
 	cfg->debug = 1;
       if (strcmp (argv[i], "alwaysok") == 0)
@@ -368,6 +368,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
       for (i = 0; i < argc; i++)
 	D (("argv[%d]=%s", i, argv[i]));
       D (("id=%d", cfg->client_id));
+      D (("key=%s", cfg->client_key ? cfg->client_key : "(null)"));
       D (("debug=%d", cfg->debug));
       D (("alwaysok=%d", cfg->alwaysok));
       D (("try_first_pass=%d", cfg->try_first_pass));
@@ -437,7 +438,15 @@ pam_sm_authenticate (pam_handle_t * pamh,
       goto done;
     }
 
-  ykclient_set_client (ykc, cfg.client_id, 0, NULL);
+  rc = ykclient_set_client_b64 (ykc, cfg.client_id, cfg.client_key);
+  if (rc != YKCLIENT_OK)
+    {
+      DBG (("ykclient_set_client_b64() failed (%d): %s",
+	    rc, ykclient_strerror (rc)));
+      retval = PAM_AUTHINFO_UNAVAIL;
+      goto done;
+    }
+
   if (cfg.url)
     ykclient_set_url_template (ykc, cfg.url);
 
