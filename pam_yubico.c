@@ -578,14 +578,17 @@ pam_sm_setcred (pam_handle_t * pamh, int flags, int argc, const char **argv)
 {
   int retval;
   int auth_retval;
+  struct cfg cfg;
 
-  D (("called."));
+  parse_cfg (flags, argc, argv, &cfg);
+
+  DBG (("called."));
 
   /* TODO: ? */
 
   retval = pam_get_data (pamh, "yubico_setcred_return",
 			 (void*) (intptr_t) &auth_retval);
-  D (("retval: %d", auth_retval));
+  DBG (("retval: %d", auth_retval));
   if (retval != PAM_SUCCESS)
     return PAM_CRED_UNAVAIL;
 
@@ -605,7 +608,7 @@ pam_sm_setcred (pam_handle_t * pamh, int flags, int argc, const char **argv)
       break;
     }
 
-  D (("done. [%s]", pam_strerror (pamh, retval)));
+  DBG (("done. [%s]", pam_strerror (pamh, retval)));
 
   return retval;
 }
