@@ -1,5 +1,7 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
+* Version 2.3 (unreleased)
+
 * Version 2.2 (released 2009-05-11)
 
 ** Added new PAM configuration variable "key" for base64 client key.
