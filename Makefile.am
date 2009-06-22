@@ -52,20 +52,22 @@ TESTS = $(check_PROGRAMS)
 ChangeLog:
 	svn2cl
 
-PROJECT=yubico-pam
+PROJECT = yubico-pam
+USER ?= simon75j
+KEYID ?= B9156397
 
 release:
 	rm -f ChangeLog
 	make ChangeLog distcheck
-	gpg -b $(PACKAGE)-$(VERSION).tar.gz
+	gpg --detach-sign --default-key $(KEYID) $(PACKAGE)-$(VERSION).tar.gz
 	gpg --verify $(PACKAGE)-$(VERSION).tar.gz.sig
 	svn copy https://$(PROJECT).googlecode.com/svn/trunk/ \
 	 https://$(PROJECT).googlecode.com/svn/tags/$(PACKAGE)-$(VERSION) \
 	 -m "Tagging the $(VERSION) release of the $(PACKAGE) project."
 	googlecode_upload.py -s "OpenPGP signature for $(PACKAGE) $(VERSION)." \
-	 -p $(PROJECT) -u simon75j $(PACKAGE)-$(VERSION).tar.gz.sig
+	 -p $(PROJECT) -u $(USER) $(PACKAGE)-$(VERSION).tar.gz.sig
 	googlecode_upload.py -s "$(PACKAGE) $(VERSION)" \
-	 -p $(PROJECT) -u simon75j $(PACKAGE)-$(VERSION).tar.gz 
+	 -p $(PROJECT) -u $(USER) $(PACKAGE)-$(VERSION).tar.gz 
 	cp README ../wiki-$(PROJECT)/ReadMe.wiki && \
 		cd ../wiki-$(PROJECT) && \
 		svn commit -m Sync. ReadMe.wiki
