@@ -202,28 +202,34 @@ authorize_user_token (const char *authfile,
  *
  */
 static int
-authorize_user_token_ldap (const char *ldapserver,
+authorize_user_token_ldap (const char *ldap_uri,
 			   const char *ldapdn, const char *user_attr,
 			   const char *yubi_attr, const char *user,
 			   const char *token_id)
 {
 
+  D(("called"));
   int retval = 0;
 #ifdef HAVE_LIBLDAP
   LDAP *ld;
   LDAPMessage *result, *e;
   BerElement *ber;
   char *a;
-  char **vals;
+  
+  struct berval **vals;
   int i, rc;
-  /* FIXME: dont' use hard coded buffers here. */
-  char find[256] = "";
-  char sr[128] = "(";
+
+  /* Allocation of memory for search strings depending on input size */  
+  char *find = malloc((strlen(user_attr)+strlen(ldapdn)+strlen(user)+3)*sizeof(char));
+  char *sr = malloc((strlen(yubi_attr)+4)*sizeof(char)); 
+  
   char sep[2] = ",";
   char eq[2] = "=";
   char sren[4] = "=*)";
 
-
+  sr[0] = '(';
+  sr[1] = '\0';
+  find[0]='\0';
 
   strcat (find, user_attr);
   strcat (find, eq);
@@ -234,10 +240,14 @@ authorize_user_token_ldap (const char *ldapserver,
   strcat (sr, yubi_attr);
   strcat (sr, sren);
 
+  D(("find: %s",find));
+  D(("sr: %s",sr));
+
   /* Get a handle to an LDAP connection. */
-  if ((ld = ldap_init (ldapserver, PORT_NUMBER)) == NULL)
+  rc = ldap_initialize (&ld,ldap_uri);
+  if (rc != LDAP_SUCCESS)
     {
-      D (("ldap_init"));
+      D (("ldap_init: %s", ldap_err2string (rc)));
       return (0);
     }
 
@@ -270,13 +280,13 @@ authorize_user_token_ldap (const char *ldapserver,
       for (a = ldap_first_attribute (ld, e, &ber);
 	   a != NULL; a = ldap_next_attribute (ld, e, ber))
 	{
-	  if ((vals = ldap_get_values (ld, e, a)) != NULL)
+	  if ((vals = ldap_get_values_len (ld, e, a)) != NULL)
 	    {
 	      for (i = 0; vals[i] != NULL; i++)
 		{
-		  if (!strncmp (token_id, vals[i], strlen (token_id)))
+		  if (!strncmp (token_id, vals[i]->bv_val, strlen (token_id)))
 		    {
-		      D (("Token Found :: %s", vals[i]));
+		      D (("Token Found :: %s", vals[i]->bv_val));
 		      retval = 1;
 		    }
 		}
@@ -293,6 +303,11 @@ authorize_user_token_ldap (const char *ldapserver,
 
   ldap_msgfree (result);
   ldap_unbind (ld);
+
+  /* free memory allocated for search strings */
+  free(find);
+  free(sr);
+
 #else
   D (("Trying to use LDAP, but this function is not compiled in pam_yubico!!"));
   D (("Install libldap-dev and then recompile pam_yubico."));
@@ -310,7 +325,7 @@ struct cfg
   int use_first_pass;
   char *auth_file;
   char *url;
-  char *ldapserver;
+  char *ldap_uri;
   char *ldapdn;
   char *user_attr;
   char *yubi_attr;
@@ -328,7 +343,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
   cfg->use_first_pass = 0;
   cfg->auth_file = NULL;
   cfg->url = NULL;
-  cfg->ldapserver = NULL;
+  cfg->ldap_uri = NULL;
   cfg->ldapdn = NULL;
   cfg->user_attr = NULL;
   cfg->yubi_attr = NULL;
@@ -351,8 +366,8 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->auth_file = (char *) argv[i] + 9;
       if (strncmp (argv[i], "url=", 4) == 0)
 	cfg->url = (char *) argv[i] + 4;
-      if (strncmp (argv[i], "ldapserver=", 11) == 0)
-	cfg->ldapserver = (char *) argv[i] + 11;
+      if (strncmp (argv[i], "ldap_uri=", 9) == 0)
+	cfg->ldap_uri = (char *) argv[i] + 9;
       if (strncmp (argv[i], "ldapdn=", 7) == 0)
 	cfg->ldapdn = (char *) argv[i] + 7;
       if (strncmp (argv[i], "user_attr=", 10) == 0)
@@ -374,7 +389,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
       D (("try_first_pass=%d", cfg->try_first_pass));
       D (("use_first_pass=%d", cfg->use_first_pass));
       D (("authfile=%s", cfg->auth_file ? cfg->auth_file : "(null)"));
-      D (("ldapserver=%s", cfg->ldapserver ? cfg->ldapserver : "(null)"));
+      D (("ldap_uri=%s", cfg->ldap_uri ? cfg->ldap_uri : "(null)"));
       D (("ldapdn=%s", cfg->ldapdn ? cfg->ldapdn : "(null)"));
       D (("user_attr=%s", cfg->user_attr ? cfg->user_attr : "(null)"));
       D (("yubi_attr=%s", cfg->yubi_attr ? cfg->yubi_attr : "(null)"));
@@ -552,8 +567,8 @@ pam_sm_authenticate (pam_handle_t * pamh,
     }
 
   /* authorize the user with supplied token id */
-  if (cfg.ldapserver != NULL)
-    valid_token = authorize_user_token_ldap (cfg.ldapserver, cfg.ldapdn,
+  if (cfg.ldap_uri != NULL)
+    valid_token = authorize_user_token_ldap (cfg.ldap_uri, cfg.ldapdn,
 					     cfg.user_attr, cfg.yubi_attr,
 					     user, otp_id);
   else

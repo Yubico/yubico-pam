@@ -115,7 +115,7 @@ Supported PAM module parameters are:
                 yubikey_client_set_url_template, which uses by default:
 	        http://api.yubico.com/wsapi/verify?id=%d&otp=%s
 
-  "ldapserver": specifiy the ldap server host (default ldap port is used).
+  "ldap_uri": specifiy the ldap server uri (e.g. ldap://localhost).
 
   "ldapdn":     specify the dn where the users are stored
                 (eg: ou=users,dc=domain,dc=com).
