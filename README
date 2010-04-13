@@ -91,6 +91,9 @@ For more information, see the project Wiki page.
 Supported PAM module parameters are:
 
 {{{
+  "authfile":   to indicate the location of the file that holds the
+               mappings of yubikey public IDs to usernames.
+
   "id":         to indicate your client identity.
 
   "key":        to indicate your client key in base64 format.
