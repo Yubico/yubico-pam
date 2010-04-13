@@ -1,5 +1,5 @@
 /* Written by Simon Josefsson <simon@yubico.com>.
- * Copyright (c) 2006, 2007, 2008, 2009 Yubico AB
+ * Copyright (c) 2006, 2007, 2008, 2009, 2010 Yubico AB
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -195,7 +195,7 @@ authorize_user_token (const char *authfile,
  * remote host.
  *
  * You need the following parameters in you pam config:
- * ldapsever=
+ * ldap_uri=
  * ldapdn=
  * user_attr=
  * yubi_attr=
@@ -215,14 +215,14 @@ authorize_user_token_ldap (const char *ldap_uri,
   LDAPMessage *result, *e;
   BerElement *ber;
   char *a;
-  
+
   struct berval **vals;
   int i, rc;
 
-  /* Allocation of memory for search strings depending on input size */  
+  /* Allocation of memory for search strings depending on input size */
   char *find = malloc((strlen(user_attr)+strlen(ldapdn)+strlen(user)+3)*sizeof(char));
-  char *sr = malloc((strlen(yubi_attr)+4)*sizeof(char)); 
-  
+  char *sr = malloc((strlen(yubi_attr)+4)*sizeof(char));
+
   char sep[2] = ",";
   char eq[2] = "=";
   char sren[4] = "=*)";
