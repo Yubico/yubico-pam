@@ -92,7 +92,7 @@ Supported PAM module parameters are:
 
 {{{
   "authfile":   to indicate the location of the file that holds the
-               mappings of yubikey public IDs to usernames.
+                mappings of yubikey public IDs to user names.
 
   "id":         to indicate your client identity.
 
@@ -100,7 +100,7 @@ Supported PAM module parameters are:
 
   "debug":      to enable debug output to stdout.
 
-  "alwaysok":   to enable that all authentication attempts should succeed
+  "alwaysok":   to enable all authentication attempts to succeed
                 (aka presentation mode).
 
   "try_first_pass":
@@ -115,17 +115,17 @@ Supported PAM module parameters are:
            will be denied access.
 
   "url":        specify the URL template to use, this is set by calling
-                yubikey_client_set_url_template, which uses by default:
-	        http://api.yubico.com/wsapi/verify?id=%d&otp=%s
+                yubikey_client_set_url_template, which defaults to:
+                http://api.yubico.com/wsapi/verify?id=%d&otp=%s
 
   "ldap_uri": specifiy the ldap server uri (e.g. ldap://localhost).
 
   "ldapdn":     specify the dn where the users are stored
                 (eg: ou=users,dc=domain,dc=com).
 
-  "user_attr":  specify the attribute used to store usernames (eg:cn).
+  "user_attr":  specify the LDAP attribute used to store user names (eg:cn).
 
-  "yubi_attr":  specify the attribute used to store the yubikey id.
+  "yubi_attr":  specify the LDAP attribute used to store the yubikey id.
 }}}
 
 If you are using "debug" you may find it useful to create a
@@ -135,6 +135,35 @@ world-writable log file:
   touch /var/run/pam-debug.log 
   chmod go+w /var/run/pam-debug.log 
 }}}
+
+== Authorization Mapping Files ==
+A mapping must be made between the yubikey public ID and the user it ID is
+attached to. There are two ways to do this, either centrally in one file or
+individually, where users can create the mapping in their home directories.
+
+1) Centrally
+
+Create a /etc/yubikey_mappings, the file must contain a user name and the
+yubikey Public ID separated by colons (same format at the passwd file) for
+each user you want to allow onto the system using a yubikey.
+
+The mappings should look like this, one per line:
+<user name>:<yubikey token ID>:<yubikey token ID>: ….
+<user name>:<yubikey token ID>:<yubikey token ID>:…..
+
+Now add authfile=/etc/yubikey_mappings to your PAM configuration line, so it
+looks like:
+
+auth sufficient pam_yubico.so id=16 authfile=/etc/yubikey_mappings
+
+2) Individual, by user
+Each user creates a ~/.yubico/authorized_yubikeys file inside of their home
+directory and places the mapping in that file, the file must have only one
+line:
+
+<user name>:<yubikey token ID>:<yubikey token ID>
+
+This is much the same concept as the SSH authorized_keys file.
 
 == Examples ==
 
