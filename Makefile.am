@@ -1,5 +1,5 @@
 # Written by Simon Josefsson <simon@yubico.com>.
-# Copyright (c) 2006, 2007, 2008, 2009 Yubico AB
+# Copyright (c) 2006, 2007, 2008, 2009, 2010 Yubico AB
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -53,7 +53,7 @@ ChangeLog:
 	svn2cl
 
 PROJECT = yubico-pam
-USER ?= simon75j
+GOOGLEACCOUNT ?= $(PACKAGE_BUGREPORT)
 KEYID ?= B9156397
 
 release:
@@ -65,9 +65,9 @@ release:
 	 https://$(PROJECT).googlecode.com/svn/tags/$(PACKAGE)-$(VERSION) \
 	 -m "Tagging the $(VERSION) release of the $(PACKAGE) project."
 	googlecode_upload.py -s "OpenPGP signature for $(PACKAGE) $(VERSION)." \
-	 -p $(PROJECT) -u $(USER) $(PACKAGE)-$(VERSION).tar.gz.sig
+	 -p $(PROJECT) -u $(GOOGLEACCOUNT) $(PACKAGE)-$(VERSION).tar.gz.sig
 	googlecode_upload.py -s "$(PACKAGE) $(VERSION)" \
-	 -p $(PROJECT) -u $(USER) $(PACKAGE)-$(VERSION).tar.gz 
+	 -p $(PROJECT) -u $(GOOGLEACCOUNT) $(PACKAGE)-$(VERSION).tar.gz 
 	cp README ../wiki-$(PROJECT)/ReadMe.wiki && \
 		cd ../wiki-$(PROJECT) && \
 		svn commit -m Sync. ReadMe.wiki
