@@ -1,5 +1,5 @@
 # Written by Simon Josefsson <simon@yubico.com>.
-# Copyright (c) 2006, 2007, 2008, 2009 Yubico AB
+# Copyright (c) 2006, 2007, 2008, 2009, 2010 Yubico AB
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-AC_INIT([pam_yubico], [2.3], [simon@yubico.com])
+AC_INIT([pam_yubico], [2.4], [simon@yubico.com])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([foreign])
