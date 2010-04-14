@@ -140,6 +140,10 @@ world-writable log file:
 A mapping must be made between the yubikey public ID and the user it ID is
 attached to. There are two ways to do this, either centrally in one file or
 individually, where users can create the mapping in their home directories.
+If the central authorization mapping file is being used, user home directory
+mappings will not be used and the opposite applies if user home directory
+mappings are being used, the central authorization mappings file will not
+be used.
 
 1) Centrally
 
