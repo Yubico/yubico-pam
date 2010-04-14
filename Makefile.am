@@ -37,7 +37,7 @@ pam_yubico_la_SOURCES = pam_yubico.c
 pam_yubico_la_LIBADD = @LTLIBYKCLIENT@ @LIBLDAP@
 pam_yubico_la_LDFLAGS = -module -avoid-version
 
-DEFS = -DDEBUG_PAM @DEFS@
+DEFS = -DDEBUG_PAM -DPAM_DEBUG @DEFS@
 
 # Self tests.
 

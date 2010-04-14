@@ -6,6 +6,10 @@ pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 Contributed by qistoph reported in Issue #22:
 <http://code.google.com/p/yubico-pam/issues/detail?id=22>.
 
+** Build with -DPAM_DEBUG so that debug file writing works.
+Reported by qistoph in Issue #20:
+<http://code.google.com/p/yubico-pam/issues/detail?id=20>.
+
 * Version 2.3 (released 2010-04-14)
 
 ** New keyword "ldap_uri" added.
