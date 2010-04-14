@@ -7,6 +7,9 @@ This keyword is preferred over the old "ldapserver" keyword, and
 allows you to specify a complete LDAP URI instead of only the hostname
 of your LDAP server.  Contributed by Zubrick.
 
+** Improved README.
+Contributed by Erinn Looney-Triggs <erinn.looneytriggs@gmail.com>.
+
 * Version 2.2 (released 2009-05-11)
 
 ** Added new PAM configuration variable "key" for base64 client key.
