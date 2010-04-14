@@ -1,6 +1,6 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
-* Version 2.3 (unreleased)
+* Version 2.3 (released 2010-04-14)
 
 ** New keyword "ldap_uri" added.
 This keyword is preferred over the old "ldapserver" keyword, and
