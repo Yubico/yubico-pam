@@ -333,6 +333,7 @@ struct cfg
   char *client_key;
   int debug;
   int alwaysok;
+  int verbose_otp;
   int try_first_pass;
   int use_first_pass;
   char *auth_file;
@@ -350,8 +351,10 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
   int i;
 
   cfg->client_id = -1;
+  cfg->client_key = NULL;
   cfg->debug = 0;
   cfg->alwaysok = 0;
+  cfg->verbose_otp = 0;
   cfg->try_first_pass = 0;
   cfg->use_first_pass = 0;
   cfg->auth_file = NULL;
@@ -372,6 +375,8 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->debug = 1;
       if (strcmp (argv[i], "alwaysok") == 0)
 	cfg->alwaysok = 1;
+      if (strcmp (argv[i], "verbose_otp") == 0)
+	cfg->verbose_otp = 1;
       if (strcmp (argv[i], "try_first_pass") == 0)
 	cfg->try_first_pass = 1;
       if (strcmp (argv[i], "use_first_pass") == 0)
@@ -402,6 +407,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
       D (("key=%s", cfg->client_key ? cfg->client_key : "(null)"));
       D (("debug=%d", cfg->debug));
       D (("alwaysok=%d", cfg->alwaysok));
+      D (("verbose_otp=%d", cfg->verbose_otp));
       D (("try_first_pass=%d", cfg->try_first_pass));
       D (("use_first_pass=%d", cfg->use_first_pass));
       D (("authfile=%s", cfg->auth_file ? cfg->auth_file : "(null)"));
@@ -511,7 +517,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
 	    goto done;
 	  }
       }
-      msg[0].msg_style = PAM_PROMPT_ECHO_OFF;
+      msg[0].msg_style = cfg.verbose_otp ? PAM_PROMPT_ECHO_ON : PAM_PROMPT_ECHO_OFF;
       resp = NULL;
 
       retval = conv->conv (nargs, (const struct pam_message **) pmsg,
