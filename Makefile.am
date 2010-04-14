@@ -64,6 +64,7 @@ release:
 	svn copy https://$(PROJECT).googlecode.com/svn/trunk/ \
 	 https://$(PROJECT).googlecode.com/svn/tags/$(PACKAGE)-$(VERSION) \
 	 -m "Tagging the $(VERSION) release of the $(PACKAGE) project."
+	cp -v $(PACKAGE)-$(VERSION).tar.gz* ../release/$(PACKAGE)/
 	googlecode_upload.py -s "OpenPGP signature for $(PACKAGE) $(VERSION)." \
 	 -p $(PROJECT) -u $(GOOGLEACCOUNT) $(PACKAGE)-$(VERSION).tar.gz.sig
 	googlecode_upload.py -s "$(PACKAGE) $(VERSION)" \
