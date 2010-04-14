@@ -120,6 +120,10 @@ Supported PAM module parameters are:
 
   "ldap_uri": specifiy the ldap server uri (e.g. ldap://localhost).
 
+
+  "ldapserver": specifiy the ldap server host (default ldap port is used).
+                Deprecated.  Use "ldap_uri" instead.
+
   "ldapdn":     specify the dn where the users are stored
                 (eg: ou=users,dc=domain,dc=com).
 
