@@ -2,6 +2,11 @@ pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
 * Version 2.3 (unreleased)
 
+** New keyword "ldap_uri" added.
+This keyword is preferred over the old "ldapserver" keyword, and
+allows you to specify a complete LDAP URI instead of only the hostname
+of your LDAP server.  Contributed by Zubrick.
+
 * Version 2.2 (released 2009-05-11)
 
 ** Added new PAM configuration variable "key" for base64 client key.

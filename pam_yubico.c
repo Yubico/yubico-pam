@@ -195,7 +195,7 @@ authorize_user_token (const char *authfile,
  * remote host.
  *
  * You need the following parameters in you pam config:
- * ldap_uri=
+ * ldapserver=  OR ldap_uri=
  * ldapdn=
  * user_attr=
  * yubi_attr=
@@ -203,8 +203,11 @@ authorize_user_token (const char *authfile,
  */
 static int
 authorize_user_token_ldap (const char *ldap_uri,
-			   const char *ldapdn, const char *user_attr,
-			   const char *yubi_attr, const char *user,
+			   const char *ldapserver,
+			   const char *ldapdn,
+			   const char *user_attr,
+			   const char *yubi_attr,
+			   const char *user,
 			   const char *token_id)
 {
 
@@ -244,11 +247,20 @@ authorize_user_token_ldap (const char *ldap_uri,
   D(("sr: %s",sr));
 
   /* Get a handle to an LDAP connection. */
-  rc = ldap_initialize (&ld,ldap_uri);
-  if (rc != LDAP_SUCCESS)
+  if (ldap_uri)
     {
-      D (("ldap_init: %s", ldap_err2string (rc)));
-      return (0);
+      rc = ldap_initialize (&ld,ldap_uri);
+      if (rc != LDAP_SUCCESS)
+	{
+	  D (("ldap_init: %s", ldap_err2string (rc)));
+	  return 0;
+	}
+    }
+  else
+    {
+      if ((ld = ldap_init (ldapserver, PORT_NUMBER)) == NULL)
+	D (("ldap_init"));
+      return 0;
     }
 
   /* Bind anonymously to the LDAP server. */
@@ -325,6 +337,7 @@ struct cfg
   int use_first_pass;
   char *auth_file;
   char *url;
+  char *ldapserver;
   char *ldap_uri;
   char *ldapdn;
   char *user_attr;
@@ -343,6 +356,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
   cfg->use_first_pass = 0;
   cfg->auth_file = NULL;
   cfg->url = NULL;
+  cfg->ldapserver = NULL;
   cfg->ldap_uri = NULL;
   cfg->ldapdn = NULL;
   cfg->user_attr = NULL;
@@ -366,6 +380,8 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->auth_file = (char *) argv[i] + 9;
       if (strncmp (argv[i], "url=", 4) == 0)
 	cfg->url = (char *) argv[i] + 4;
+      if (strncmp (argv[i], "ldapserver=", 11) == 0)
+	cfg->ldapserver = (char *) argv[i] + 11;
       if (strncmp (argv[i], "ldap_uri=", 9) == 0)
 	cfg->ldap_uri = (char *) argv[i] + 9;
       if (strncmp (argv[i], "ldapdn=", 7) == 0)
@@ -389,6 +405,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
       D (("try_first_pass=%d", cfg->try_first_pass));
       D (("use_first_pass=%d", cfg->use_first_pass));
       D (("authfile=%s", cfg->auth_file ? cfg->auth_file : "(null)"));
+      D (("ldapserver=%s", cfg->ldapserver ? cfg->ldapserver : "(null)"));
       D (("ldap_uri=%s", cfg->ldap_uri ? cfg->ldap_uri : "(null)"));
       D (("ldapdn=%s", cfg->ldapdn ? cfg->ldapdn : "(null)"));
       D (("user_attr=%s", cfg->user_attr ? cfg->user_attr : "(null)"));
@@ -567,10 +584,10 @@ pam_sm_authenticate (pam_handle_t * pamh,
     }
 
   /* authorize the user with supplied token id */
-  if (cfg.ldap_uri != NULL)
-    valid_token = authorize_user_token_ldap (cfg.ldap_uri, cfg.ldapdn,
-					     cfg.user_attr, cfg.yubi_attr,
-					     user, otp_id);
+  if (cfg.ldapserver != NULL || cfg.ldap_uri != NULL)
+    valid_token = authorize_user_token_ldap (cfg.ldap_uri, cfg.ldapserver,
+					     cfg.ldapdn, cfg.user_attr,
+					     cfg.yubi_attr, user, otp_id);
   else
     valid_token = authorize_user_token (cfg.auth_file, user, otp_id);
 
