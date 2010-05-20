@@ -92,7 +92,7 @@ Supported PAM module parameters are:
 
 {{{
   "authfile":   to indicate the location of the file that holds the
-                mappings of yubikey public IDs to user names.
+                mappings of yubikey token IDs to user names.
 
   "id":         to indicate your client identity.
 
@@ -125,10 +125,10 @@ Supported PAM module parameters are:
                 module to display custom fields. (e.g. OpenSSH requires you
                 to configure "ChallengeResponseAuthentication no")
 
-  "ldap_uri": specifiy the ldap server uri (e.g. ldap://localhost).
+  "ldap_uri": specify the LDAP server URI (e.g. ldap://localhost).
 
 
-  "ldapserver": specifiy the ldap server host (default ldap port is used).
+  "ldapserver": specify the LDAP server host (default LDAP port is used).
                 Deprecated.  Use "ldap_uri" instead.
 
   "ldapdn":     specify the dn where the users are stored
@@ -148,37 +148,59 @@ world-writable log file:
 }}}
 
 == Authorization Mapping Files ==
-A mapping must be made between the yubikey public ID and the user it ID is
-attached to. There are two ways to do this, either centrally in one file or
+A mapping must be made between the yubikey token ID and the user ID it is
+attached to. There are two ways to do this, either centrally in one file, or
 individually, where users can create the mapping in their home directories.
 If the central authorization mapping file is being used, user home directory
 mappings will not be used and the opposite applies if user home directory
 mappings are being used, the central authorization mappings file will not
 be used.
 
-1) Centrally
+=== Centrally ===
 
 Create a /etc/yubikey_mappings, the file must contain a user name and the
-yubikey Public ID separated by colons (same format at the passwd file) for
+yubikey token ID separated by colons (same format as the passwd file) for
 each user you want to allow onto the system using a yubikey.
 
 The mappings should look like this, one per line:
-<user name>:<yubikey token ID>:<yubikey token ID>: ….
-<user name>:<yubikey token ID>:<yubikey token ID>:…..
+
+{{{
+<user name>:<yubikey token ID>:<yubikey token ID>:….
+<user name>:<yubikey token ID>:<yubikey token ID>:….
+}}}
 
 Now add authfile=/etc/yubikey_mappings to your PAM configuration line, so it
 looks like:
 
+{{{
 auth sufficient pam_yubico.so id=16 authfile=/etc/yubikey_mappings
+}}}
 
-2) Individual, by user
+=== Individual, by user ===
 Each user creates a ~/.yubico/authorized_yubikeys file inside of their home
 directory and places the mapping in that file, the file must have only one
 line:
 
+{{{
 <user name>:<yubikey token ID>:<yubikey token ID>
+}}}
 
 This is much the same concept as the SSH authorized_keys file.
+
+=== Obtaining the yubikey token ID ===
+You can obtain the yubikey token ID in two places, one is by capturing the 
+the first twelve digits of any OTP generated with your yubikey, the other 
+is by using the modhex calculator located here: 
+
+{{{
+http://radius.yubico.com/demo/Modhex_Calculator.php
+}}}
+
+Enter your yubikey OTP and convert it, your yubikey token ID is 12 digits and listed as:
+
+{{{
+Modhex encoded: XXXXXXX
+}}}
 
 == Examples ==
 
