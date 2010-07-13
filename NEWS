@@ -10,6 +10,10 @@ Contributed by qistoph reported in Issue #22:
 Reported by qistoph in Issue #20:
 <http://code.google.com/p/yubico-pam/issues/detail?id=20>.
 
+** Make deprecated "ldapserver" work again.
+Reported by giovannibajo in Issue #27:
+<http://code.google.com/p/yubico-pam/issues/detail?id=27>.
+
 * Version 2.3 (released 2010-04-14)
 
 ** New keyword "ldap_uri" added.

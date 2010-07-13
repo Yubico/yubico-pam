@@ -259,8 +259,10 @@ authorize_user_token_ldap (const char *ldap_uri,
   else
     {
       if ((ld = ldap_init (ldapserver, PORT_NUMBER)) == NULL)
-	D (("ldap_init"));
-      return 0;
+	{
+	  D (("ldap_init"));
+	  return 0;
+	}
     }
 
   /* Bind anonymously to the LDAP server. */
