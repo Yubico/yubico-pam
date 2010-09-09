@@ -18,6 +18,8 @@ Reported by giovannibajo in Issue #27:
 Reported by multiple people in Issue #11:
 <http://code.google.com/p/yubico-pam/issues/detail?id=11>.
 
+** Don't crash on ^D at su prompt, or generally, on a NULL password value.
+
 * Version 2.3 (released 2010-04-14)
 
 ** New keyword "ldap_uri" added.
