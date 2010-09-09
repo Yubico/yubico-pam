@@ -533,6 +533,12 @@ pam_sm_authenticate (pam_handle_t * pamh,
 	  goto done;
 	}
 
+      if (resp->resp == NULL)
+	{
+	  DBG (("conv returned NULL passwd?"));
+	  goto done;
+	}
+
       DBG (("conv returned: %s", resp->resp));
 
       password = resp->resp;
