@@ -1,6 +1,6 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
-* Version 2.4 (unreleased)
+* Version 2.4 (released 2010-09-10)
 
 ** New keyword "verbose_otp" to allow displaying OTP characters.
 Contributed by qistoph reported in Issue #22:
