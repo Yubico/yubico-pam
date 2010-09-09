@@ -632,7 +632,7 @@ PAM_EXTERN int
 pam_sm_setcred (pam_handle_t * pamh, int flags, int argc, const char **argv)
 {
   int retval;
-  int auth_retval;
+  uintptr_t auth_retval;
   struct cfg cfg;
 
   parse_cfg (flags, argc, argv, &cfg);

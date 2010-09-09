@@ -14,6 +14,10 @@ Reported by qistoph in Issue #20:
 Reported by giovannibajo in Issue #27:
 <http://code.google.com/p/yubico-pam/issues/detail?id=27>.
 
+** Fix segmentation fault on 64-bit systems.
+Reported by multiple people in Issue #11:
+<http://code.google.com/p/yubico-pam/issues/detail?id=11>.
+
 * Version 2.3 (released 2010-04-14)
 
 ** New keyword "ldap_uri" added.
