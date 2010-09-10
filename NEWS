@@ -2,6 +2,10 @@ pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
 * Version 2.5 (unreleased)
 
+** Wiki articles are now inclded in the archive.  Same license as code.
+Reported by dmitrij.ledkov in Issue #30:
+<http://code.google.com/p/yubico-pam/issues/detail?id=30>.
+
 * Version 2.4 (released 2010-09-10)
 
 ** New keyword "verbose_otp" to allow displaying OTP characters.
