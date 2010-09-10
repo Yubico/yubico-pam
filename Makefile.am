@@ -48,7 +48,7 @@ check_PROGRAMS = test
 TESTS = $(check_PROGRAMS)
 
 # Dist docs from wiki.
-EXTRA_DIST = doc/ReadMe.wiki doc/TwoFactorPAMConfiguration.wiki doc/YubiKeyAndFreeRADIUSviaPAM.wiki doc/YubiKeyAndFreeRADIUSwithsinglefactorauthenticationviaPAM.wiki doc/YubiKeyAndOpenVPNviaPAM.wiki doc/YubikeyAndRadiusViaPAM.wiki doc/YubikeyAndSSHViaPAM.wiki
+EXTRA_DIST = doc/ReadMe.wiki doc/TwoFactorPAMConfiguration.wiki doc/UbuntuFreeRadiusYubiKey.wiki doc/YubiKeyAndFreeRADIUSviaPAM.wiki doc/YubiKeyAndFreeRADIUSwithsinglefactorauthenticationviaPAM.wiki doc/YubiKeyAndOpenVPNviaPAM.wiki doc/YubikeyAndRadiusViaPAM.wiki doc/YubikeyAndSSHViaPAM.wiki
 
 # Release
 
