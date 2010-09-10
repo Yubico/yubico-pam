@@ -1,6 +1,8 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
-* Version 2.5 (unreleased)
+* Version 2.6 (unreleased)
+
+* Version 2.5 (released 2010-09-10)
 
 ** Wiki articles are now inclded in the archive.  Same license as code.
 Reported by dmitrij.ledkov in Issue #30:
