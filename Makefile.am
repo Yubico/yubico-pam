@@ -47,10 +47,17 @@ LDADD = ./pam_yubico.la -lpam
 check_PROGRAMS = test
 TESTS = $(check_PROGRAMS)
 
+# Dist docs from wiki.
+EXTRA_DIST = doc/ReadMe.wiki doc/TwoFactorPAMConfiguration.wiki doc/YubiKeyAndFreeRADIUSviaPAM.wiki doc/YubiKeyAndFreeRADIUSwithsinglefactorauthenticationviaPAM.wiki doc/YubiKeyAndOpenVPNviaPAM.wiki doc/YubikeyAndRadiusViaPAM.wiki doc/YubikeyAndSSHViaPAM.wiki
+
 # Release
 
 ChangeLog:
 	svn2cl
+
+check-doc-dist:
+	perl -pe "s,^EXTRA_DIST = .*,EXTRA_DIST = `echo doc/*.wiki`," < Makefile.am > tmp
+	diff -ur Makefile.am tmp || (echo 'error: please update Makefile.am'; exit 1)
 
 PROJECT = yubico-pam
 GOOGLEACCOUNT ?= $(PACKAGE_BUGREPORT)
@@ -58,13 +65,14 @@ KEYID ?= B9156397
 
 release:
 	rm -f ChangeLog
-	make ChangeLog distcheck
+	make check-doc-dist ChangeLog distcheck
 	gpg --detach-sign --default-key $(KEYID) $(PACKAGE)-$(VERSION).tar.gz
 	gpg --verify $(PACKAGE)-$(VERSION).tar.gz.sig
 	svn copy https://$(PROJECT).googlecode.com/svn/trunk/ \
 	 https://$(PROJECT).googlecode.com/svn/tags/$(PACKAGE)-$(VERSION) \
 	 -m "Tagging the $(VERSION) release of the $(PACKAGE) project."
-	cp -v $(PACKAGE)-$(VERSION).tar.gz* ../releases/$(PACKAGE)/
+	mkdir -p ../releases/$(PACKAGE)/ && \
+		cp -v $(PACKAGE)-$(VERSION).tar.gz* ../releases/$(PACKAGE)/
 	googlecode_upload.py -s "OpenPGP signature for $(PACKAGE) $(VERSION)." \
 	 -p $(PROJECT) -u $(GOOGLEACCOUNT) $(PACKAGE)-$(VERSION).tar.gz.sig
 	googlecode_upload.py -s "$(PACKAGE) $(VERSION)" \
