@@ -339,6 +339,7 @@ struct cfg
   int try_first_pass;
   int use_first_pass;
   char *auth_file;
+  char *capath;
   char *url;
   char *ldapserver;
   char *ldap_uri;
@@ -360,6 +361,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
   cfg->try_first_pass = 0;
   cfg->use_first_pass = 0;
   cfg->auth_file = NULL;
+  cfg->capath = NULL;
   cfg->url = NULL;
   cfg->ldapserver = NULL;
   cfg->ldap_uri = NULL;
@@ -385,6 +387,8 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->use_first_pass = 1;
       if (strncmp (argv[i], "authfile=", 9) == 0)
 	cfg->auth_file = (char *) argv[i] + 9;
+      if (strncmp (argv[i], "capath=", 7) == 0)
+	cfg->capath = (char *) argv[i] + 7;
       if (strncmp (argv[i], "url=", 4) == 0)
 	cfg->url = (char *) argv[i] + 4;
       if (strncmp (argv[i], "ldapserver=", 11) == 0)
@@ -486,6 +490,9 @@ pam_sm_authenticate (pam_handle_t * pamh,
       retval = PAM_AUTHINFO_UNAVAIL;
       goto done;
     }
+
+  if (cfg.capath)
+    ykclient_set_ca_path (ykc, cfg.capath);
 
   if (cfg.url)
     ykclient_set_url_template (ykc, cfg.url);
