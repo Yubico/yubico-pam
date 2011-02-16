@@ -48,16 +48,23 @@ check_PROGRAMS = test
 TESTS = $(check_PROGRAMS)
 
 # Dist docs from wiki.
-EXTRA_DIST = doc/ReadMe.wiki doc/TwoFactorPAMConfiguration.wiki doc/UbuntuFreeRadiusYubiKey.wiki doc/YubiKeyAndFreeRADIUSviaPAM.wiki doc/YubiKeyAndFreeRADIUSwithsinglefactorauthenticationviaPAM.wiki doc/YubiKeyAndOpenVPNviaPAM.wiki doc/YubikeyAndRadiusViaPAM.wiki doc/YubikeyAndSSHViaPAM.wiki
+EXTRA_DIST = doc/ReadMe.asciidoc doc/TwoFactorPAMConfiguration.asciidoc doc/UbuntuFreeRadiusYubiKey.asciidoc doc/YubiKeyAndFreeRADIUSviaPAM.asciidoc doc/YubiKeyAndFreeRADIUSwithsinglefactorauthenticationviaPAM.asciidoc doc/YubiKeyAndOpenVPNviaPAM.asciidoc doc/YubikeyAndRadiusViaPAM.asciidoc doc/YubikeyAndSSHViaPAM.asciidoc
 
 # Release
 
 ChangeLog:
-	svn2cl
+	cd $(srcdir) && git2cl > ChangeLog
 
 check-doc-dist:
-	perl -pe "s,^EXTRA_DIST = .*,EXTRA_DIST = `echo doc/*.wiki`," < Makefile.am > tmp
-	diff -ur Makefile.am tmp || (echo 'error: please update Makefile.am'; exit 1)
+	cd $(srcdir) && git submodule update
+	cd $(srcdir)/doc && git pull
+	perl -pe "s,^EXTRA_DIST = .*,EXTRA_DIST = `cd $(srcdir) && ls doc/*.asciidoc | grep -v Todo.ascii | xargs echo`," \
+		< $(srcdir)/Makefile.am > check-doc-dist.tmp
+	diff -ur $(srcdir)/Makefile.am check-doc-dist.tmp || \
+		(rm -f check-doc-dist.tmp; echo 'error: please update $(srcdir)/Makefile.am to include all docs'; exit 1)
+	rm -f check-doc-dist.tmp
+	diff -ur $(srcdir)/README $(srcdir)/doc/ReadMe.asciidoc || \
+		(echo 'error: README and doc/ReadMe.asciidoc does not match!'; exit 1)
 
 PROJECT = yubico-pam
 GOOGLEACCOUNT ?= $(PACKAGE_BUGREPORT)
@@ -68,15 +75,12 @@ release:
 	make check-doc-dist ChangeLog distcheck
 	gpg --detach-sign --default-key $(KEYID) $(PACKAGE)-$(VERSION).tar.gz
 	gpg --verify $(PACKAGE)-$(VERSION).tar.gz.sig
-	svn copy https://$(PROJECT).googlecode.com/svn/trunk/ \
-	 https://$(PROJECT).googlecode.com/svn/tags/$(PACKAGE)-$(VERSION) \
-	 -m "Tagging the $(VERSION) release of the $(PACKAGE) project."
+	cd $(srcdir) && git push
+	cd $(srcdir) && git tag -u $(KEYID)! -m $(VERSION) v$(VERSION)
+	cd $(srcdir) && git push --tags
 	mkdir -p ../releases/$(PACKAGE)/ && \
 		cp -v $(PACKAGE)-$(VERSION).tar.gz* ../releases/$(PACKAGE)/
 	googlecode_upload.py -s "OpenPGP signature for $(PACKAGE) $(VERSION)." \
 	 -p $(PROJECT) -u $(GOOGLEACCOUNT) $(PACKAGE)-$(VERSION).tar.gz.sig
 	googlecode_upload.py -s "$(PACKAGE) $(VERSION)" \
 	 -p $(PROJECT) -u $(GOOGLEACCOUNT) $(PACKAGE)-$(VERSION).tar.gz 
-	cp README ../wiki-$(PROJECT)/ReadMe.wiki && \
-		cd ../wiki-$(PROJECT) && \
-		svn commit -m Sync. ReadMe.wiki
