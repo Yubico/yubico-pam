@@ -1,53 +1,55 @@
-#summary Installation and configuration of the Yubico PAM module
-#labels Featured,Phase-Deploy
-
-= Yubico PAM module =
+Yubico PAM module
+-----------------
 
 The Yubico PAM module provides an easy way to integrate the Yubikey
 into your existing user authentication infrastructure.  PAM is used by
 GNU/Linux, Solaris and Mac OS X for user authentication, and by other
 specialized applications such as NCSA !MyProxy.
 
-== Status and Roadmap ==
+
+Status and Roadmap
+------------------
 
 The module is working for multi-user systems.  It does not support
 disconnected mode, for that there is another Yubico PAM module that
-uses the AES key.
+stores the AES key on disk.
 
-The development community is co-ordinated via Google Code:
+The development community is co-ordinated via Google Code :
 
-  http://code.google.com/p/yubico-pam/
+http://code.google.com/p/yubico-pam/
 
 The license for pam_yubico is the 2-clause BSD license, which is
 compatible with the Linux-PAM BSD/GPL license.  See the file COPYING
 for more information.
 
-== Building from SVN ==
+
+Building from Git
+-----------------
 
 Skip to the next section if you are using an official packaged
 version.
 
-You may check out the sources using SVN with the following command:
+You may check out the sources using Git with the following command:
 
-{{{
-  svn checkout http://yubico-pam.googlecode.com/svn/trunk/ yubico-pam
-}}}
+------
+   $ git clone git://github.com/Yubico/yubico-pam.git yubico-pam
+------
 
-This will create a directory 'yubico-pam'.  Enter the directory:
+This will create a directory 'yubico-pam'.
 
-{{{
-  cd yubico-pam
-}}}
-
-Autoconf, automake and libtool must be installed.
+Autoconf, automake and libtool must be installed to create a compilable
+source tree.
 
 Generate the build system using:
 
-{{{
-  autoreconf --install
-}}}
+------
+   $ cd yubico-pam
+   $ autoreconf --install
+------
 
-== Building ==
+
+Building
+--------
 
 You will need to have libykclient (ykclient.h, libykclient.so) and
 libpam-dev (security/pam_appl.h, libpam.so) installed.  Get the
@@ -59,38 +61,40 @@ It in turn requires Curl, which you need to have installed.
 
 The build system uses Autoconf, to set up the build system run:
 
-{{{
+------
   ./configure
-}}}
+------
 
 Use --without-ldap to disable ldap support.
 
 Then build the code, run the self-test and install the binaries:
 
-{{{
+------
   make check install
-}}}
+------
 
-== Configuration ==
+
+Configuration
+-------------
 
 Install it in your PAM setup by adding a line to an appropriate file
 in /etc/pam.d/:
 
-{{{
+------
   auth sufficient pam_yubico.so id=16 debug
-}}}
+------
 
-and move pam_yubico.so into /lib/security/:
+and move pam_yubico.so into /lib/security/ :
 
-{{{
+------
   mv /usr/local/lib/security/pam_yubico.so /lib/security/
-}}}
+------
 
 For more information, see the project Wiki page.
 
 Supported PAM module parameters are:
 
-{{{
+------
   "authfile":   to indicate the location of the file that holds the
                 mappings of yubikey token IDs to user names.
 
@@ -104,15 +108,15 @@ Supported PAM module parameters are:
                 (aka presentation mode).
 
   "try_first_pass":
-           Before prompting the user for their password, the module first
-           tries the previous stacked module´s password in case that satisfies
-           this module as well.
+                Before prompting the user for their password, the module
+                first tries the previous stacked module´s password in case
+                that satisfies this module as well.
 
   "use_first_pass":
-           The argument use_first_pass forces the module to use a previous
-           stacked modules password and will never prompt the user - if no
-           password is available or the password is not appropriate, the user
-           will be denied access.
+                The argument use_first_pass forces the module to use a previous
+                stacked modules password and will never prompt the user - if no
+                password is available or the password is not appropriate, the user
+                will be denied access.
 
   "url":        specify the URL template to use, this is set by calling
                 yubikey_client_set_url_template, which defaults to:
@@ -129,11 +133,11 @@ Supported PAM module parameters are:
                 display custom fields.  For example, OpenSSH requires
                 you to configure "ChallengeResponseAuthentication no".
 
-  "ldap_uri": specify the LDAP server URI (e.g. ldap://localhost).
+  "ldap_uri":   specify the LDAP server URI (e.g. ldap://localhost).
 
 
   "ldapserver": specify the LDAP server host (default LDAP port is used).
-                Deprecated.  Use "ldap_uri" instead.
+                _Deprecated.  Use "ldap_uri" instead._
 
   "ldapdn":     specify the dn where the users are stored
                 (eg: ou=users,dc=domain,dc=com).
@@ -141,17 +145,21 @@ Supported PAM module parameters are:
   "user_attr":  specify the LDAP attribute used to store user names (eg:cn).
 
   "yubi_attr":  specify the LDAP attribute used to store the yubikey id.
-}}}
+
+  "capath":     Path to a directory with SSL CA certs you trust.
+------
 
 If you are using "debug" you may find it useful to create a
 world-writable log file:
 
-{{{
+------
   touch /var/run/pam-debug.log 
   chmod go+w /var/run/pam-debug.log 
-}}}
+------
 
-== Authorization Mapping Files ==
+
+Authorization Mapping Files
+---------------------------
 A mapping must be made between the yubikey token ID and the user ID it is
 attached to. There are two ways to do this, either centrally in one file, or
 individually, where users can create the mapping in their home directories.
@@ -160,7 +168,8 @@ mappings will not be used and the opposite applies if user home directory
 mappings are being used, the central authorization mappings file will not
 be used.
 
-=== Centrally ===
+Central authorization mapping
+-----------------------------
 
 Create a /etc/yubikey_mappings, the file must contain a user name and the
 yubikey token ID separated by colons (same format as the passwd file) for
@@ -168,54 +177,58 @@ each user you want to allow onto the system using a yubikey.
 
 The mappings should look like this, one per line:
 
-{{{
-<user name>:<yubikey token ID>:<yubikey token ID>:….
-<user name>:<yubikey token ID>:<yubikey token ID>:….
-}}}
+------
+   <user name>:<yubikey token ID>:<yubikey token ID>:….
+   <user name>:<yubikey token ID>:<yubikey token ID>:….
+------
 
 Now add authfile=/etc/yubikey_mappings to your PAM configuration line, so it
 looks like:
 
-{{{
-auth sufficient pam_yubico.so id=16 authfile=/etc/yubikey_mappings
-}}}
+------
+   auth sufficient pam_yubico.so id=16 authfile=/etc/yubikey_mappings
+------
 
-=== Individual, by user ===
+
+Individual authorization mapping by user
+----------------------------------------
 Each user creates a ~/.yubico/authorized_yubikeys file inside of their home
 directory and places the mapping in that file, the file must have only one
 line:
 
-{{{
-<user name>:<yubikey token ID>:<yubikey token ID>
-}}}
+------
+   <user name>:<yubikey token ID>:<yubikey token ID>
+------
 
 This is much the same concept as the SSH authorized_keys file.
 
-=== Obtaining the yubikey token ID ===
+
+Obtaining the yubikey token ID
+------------------------------
 You can obtain the yubikey token ID in two places, one is by capturing the 
 the first twelve digits of any OTP generated with your yubikey, the other 
 is by using the modhex calculator located here: 
 
-{{{
 http://radius.yubico.com/demo/Modhex_Calculator.php
-}}}
 
 Enter your yubikey OTP and convert it, your yubikey token ID is 12 digits and listed as:
 
-{{{
-Modhex encoded: XXXXXXX
-}}}
+   Modhex encoded: XXXXXXX
 
-== Examples ==
+
+Examples
+--------
 
 If you want to use the Yubikey to authenticate you on linux console
 logins, add the following to the top of /etc/pam.d/login:
 
-{{{
-auth sufficient pam_yubico.so id=16 debug
-}}}
+------
+   auth sufficient pam_yubico.so id=16 debug
+------
 
-== Feedback ==
+
+Feedback
+--------
 
 If you want to discuss anything related to the Yubico PAM module,
 please contact Simon Josefsson <simon@yubico.com>.
