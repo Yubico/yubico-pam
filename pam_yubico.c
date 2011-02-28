@@ -422,6 +422,8 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
       D (("ldapdn=%s", cfg->ldapdn ? cfg->ldapdn : "(null)"));
       D (("user_attr=%s", cfg->user_attr ? cfg->user_attr : "(null)"));
       D (("yubi_attr=%s", cfg->yubi_attr ? cfg->yubi_attr : "(null)"));
+      D (("url=%s", cfg->url ? cfg->url : "(null)"));
+      D (("capath=%s", cfg->capath ? cfg->capath : "(null)"));
     }
 }
 
