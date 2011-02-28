@@ -81,8 +81,11 @@
 #include <sys/types.h>
 #include <pwd.h>
 
-#define TOKEN_LEN 44
-#define TOKEN_ID_LEN 12
+#define TOKEN_OTP_LEN 32
+#define MAX_TOKEN_ID_LEN 16
+#define DEFAULT_TOKEN_ID_LEN 12
+//#define TOKEN_LEN 44
+//#define TOKEN_ID_LEN 12
 
 /*
  * This function will look for users name with valid user token id. It
@@ -346,6 +349,7 @@ struct cfg
   char *ldapdn;
   char *user_attr;
   char *yubi_attr;
+  int public_id_length;
 };
 
 static void
@@ -368,6 +372,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
   cfg->ldapdn = NULL;
   cfg->user_attr = NULL;
   cfg->yubi_attr = NULL;
+  cfg->public_id_length = DEFAULT_TOKEN_ID_LEN;
 
   for (i = 0; i < argc; i++)
     {
@@ -401,6 +406,8 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->user_attr = (char *) argv[i] + 10;
       if (strncmp (argv[i], "yubi_attr=", 10) == 0)
 	cfg->yubi_attr = (char *) argv[i] + 10;
+      if (strncmp (argv[i], "public_id_length=", 17) == 0)
+	sscanf (argv[i], "public_id_length=%d", &cfg->public_id_length);
     }
 
   if (cfg->debug)
@@ -424,6 +431,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
       D (("yubi_attr=%s", cfg->yubi_attr ? cfg->yubi_attr : "(null)"));
       D (("url=%s", cfg->url ? cfg->url : "(null)"));
       D (("capath=%s", cfg->capath ? cfg->capath : "(null)"));
+      D (("public_id_length=%d", cfg->public_id_length));
     }
 }
 
@@ -436,9 +444,10 @@ pam_sm_authenticate (pam_handle_t * pamh,
   int retval, rc;
   const char *user = NULL;
   const char *password = NULL;
-  char otp[TOKEN_LEN + 1] = { 0 };
-  char otp_id[TOKEN_ID_LEN + 1] = { 0 };
+  char otp[MAX_TOKEN_ID_LEN + TOKEN_OTP_LEN + 1] = { 0 };
+  char otp_id[MAX_TOKEN_ID_LEN + 1] = { 0 };
   int password_len = 0;
+  int skip_bytes = 0;
   int valid_token = 0;
   struct pam_conv *conv;
   struct pam_message *pmsg[1], msg[1];
@@ -554,24 +563,33 @@ pam_sm_authenticate (pam_handle_t * pamh,
     }
 
   password_len = strlen (password);
-  if (password_len < TOKEN_LEN)
+  if (password_len < TOKEN_OTP_LEN)
     {
       DBG (("OTP too short: %s", password));
       retval = PAM_AUTH_ERR;
       goto done;
     }
 
-  strncpy (otp, password + (password_len - TOKEN_LEN), TOKEN_LEN);
-  strncpy (otp_id, password + (password_len - TOKEN_LEN), TOKEN_ID_LEN);
+  /* In case the input was systempassword+YubiKeyOTP, we want to skip over
+     "systempassword" when copying the public_id and OTP to separate buffers */
+  skip_bytes = password_len - (cfg.public_id_length + TOKEN_OTP_LEN);
+
+  DBG (("Skipping first %i bytes. Length is %i, public_id set to %i and token OTP always %i.",
+	skip_bytes, password_len, cfg.public_id_length, TOKEN_OTP_LEN));
+
+  /* Copy full YubiKey output (public ID + OTP) into otp */
+  strncpy (otp, password + skip_bytes, sizeof (otp) - 1);
+  /* Copy only public ID into otp_id. Destination buffer is zeroed. */
+  strncpy (otp_id, password + skip_bytes, cfg.public_id_length);
 
   DBG (("OTP: %s ID: %s ", otp, otp_id));
 
   /* user entered their system password followed by generated OTP? */
-  if (password_len > TOKEN_LEN)
+  if (password_len > TOKEN_OTP_LEN + cfg.public_id_length)
     {
       char *onlypasswd = strdup (password);
 
-      onlypasswd[password_len - TOKEN_LEN] = '\0';
+      onlypasswd[password_len - (TOKEN_OTP_LEN + cfg.public_id_length)] = '\0';
 
       DBG (("Password: %s ", onlypasswd));
 
