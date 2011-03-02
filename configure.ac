@@ -59,9 +59,9 @@ AC_ARG_WITH([ldap],
 
 
 AC_LIB_HAVE_LINKFLAGS([ykclient],, [#include <ykclient.h>],
-                      [ykclient_set_client_b64 (0, 0, 0);])
+                      [ykclient_set_ca_path(0, 0)])
 if test "$ac_cv_libykclient" != yes; then
-   AC_MSG_ERROR([[Libykclient v2.3+ required, see http://code.google.com/p/yubico-c-client/]])
+   AC_MSG_ERROR([[Libykclient v2.4+ required, see http://code.google.com/p/yubico-c-client/]])
 fi
 
 AC_SUBST(PAMDIR, "\$(exec_prefix)/lib/security")
