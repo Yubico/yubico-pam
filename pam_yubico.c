@@ -555,15 +555,15 @@ pam_sm_authenticate (pam_handle_t * pamh,
 	  goto done;
 	}
 
-      DBG (("conv returned: %s", resp->resp));
+      DBG (("conv returned %i bytes", strlen(resp->resp)));
 
       password = resp->resp;
     }
 
   password_len = strlen (password);
-  if (password_len < TOKEN_OTP_LEN)
+  if (password_len < (cfg.token_id_length + TOKEN_OTP_LEN))
     {
-      DBG (("OTP too short: %s", password));
+      DBG (("OTP too short: %i < %i", password_len, TOKEN_OTP_LEN));
       retval = PAM_AUTH_ERR;
       goto done;
     }
@@ -589,7 +589,8 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
       onlypasswd[password_len - (TOKEN_OTP_LEN + cfg.token_id_length)] = '\0';
 
-      DBG (("Password: %s ", onlypasswd));
+      DBG (("Extracted a probable system password entered before the OTP - "
+	    "setting item PAM_AUTHTOK"));
 
       retval = pam_set_item (pamh, PAM_AUTHTOK, onlypasswd);
       free (onlypasswd);
