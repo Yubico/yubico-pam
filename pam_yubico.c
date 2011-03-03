@@ -66,6 +66,13 @@
 #include <ykclient.h>
 
 #ifdef HAVE_LIBLDAP
+/* Some functions like ldap_init, ldap_simple_bind_s, ldap_unbind are
+   deprecated but still available. We will drop support for 'ldapserver'
+   (in favour of 'ldap_uri' and update to using the new functions instead
+   soon.
+*/
+#define LDAP_DEPRECATED 1
+
 #include <ldap.h>
 #define PORT_NUMBER  LDAP_PORT
 #endif
