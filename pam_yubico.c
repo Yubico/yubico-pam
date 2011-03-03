@@ -230,6 +230,19 @@ authorize_user_token_ldap (const char *ldap_uri,
   struct berval **vals;
   int i, rc;
 
+  if (user_attr == NULL) {
+    D (("Trying to look up user to YubiKey mapping in LDAP, but user_attr not set!"));
+    return 0;
+  }
+  if (yubi_attr == NULL) {
+    D (("Trying to look up user to YubiKey mapping in LDAP, but yubi_attr not set!"));
+    return 0;
+  }
+  if (ldapdn == NULL) {
+    D (("Trying to look up user to YubiKey mapping in LDAP, but ldapdn not set!"));
+    return 0;
+  }
+
   /* Allocation of memory for search strings depending on input size */
   char *find = malloc((strlen(user_attr)+strlen(ldapdn)+strlen(user)+3)*sizeof(char));
   char *sr = malloc((strlen(yubi_attr)+4)*sizeof(char));
