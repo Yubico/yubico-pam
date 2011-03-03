@@ -563,7 +563,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
   password_len = strlen (password);
   if (password_len < (cfg.token_id_length + TOKEN_OTP_LEN))
     {
-      DBG (("OTP too short: %i < %i", password_len, TOKEN_OTP_LEN));
+      DBG (("OTP too short to be considered : %i < %i", password_len, (cfg.token_id_length + TOKEN_OTP_LEN)));
       retval = PAM_AUTH_ERR;
       goto done;
     }
