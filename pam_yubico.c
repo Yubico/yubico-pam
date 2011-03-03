@@ -222,14 +222,16 @@ authorize_user_token_ldap (const char *ldap_uri,
   int retval = 0;
   int protocol;
 #ifdef HAVE_LIBLDAP
-  LDAP *ld;
-  LDAPMessage *result, *e;
+  LDAP *ld = NULL;
+  LDAPMessage *result = NULL, *e;
   BerElement *ber;
   char *a;
 
   struct berval **vals;
   int i, rc;
 
+  char *find = NULL, *sr = NULL;
+  
   if (user_attr == NULL) {
     D (("Trying to look up user to YubiKey mapping in LDAP, but user_attr not set!"));
     return 0;
@@ -244,8 +246,8 @@ authorize_user_token_ldap (const char *ldap_uri,
   }
 
   /* Allocation of memory for search strings depending on input size */
-  char *find = malloc((strlen(user_attr)+strlen(ldapdn)+strlen(user)+3)*sizeof(char));
-  char *sr = malloc((strlen(yubi_attr)+5)*sizeof(char));
+  find = malloc((strlen(user_attr)+strlen(ldapdn)+strlen(user)+3)*sizeof(char));
+  sr = malloc((strlen(yubi_attr)+5)*sizeof(char));
 
   sprintf (find, "%s=%s,%s", user_attr, user, ldapdn);
   sprintf (sr, "(%s=*)", yubi_attr);
@@ -260,7 +262,8 @@ authorize_user_token_ldap (const char *ldap_uri,
       if (rc != LDAP_SUCCESS)
 	{
 	  D (("ldap_init: %s", ldap_err2string (rc)));
-	  return 0;
+	  retval = 0;
+	  goto done;
 	}
     }
   else
@@ -268,7 +271,8 @@ authorize_user_token_ldap (const char *ldap_uri,
       if ((ld = ldap_init (ldapserver, PORT_NUMBER)) == NULL)
 	{
 	  D (("ldap_init"));
-	  return 0;
+	  retval = 0;
+	  goto done;
 	}
     }
 
@@ -281,7 +285,8 @@ authorize_user_token_ldap (const char *ldap_uri,
   if (rc != LDAP_SUCCESS)
     {
       D (("ldap_simple_bind_s: %s", ldap_err2string (rc)));
-      return (0);
+      retval = 0;
+      goto done;
     }
 
   /* Search for the entry. */
@@ -294,7 +299,8 @@ authorize_user_token_ldap (const char *ldap_uri,
     {
       D (("ldap_search_ext_s: %s", ldap_err2string (rc)));
 
-      return (0);
+      retval = 0;
+      goto done;
     }
 
   e = ldap_first_entry (ld, result);
@@ -326,12 +332,17 @@ authorize_user_token_ldap (const char *ldap_uri,
 
     }
 
-  ldap_msgfree (result);
-  ldap_unbind (ld);
+ done:
+  if (result != NULL)
+    ldap_msgfree (result);
+  if (ld != NULL)
+    ldap_unbind (ld);
 
   /* free memory allocated for search strings */
-  free(find);
-  free(sr);
+  if (find != NULL)
+    free(find);
+  if (sr != NULL)
+    free(sr);
 
 #else
   D (("Trying to use LDAP, but this function is not compiled in pam_yubico!!"));
