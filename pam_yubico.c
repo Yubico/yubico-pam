@@ -245,27 +245,13 @@ authorize_user_token_ldap (const char *ldap_uri,
 
   /* Allocation of memory for search strings depending on input size */
   char *find = malloc((strlen(user_attr)+strlen(ldapdn)+strlen(user)+3)*sizeof(char));
-  char *sr = malloc((strlen(yubi_attr)+4)*sizeof(char));
+  char *sr = malloc((strlen(yubi_attr)+5)*sizeof(char));
 
-  char sep[2] = ",";
-  char eq[2] = "=";
-  char sren[4] = "=*)";
+  sprintf (find, "%s=%s,%s", user_attr, user, ldapdn);
+  sprintf (sr, "(%s=*)", yubi_attr);
 
-  sr[0] = '(';
-  sr[1] = '\0';
-  find[0]='\0';
-
-  strcat (find, user_attr);
-  strcat (find, eq);
-  strcat (find, user);
-  strcat (find, sep);
-  strcat (find, ldapdn);
-
-  strcat (sr, yubi_attr);
-  strcat (sr, sren);
-
-  D(("find: %s",find));
-  D(("sr: %s",sr));
+  D(("LDAP : find: %s",find));
+  D(("LDAP : sr: %s",sr));
 
   /* Get a handle to an LDAP connection. */
   if (ldap_uri)
