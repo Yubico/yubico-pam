@@ -226,6 +226,7 @@ authorize_user_token_ldap (const char *ldap_uri,
   LDAPMessage *result = NULL, *e;
   BerElement *ber;
   char *a;
+  char *attrs[2] = {NULL, NULL};
 
   struct berval **vals;
   int i, rc;
@@ -244,16 +245,6 @@ authorize_user_token_ldap (const char *ldap_uri,
     D (("Trying to look up user to YubiKey mapping in LDAP, but ldapdn not set!"));
     return 0;
   }
-
-  /* Allocation of memory for search strings depending on input size */
-  find = malloc((strlen(user_attr)+strlen(ldapdn)+strlen(user)+3)*sizeof(char));
-  sr = malloc((strlen(yubi_attr)+5)*sizeof(char));
-
-  sprintf (find, "%s=%s,%s", user_attr, user, ldapdn);
-  sprintf (sr, "(%s=*)", yubi_attr);
-
-  D(("LDAP : find: %s",find));
-  D(("LDAP : sr: %s",sr));
 
   /* Get a handle to an LDAP connection. */
   if (ldap_uri)
@@ -289,12 +280,18 @@ authorize_user_token_ldap (const char *ldap_uri,
       goto done;
     }
 
-  /* Search for the entry. */
-  D (("ldap-dn: %s", find));
-  D (("ldap-filter: %s", sr));
+  /* Allocation of memory for search strings depending on input size */
+  find = malloc((strlen(user_attr)+strlen(ldapdn)+strlen(user)+3)*sizeof(char));
 
+  sprintf (find, "%s=%s,%s", user_attr, user, ldapdn);
+
+  attrs[0] = (char *) yubi_attr;
+
+  D(("LDAP : look up object '%s', ask for attribute '%s'", find, yubi_attr));
+
+  /* Search for the entry. */
   if ((rc = ldap_search_ext_s (ld, find, LDAP_SCOPE_BASE,
-			       sr, NULL, 0, NULL, NULL, LDAP_NO_LIMIT,
+			       NULL, attrs, 0, NULL, NULL, LDAP_NO_LIMIT,
 			       LDAP_NO_LIMIT, &result)) != LDAP_SUCCESS)
     {
       D (("ldap_search_ext_s: %s", ldap_err2string (rc)));
@@ -304,15 +301,19 @@ authorize_user_token_ldap (const char *ldap_uri,
     }
 
   e = ldap_first_entry (ld, result);
-  if (e != NULL)
+  if (e == NULL)
     {
-
-      /* Iterate through each attribute in the entry. */
+      D (("No result from LDAP search"));
+    }
+  else
+    {
+      /* Iterate through each returned attribute. */
       for (a = ldap_first_attribute (ld, e, &ber);
 	   a != NULL; a = ldap_next_attribute (ld, e, ber))
 	{
 	  if ((vals = ldap_get_values_len (ld, e, a)) != NULL)
 	    {
+	      /* Compare each value for the attribute against the token id. */
 	      for (i = 0; vals[i] != NULL; i++)
 		{
 		  if (!strncmp (token_id, vals[i]->bv_val, strlen (token_id)))
@@ -320,16 +321,17 @@ authorize_user_token_ldap (const char *ldap_uri,
 		      D (("Token Found :: %s", vals[i]->bv_val));
 		      retval = 1;
 		    }
+		  else
+		    {
+		      D (("No match : (%s) %s != %s", a, vals[i]->bv_val, token_id));
+		    }
 		}
 	      ldap_value_free_len (vals);
 	    }
 	  ldap_memfree (a);
 	}
       if (ber != NULL)
-	{
 	  ber_free (ber, 0);
-	}
-
     }
 
  done:
