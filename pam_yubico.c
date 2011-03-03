@@ -404,7 +404,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->user_attr = (char *) argv[i] + 10;
       if (strncmp (argv[i], "yubi_attr=", 10) == 0)
 	cfg->yubi_attr = (char *) argv[i] + 10;
-      if (strncmp (argv[i], "token_id_length=", 17) == 0)
+      if (strncmp (argv[i], "token_id_length=", 16) == 0)
 	sscanf (argv[i], "token_id_length=%d", &cfg->token_id_length);
     }
 
