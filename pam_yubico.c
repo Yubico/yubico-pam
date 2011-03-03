@@ -304,7 +304,7 @@ authorize_user_token_ldap (const char *ldap_uri,
 		      retval = 1;
 		    }
 		}
-	      ldap_value_free (vals);
+	      ldap_value_free_len (vals);
 	    }
 	  ldap_memfree (a);
 	}
