@@ -220,6 +220,7 @@ authorize_user_token_ldap (const char *ldap_uri,
 
   D(("called"));
   int retval = 0;
+  int protocol;
 #ifdef HAVE_LIBLDAP
   LDAP *ld;
   LDAPMessage *result, *e;
@@ -271,6 +272,10 @@ authorize_user_token_ldap (const char *ldap_uri,
 	  return 0;
 	}
     }
+
+  /* LDAPv2 is historical -- RFC3494. */
+  protocol = LDAP_VERSION3;
+  ldap_set_option (ld, LDAP_OPT_PROTOCOL_VERSION, &protocol);
 
   /* Bind anonymously to the LDAP server. */
   rc = ldap_simple_bind_s (ld, NULL, NULL);
