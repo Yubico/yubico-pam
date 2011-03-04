@@ -661,17 +661,26 @@ pam_sm_setcred (pam_handle_t * pamh, int flags, int argc, const char **argv)
   uintptr_t auth_retval;
   struct cfg cfg;
 
+  /* Parse config to see if we are debugging or not. */
   parse_cfg (flags, argc, argv, &cfg);
 
   DBG (("called."));
 
   /* TODO: ? */
 
+  /* Try to get result of pam_sm_authenticate() to re-use as return
+   * value here. This does not always work though (OpenSSH sometimes forks
+   * between auth and setcred), so we turn any failure from pam_get_data()
+   * into PAM_SUCCESS. This is in line with how other PAM modules do.
+   */
   retval = pam_get_data (pamh, "yubico_setcred_return",
 			 (void*) (intptr_t) &auth_retval);
   DBG (("retval: %d", auth_retval));
   if (retval != PAM_SUCCESS)
-    return PAM_CRED_UNAVAIL;
+    {
+      DBG (("done (ignoring pam_get_data error, returning PAM_SUCCESS)."));
+      return PAM_SUCCESS;
+    }
 
   switch (auth_retval)
     {
