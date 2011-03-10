@@ -66,6 +66,13 @@
 #include <ykclient.h>
 
 #ifdef HAVE_LIBLDAP
+/* Some functions like ldap_init, ldap_simple_bind_s, ldap_unbind are
+   deprecated but still available. We will drop support for 'ldapserver'
+   (in favour of 'ldap_uri' and update to using the new functions instead
+   soon.
+*/
+#define LDAP_DEPRECATED 1
+
 #include <ldap.h>
 #define PORT_NUMBER  LDAP_PORT
 #endif
@@ -214,38 +221,31 @@ authorize_user_token_ldap (const char *ldap_uri,
 
   D(("called"));
   int retval = 0;
+  int protocol;
 #ifdef HAVE_LIBLDAP
-  LDAP *ld;
-  LDAPMessage *result, *e;
+  LDAP *ld = NULL;
+  LDAPMessage *result = NULL, *e;
   BerElement *ber;
   char *a;
+  char *attrs[2] = {NULL, NULL};
 
   struct berval **vals;
   int i, rc;
 
-  /* Allocation of memory for search strings depending on input size */
-  char *find = malloc((strlen(user_attr)+strlen(ldapdn)+strlen(user)+3)*sizeof(char));
-  char *sr = malloc((strlen(yubi_attr)+4)*sizeof(char));
-
-  char sep[2] = ",";
-  char eq[2] = "=";
-  char sren[4] = "=*)";
-
-  sr[0] = '(';
-  sr[1] = '\0';
-  find[0]='\0';
-
-  strcat (find, user_attr);
-  strcat (find, eq);
-  strcat (find, user);
-  strcat (find, sep);
-  strcat (find, ldapdn);
-
-  strcat (sr, yubi_attr);
-  strcat (sr, sren);
-
-  D(("find: %s",find));
-  D(("sr: %s",sr));
+  char *find = NULL, *sr = NULL;
+  
+  if (user_attr == NULL) {
+    D (("Trying to look up user to YubiKey mapping in LDAP, but user_attr not set!"));
+    return 0;
+  }
+  if (yubi_attr == NULL) {
+    D (("Trying to look up user to YubiKey mapping in LDAP, but yubi_attr not set!"));
+    return 0;
+  }
+  if (ldapdn == NULL) {
+    D (("Trying to look up user to YubiKey mapping in LDAP, but ldapdn not set!"));
+    return 0;
+  }
 
   /* Get a handle to an LDAP connection. */
   if (ldap_uri)
@@ -254,7 +254,8 @@ authorize_user_token_ldap (const char *ldap_uri,
       if (rc != LDAP_SUCCESS)
 	{
 	  D (("ldap_init: %s", ldap_err2string (rc)));
-	  return 0;
+	  retval = 0;
+	  goto done;
 	}
     }
   else
@@ -262,41 +263,58 @@ authorize_user_token_ldap (const char *ldap_uri,
       if ((ld = ldap_init (ldapserver, PORT_NUMBER)) == NULL)
 	{
 	  D (("ldap_init"));
-	  return 0;
+	  retval = 0;
+	  goto done;
 	}
     }
+
+  /* LDAPv2 is historical -- RFC3494. */
+  protocol = LDAP_VERSION3;
+  ldap_set_option (ld, LDAP_OPT_PROTOCOL_VERSION, &protocol);
 
   /* Bind anonymously to the LDAP server. */
   rc = ldap_simple_bind_s (ld, NULL, NULL);
   if (rc != LDAP_SUCCESS)
     {
       D (("ldap_simple_bind_s: %s", ldap_err2string (rc)));
-      return (0);
+      retval = 0;
+      goto done;
     }
 
-  /* Search for the entry. */
-  D (("ldap-dn: %s", find));
-  D (("ldap-filter: %s", sr));
+  /* Allocation of memory for search strings depending on input size */
+  find = malloc((strlen(user_attr)+strlen(ldapdn)+strlen(user)+3)*sizeof(char));
 
+  sprintf (find, "%s=%s,%s", user_attr, user, ldapdn);
+
+  attrs[0] = (char *) yubi_attr;
+
+  D(("LDAP : look up object '%s', ask for attribute '%s'", find, yubi_attr));
+
+  /* Search for the entry. */
   if ((rc = ldap_search_ext_s (ld, find, LDAP_SCOPE_BASE,
-			       sr, NULL, 0, NULL, NULL, LDAP_NO_LIMIT,
+			       NULL, attrs, 0, NULL, NULL, LDAP_NO_LIMIT,
 			       LDAP_NO_LIMIT, &result)) != LDAP_SUCCESS)
     {
       D (("ldap_search_ext_s: %s", ldap_err2string (rc)));
 
-      return (0);
+      retval = 0;
+      goto done;
     }
 
   e = ldap_first_entry (ld, result);
-  if (e != NULL)
+  if (e == NULL)
     {
-
-      /* Iterate through each attribute in the entry. */
+      D (("No result from LDAP search"));
+    }
+  else
+    {
+      /* Iterate through each returned attribute. */
       for (a = ldap_first_attribute (ld, e, &ber);
 	   a != NULL; a = ldap_next_attribute (ld, e, ber))
 	{
 	  if ((vals = ldap_get_values_len (ld, e, a)) != NULL)
 	    {
+	      /* Compare each value for the attribute against the token id. */
 	      for (i = 0; vals[i] != NULL; i++)
 		{
 		  if (!strncmp (token_id, vals[i]->bv_val, strlen (token_id)))
@@ -304,24 +322,30 @@ authorize_user_token_ldap (const char *ldap_uri,
 		      D (("Token Found :: %s", vals[i]->bv_val));
 		      retval = 1;
 		    }
+		  else
+		    {
+		      D (("No match : (%s) %s != %s", a, vals[i]->bv_val, token_id));
+		    }
 		}
-	      ldap_value_free (vals);
+	      ldap_value_free_len (vals);
 	    }
 	  ldap_memfree (a);
 	}
       if (ber != NULL)
-	{
 	  ber_free (ber, 0);
-	}
-
     }
 
-  ldap_msgfree (result);
-  ldap_unbind (ld);
+ done:
+  if (result != NULL)
+    ldap_msgfree (result);
+  if (ld != NULL)
+    ldap_unbind (ld);
 
   /* free memory allocated for search strings */
-  free(find);
-  free(sr);
+  if (find != NULL)
+    free(find);
+  if (sr != NULL)
+    free(sr);
 
 #else
   D (("Trying to use LDAP, but this function is not compiled in pam_yubico!!"));
