@@ -64,6 +64,8 @@ if test "$ac_cv_libykclient" != yes; then
    AC_MSG_ERROR([[Libykclient v2.4+ required, see http://code.google.com/p/yubico-c-client/]])
 fi
 
+PKG_CHECK_MODULES([YKPERS], [ykpers-1]);
+
 AC_SUBST(PAMDIR, "\$(exec_prefix)/lib/security")
 AC_ARG_WITH(pam-dir,
   AC_HELP_STRING([--with-pam-dir=DIR],
