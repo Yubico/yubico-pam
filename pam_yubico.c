@@ -190,6 +190,7 @@ authorize_user_token (const char *authfile,
     }
 
   return retval;
+#undef USERFILE
 }
 
 /*
