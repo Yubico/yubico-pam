@@ -39,9 +39,6 @@
 
 /* These #defines must be present according to PAM documentation. */
 #define PAM_SM_AUTH
-#define PAM_SM_ACCOUNT
-#define PAM_SM_SESSION
-#define PAM_SM_PASSWORD
 
 #ifdef HAVE_SECURITY_PAM_APPL_H
 #include <security/pam_appl.h>
@@ -681,112 +678,7 @@ done:
 PAM_EXTERN int
 pam_sm_setcred (pam_handle_t * pamh, int flags, int argc, const char **argv)
 {
-  int retval;
-  uintptr_t auth_retval;
-  struct cfg cfg;
-
-  /* Parse config to see if we are debugging or not. */
-  parse_cfg (flags, argc, argv, &cfg);
-
-  DBG (("called."));
-
-  /* TODO: ? */
-
-  /* Try to get result of pam_sm_authenticate() to re-use as return
-   * value here. This does not always work though (OpenSSH sometimes forks
-   * between auth and setcred), so we turn any failure from pam_get_data()
-   * into PAM_SUCCESS. This is in line with how other PAM modules do.
-   */
-  retval = pam_get_data (pamh, "yubico_setcred_return",
-			 (void*) (intptr_t) &auth_retval);
-  DBG (("retval: %d", auth_retval));
-  if (retval != PAM_SUCCESS)
-    {
-      DBG (("done (ignoring pam_get_data error, returning PAM_SUCCESS)."));
-      return PAM_SUCCESS;
-    }
-
-  switch (auth_retval)
-    {
-    case PAM_SUCCESS:
-      retval = PAM_SUCCESS;
-      break;
-
-    case PAM_USER_UNKNOWN:
-      retval = PAM_USER_UNKNOWN;
-      break;
-
-    case PAM_AUTH_ERR:
-    default:
-      retval = PAM_CRED_ERR;
-      break;
-    }
-
-  DBG (("done. [%s]", pam_strerror (pamh, retval)));
-
-  return retval;
-}
-
-PAM_EXTERN int
-pam_sm_acct_mgmt (pam_handle_t * pamh, int flags, int argc, const char **argv)
-{
-  int retval;
-
-  D (("called."));
-
-  /* TODO: ? */
-  retval = PAM_SUCCESS;
-
-  D (("done. [%s]", pam_strerror (pamh, retval)));
-
-  return retval;
-}
-
-PAM_EXTERN int
-pam_sm_open_session (pam_handle_t * pamh,
-		     int flags, int argc, const char **argv)
-{
-  int retval;
-
-  D (("called."));
-
-  /* TODO: ? */
-  retval = PAM_SUCCESS;
-
-  D (("done. [%s]", pam_strerror (pamh, retval)));
-
-  return retval;
-}
-
-PAM_EXTERN int
-pam_sm_close_session (pam_handle_t * pamh,
-		      int flags, int argc, const char **argv)
-{
-  int retval;
-
-  D (("called."));
-
-  /* TODO: ? */
-  retval = PAM_SUCCESS;
-
-  D (("done. [%s]", pam_strerror (pamh, retval)));
-
-  return retval;
-}
-
-PAM_EXTERN int
-pam_sm_chauthtok (pam_handle_t * pamh, int flags, int argc, const char **argv)
-{
-  int retval;
-
-  D (("called."));
-
-  /* TODO: ? */
-  retval = PAM_SUCCESS;
-
-  D (("done. [%s]", pam_strerror (pamh, retval)));
-
-  return retval;
+  return PAM_SUCCESS;
 }
 
 #ifdef PAM_STATIC
@@ -795,10 +687,10 @@ struct pam_module _pam_yubico_modstruct = {
   "pam_yubico",
   pam_sm_authenticate,
   pam_sm_setcred,
-  pam_sm_acct_mgmt,
-  pam_sm_open_session,
-  pam_sm_close_session,
-  pam_sm_chauthtok
+  NULL,
+  NULL,
+  NULL,
+  NULL
 };
 
 #endif
