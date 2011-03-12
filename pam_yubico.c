@@ -1,5 +1,6 @@
 /* Written by Simon Josefsson <simon@yubico.com>.
  * Copyright (c) 2006, 2007, 2008, 2009, 2010 Yubico AB
+ * Copyright (c) 2011 Tollef Fog Heen <tfheen@err.no>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,6 +32,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include <syslog.h>
 
 /* Libtool defines PIC for shared objects */
 #ifndef PIC
@@ -61,6 +63,8 @@
 #endif
 
 #include <ykclient.h>
+#include <ykcore.h>
+#include <ykdef.h>
 
 #ifdef HAVE_LIBLDAP
 /* Some functions like ldap_init, ldap_simple_bind_s, ldap_unbind are
@@ -352,6 +356,11 @@ authorize_user_token_ldap (const char *ldap_uri,
   return retval;
 }
 
+enum key_mode {
+  CHRESP,
+  CLIENT
+};
+
 struct cfg
 {
   int client_id;
@@ -370,7 +379,142 @@ struct cfg
   char *user_attr;
   char *yubi_attr;
   int token_id_length;
+  enum key_mode mode;
 };
+
+/* Fill buf with len/2 bytes of random data (hex-encoded) */
+
+static int generate_challenge(char *buf, int len)
+{
+  FILE *u;
+  int i;
+
+  u = fopen("/dev/urandom", "r");
+  if (!u) {
+    return -1;
+  }
+
+  for (i = 0; i < len/2; i++) {
+    int t = getc(u);
+    sprintf(buf, "%x", t);
+    buf++;
+  }
+  return 0;
+}
+
+static int
+do_challenge_response(const char *username)
+{
+  /* Getting file from user home directory, i.e. ~/.yubico/challenge.
+     Format is hex(challenge):hex(response):slot num */
+  struct passwd *p;
+  char *userfile = NULL;
+  FILE *f = NULL;
+  char challenge_hex[64], expected_response[64];
+  char challenge[32];
+  int r, slot, ret;
+
+  unsigned char response[64];
+  unsigned char response_hex[sizeof(response) * 2];
+  int yk_cmd;
+  unsigned int flags = 0;
+  unsigned int response_len = 0;
+  unsigned int expect_bytes = 0;
+  YK_KEY *yk = NULL;
+  int len;
+
+  ret = PAM_AUTH_ERR;
+  flags |= YK_FLAG_MAYBLOCK;
+
+#define USERFILE "/.yubico/challenge"
+
+  p = getpwnam (username);
+  if (!p)
+    goto out;
+  userfile = malloc ((p->pw_dir ? strlen (p->pw_dir) : 0)
+		     + strlen (USERFILE) + 1);
+  if (!userfile)
+    goto out;
+
+  strcpy (userfile, p->pw_dir);
+  strcat (userfile, USERFILE);
+  f = fopen(userfile, "r+");
+  if (! f)
+    goto out;
+  r = fscanf(f, "%63[0-9a-z]:%63[0-9a-z]:%d", &challenge_hex, &expected_response, &slot);
+  D(("Challenge: %s, response: %s, slot: %d", challenge_hex, expected_response, slot));
+  if (r != 3)
+    goto out;
+
+  yubikey_hex_decode(challenge, challenge_hex, strlen(challenge_hex));
+  len = strlen(challenge_hex) / 2;
+  if (slot == 1) {
+    yk_cmd = SLOT_CHAL_HMAC1;
+  }	else {
+    yk_cmd = SLOT_CHAL_HMAC2;
+  }
+
+  if (!yk_init())
+    goto out;
+
+  if (!(yk = yk_open_first_key()))
+    goto out;
+
+  if (!yk_write_to_key(yk, yk_cmd, challenge, len))
+    goto out;
+
+  if (! yk_read_response_from_key(yk, slot, flags,
+				  &response, sizeof(response),
+				  20,
+				  &response_len))
+    goto out;
+  yubikey_hex_encode(response_hex, (char *)response, response_len > 20 ? 20 : response_len);
+  if (strcmp(response_hex, expected_response) == 0)
+    ret = PAM_SUCCESS;
+
+  /* Ok, got a good validation.  Generate a new challenge */
+
+  if (generate_challenge(challenge_hex, 64) < 0)
+    goto out;
+  yubikey_hex_decode(challenge, challenge_hex, strlen(challenge_hex));
+  if (!yk_write_to_key(yk, yk_cmd, challenge, strlen(challenge_hex)/2))
+    goto out;
+
+  if (! yk_read_response_from_key(yk, slot, flags,
+				  &response, sizeof(response),
+				  20,
+				  &response_len))
+    goto out;
+  yubikey_hex_encode(response_hex, (char *)response, response_len > 20 ? 20 : response_len);
+  rewind(f);
+  fprintf(f, "%s:%s:%d\n", challenge_hex, response_hex, slot);
+  if (fsync(f) < 0)
+    goto out;
+
+ out:
+  if (yk_errno) {
+    if (yk_errno == YK_EUSBERR) {
+      syslog(LOG_ERR, "USB error: %s", yk_usb_strerror());
+    } else {
+      syslog(LOG_ERR, "Yubikey core error: %s", yk_strerror(yk_errno));
+    }
+  }
+
+  if (errno) {
+    syslog(LOG_ERR, "Challenge response failed: %s", strerror(errno));
+  }
+
+  if (yk)
+    yk_close_key(yk);
+  yk_release();
+
+  if (f)
+    fclose(f);
+
+  free(userfile);
+  return ret;
+}
+#undef USERFILE
 
 static void
 parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
@@ -393,6 +537,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
   cfg->user_attr = NULL;
   cfg->yubi_attr = NULL;
   cfg->token_id_length = DEFAULT_TOKEN_ID_LEN;
+  cfg->mode = CLIENT;
 
   for (i = 0; i < argc; i++)
     {
@@ -428,6 +573,10 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->yubi_attr = (char *) argv[i] + 10;
       if (strncmp (argv[i], "token_id_length=", 16) == 0)
 	sscanf (argv[i], "token_id_length=%d", &cfg->token_id_length);
+      if (strcmp (argv[i], "mode=challenge-response") == 0)
+	cfg->mode = CHRESP;
+      if (strcmp (argv[i], "mode=client") == 0)
+	cfg->mode = CLIENT;
     }
 
   if (cfg->debug)
@@ -452,6 +601,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
       D (("url=%s", cfg->url ? cfg->url : "(null)"));
       D (("capath=%s", cfg->capath ? cfg->capath : "(null)"));
       D (("token_id_length=%d", cfg->token_id_length));
+      D (("mode=%s", cfg->mode == CLIENT ? "client" : "chresp" ));
     }
 }
 
@@ -485,6 +635,10 @@ pam_sm_authenticate (pam_handle_t * pamh,
       goto done;
     }
   DBG (("get user returned: %s", user));
+
+  if (cfg.mode == CHRESP) {
+    return do_challenge_response(user);
+  }
 
   if (cfg.try_first_pass || cfg.use_first_pass)
     {
