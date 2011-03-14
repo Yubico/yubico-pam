@@ -383,24 +383,22 @@ struct cfg
   char *chalresp_path;
 };
 
-/* Fill buf with len/2 bytes of random data (hex-encoded) */
+/* Fill buf with len bytes of random data */
 
 static int generate_challenge(char *buf, int len)
 {
   FILE *u;
-  int i;
+  int i, res;
 
   u = fopen("/dev/urandom", "r");
   if (!u) {
     return -1;
   }
 
-  for (i = 0; i < len/2; i++) {
-    int t = getc(u);
-    sprintf(buf, "%x", t);
-    buf++;
-  }
-  return 0;
+  res = fread(buf, 1, (size_t) len, u);
+  fclose(u);
+
+  return (res != len);
 }
 
 int
@@ -448,12 +446,12 @@ do_challenge_response(struct cfg *cfg, const char *username)
 {
   char *userfile = NULL, *tmpfile = NULL;
   FILE *f = NULL;
-  char challenge_hex[64], expected_response[64];
   char challenge[32];
+  char challenge_hex[sizeof(challenge) * 2 + 1], expected_response[64];
   int r, slot, ret, fd;
 
   unsigned char response[64];
-  unsigned char response_hex[sizeof(response) * 2];
+  unsigned char response_hex[sizeof(response) * 2 + 1];
   int yk_cmd;
   unsigned int flags = 0;
   unsigned int response_len = 0;
@@ -511,12 +509,14 @@ do_challenge_response(struct cfg *cfg, const char *username)
     goto out;
   }
 
-  D(("Got the expected response, generating new challenge."));
+  D(("Got the expected response, generating new challenge (%i bytes).", sizeof(challenge)));
 
-  if (generate_challenge(challenge_hex, 64) < 0)
+  if (generate_challenge(challenge, 20)) {
+    D(("Failed generating new challenge!"));
     goto out;
-  yubikey_hex_decode(challenge, challenge_hex, strlen(challenge_hex));
-  if (!yk_write_to_key(yk, yk_cmd, challenge, strlen(challenge_hex)/2))
+  }
+
+  if (!yk_write_to_key(yk, yk_cmd, challenge, 20))
     goto out;
 
   if (! yk_read_response_from_key(yk, slot, flags,
@@ -528,6 +528,9 @@ do_challenge_response(struct cfg *cfg, const char *username)
   /* the yk_* functions leave 'junk' in errno */
   errno = 0;
 
+  memset(challenge_hex, 0, sizeof(challenge_hex));
+  memset(response_hex, 0, sizeof(response_hex));
+  yubikey_hex_encode(challenge_hex, (char *)challenge, 20);
   yubikey_hex_encode(response_hex, (char *)response, response_len > 20 ? 20 : response_len);
   /* Write out the new file */
   if (fclose(f) < 0) {
