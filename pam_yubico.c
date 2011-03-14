@@ -93,6 +93,12 @@
 #define MAX_TOKEN_ID_LEN 16
 #define DEFAULT_TOKEN_ID_LEN 12
 
+/* Challenges can be 0..63 or 64 bytes long, depending on YubiKey configuration.
+ * We settle for 63 bytes to have something that works with all configurations.
+ */
+#define CR_CHALLENGE_SIZE	63
+#define CR_RESPONSE_SIZE	20
+
 /*
  * This function will look for users name with valid user token id. It
  * will returns 0 for failure and 1 for success.
@@ -446,12 +452,12 @@ do_challenge_response(struct cfg *cfg, const char *username)
 {
   char *userfile = NULL;
   FILE *f = NULL;
-  char challenge[32];
-  char challenge_hex[sizeof(challenge) * 2 + 1], expected_response[64];
+  char challenge[CR_CHALLENGE_SIZE + 1];
+  char challenge_hex[sizeof(challenge) * 2 + 1], expected_response[CR_RESPONSE_SIZE * 2 + 1];
   int r, slot, ret, fd;
 
-  unsigned char response[64];
-  unsigned char response_hex[sizeof(response) * 2 + 1];
+  unsigned char response[CR_RESPONSE_SIZE + 16]; /* Need some extra bytes in this read buffer */
+  unsigned char response_hex[CR_RESPONSE_SIZE * 2 + 1];
   int yk_cmd;
   unsigned int flags = 0;
   unsigned int response_len = 0;
@@ -473,17 +479,34 @@ do_challenge_response(struct cfg *cfg, const char *username)
   f = fopen(userfile, "r+");
   if (! f)
     goto out;
-  r = fscanf(f, "%63[0-9a-z]:%63[0-9a-z]:%d", &challenge_hex, &expected_response, &slot);
+  /* XXX not ideal with hard coded lengths in this scan string.
+   * 126 corresponds to twice the size of CR_CHALLENGE_SIZE,
+   * 40 is twice the size of CR_RESPONSE_SIZE
+   * (twice because we hex encode the challenge and response)
+   */
+  r = fscanf(f, "%126[0-9a-z]:%40[0-9a-z]:%d", &challenge_hex, &expected_response, &slot);
   D(("Challenge: %s, response: %s, slot: %d", challenge_hex, expected_response, slot));
   if (r != 3)
     goto out;
+
+  if (! yubikey_hex_p(challenge_hex)) {
+    D(("Invalid challenge hex input : %s", challenge_hex));
+    goto out;
+  }
+
+  if (! yubikey_hex_p(expected_response)) {
+    D(("Invalid expected response hex input : %s", expected_response));
+    goto out;
+  }
 
   yubikey_hex_decode(challenge, challenge_hex, strlen(challenge_hex));
   len = strlen(challenge_hex) / 2;
   if (slot == 1) {
     yk_cmd = SLOT_CHAL_HMAC1;
-  }	else {
+  } else if (slot == 2) {
     yk_cmd = SLOT_CHAL_HMAC2;
+  } else {
+    D(("Invalid slot input : %i", slot));
   }
 
   if (!yk_init())
@@ -497,39 +520,46 @@ do_challenge_response(struct cfg *cfg, const char *username)
 
   if (! yk_read_response_from_key(yk, slot, flags,
 				  &response, sizeof(response),
-				  20,
+				  CR_RESPONSE_SIZE,
 				  &response_len))
     goto out;
-  yubikey_hex_encode(response_hex, (char *)response, response_len > 20 ? 20 : response_len);
+  /* response read includes some extra bytes (CRC etc.) */
+  if (response_len > CR_RESPONSE_SIZE)
+    response_len = CR_RESPONSE_SIZE;
+  yubikey_hex_encode(response_hex, (char *)response, response_len);
   if (strcmp(response_hex, expected_response) != 0) {
     D(("Unexpected C/R response : %s", response_hex));
     ret = PAM_AUTH_ERR;
     goto out;
   }
 
-  D(("Got the expected response, generating new challenge (%i bytes).", sizeof(challenge)));
+  D(("Got the expected response, generating new challenge (%i bytes).", CR_CHALLENGE_SIZE));
 
-  if (generate_challenge(challenge, 20)) {
+  if (generate_challenge(challenge, CR_CHALLENGE_SIZE)) {
     D(("Failed generating new challenge!"));
     goto out;
   }
 
-  if (!yk_write_to_key(yk, yk_cmd, challenge, 20))
+  if (!yk_write_to_key(yk, yk_cmd, challenge, CR_CHALLENGE_SIZE))
     goto out;
 
   if (! yk_read_response_from_key(yk, slot, flags,
 				  &response, sizeof(response),
-				  20,
+				  CR_RESPONSE_SIZE,
 				  &response_len))
     goto out;
+
+  /* response read includes some extra bytes (CRC etc.) */
+  if (response_len > CR_RESPONSE_SIZE)
+    response_len = CR_RESPONSE_SIZE;
 
   /* the yk_* functions leave 'junk' in errno */
   errno = 0;
 
   memset(challenge_hex, 0, sizeof(challenge_hex));
   memset(response_hex, 0, sizeof(response_hex));
-  yubikey_hex_encode(challenge_hex, (char *)challenge, 20);
-  yubikey_hex_encode(response_hex, (char *)response, response_len > 20 ? 20 : response_len);
+  yubikey_hex_encode(challenge_hex, (char *)challenge, CR_CHALLENGE_SIZE);
+  yubikey_hex_encode(response_hex, (char *)response, response_len);
   rewind(f);
   fd = fileno(f);
   if (fd == -1)
