@@ -1,5 +1,5 @@
 /* Written by Simon Josefsson <simon@yubico.com>.
- * Copyright (c) 2006, 2007, 2008, 2009, 2010 Yubico AB
+ * Copyright (c) 2006, 2007, 2008, 2009, 2010, 2011 Yubico AB
  * Copyright (c) 2011 Tollef Fog Heen <tfheen@err.no>
  * All rights reserved.
  *
@@ -235,7 +235,7 @@ authorize_user_token_ldap (const char *ldap_uri,
   int i, rc;
 
   char *find = NULL, *sr = NULL;
-  
+
   if (user_attr == NULL) {
     D (("Trying to look up user to YubiKey mapping in LDAP, but user_attr not set!"));
     return 0;
@@ -380,6 +380,7 @@ struct cfg
   char *yubi_attr;
   int token_id_length;
   enum key_mode mode;
+  char *chalresp_path;
 };
 
 /* Fill buf with len/2 bytes of random data (hex-encoded) */
@@ -402,12 +403,49 @@ static int generate_challenge(char *buf, int len)
   return 0;
 }
 
-static int
-do_challenge_response(const char *username)
+int
+get_user_challenge_file(struct cfg *cfg, const char *username, char **fn)
 {
-  /* Getting file from user home directory, i.e. ~/.yubico/challenge.
-     Format is hex(challenge):hex(response):slot num */
+  /* Getting file from user home directory, i.e. ~/.yubico/challenge, or
+   * from a system wide directory.
+   *
+   * Format is hex(challenge):hex(response):slot num
+   */
   struct passwd *p;
+  char *userfile;
+
+  if (cfg->chalresp_path) {
+    if (asprintf (&userfile, "%s/%s", cfg->chalresp_path, username) >= 0)
+      *fn = userfile;
+    return (userfile >= 0);
+  }
+
+  /* The challenge to use is located in a file in the user's home directory,
+   * which therefor can't be encrypted.
+   */
+#define USERFILE "/.yubico/challenge"
+
+  p = getpwnam (username);
+  if (!p)
+    goto out;
+  userfile = malloc ((p->pw_dir ? strlen (p->pw_dir) : 0)
+		     + strlen (USERFILE) + 1);
+  if (!userfile)
+    goto out;
+
+  strcpy (userfile, p->pw_dir);
+  strcat (userfile, USERFILE);
+
+  *fn = userfile;
+  return 1;
+
+ out:
+  return 0;
+}
+
+static int
+do_challenge_response(struct cfg *cfg, const char *username)
+{
   char *userfile = NULL;
   FILE *f = NULL;
   char challenge_hex[64], expected_response[64];
@@ -426,18 +464,14 @@ do_challenge_response(const char *username)
   ret = PAM_AUTH_ERR;
   flags |= YK_FLAG_MAYBLOCK;
 
-#define USERFILE "/.yubico/challenge"
-
-  p = getpwnam (username);
-  if (!p)
+  if (! get_user_challenge_file (cfg, username, &userfile)) {
+    D(("Failed getting user challenge file for user %s", username));
     goto out;
-  userfile = malloc ((p->pw_dir ? strlen (p->pw_dir) : 0)
-		     + strlen (USERFILE) + 1);
-  if (!userfile)
-    goto out;
+  }
 
-  strcpy (userfile, p->pw_dir);
-  strcat (userfile, USERFILE);
+  D(("Loading challenge from file %s", userfile));
+
+  /* XXX should drop root privileges before opening file in user's home directory */
   f = fopen(userfile, "r+");
   if (! f)
     goto out;
@@ -538,6 +572,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
   cfg->yubi_attr = NULL;
   cfg->token_id_length = DEFAULT_TOKEN_ID_LEN;
   cfg->mode = CLIENT;
+  cfg->chalresp_path = NULL;
 
   for (i = 0; i < argc; i++)
     {
@@ -577,6 +612,8 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->mode = CHRESP;
       if (strcmp (argv[i], "mode=client") == 0)
 	cfg->mode = CLIENT;
+      if (strncmp (argv[i], "chalresp_path=", 14) == 0)
+	cfg->chalresp_path = (char *) argv[i] + 14;
     }
 
   if (cfg->debug)
@@ -602,6 +639,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
       D (("capath=%s", cfg->capath ? cfg->capath : "(null)"));
       D (("token_id_length=%d", cfg->token_id_length));
       D (("mode=%s", cfg->mode == CLIENT ? "client" : "chresp" ));
+      D (("chalresp_path=%d", cfg->chalresp_path));
     }
 }
 
@@ -637,7 +675,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
   DBG (("get user returned: %s", user));
 
   if (cfg.mode == CHRESP) {
-    return do_challenge_response(user);
+    return do_challenge_response(&cfg, user);
   }
 
   if (cfg.try_first_pass || cfg.use_first_pass)
