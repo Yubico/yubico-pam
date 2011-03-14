@@ -503,10 +503,15 @@ do_challenge_response(struct cfg *cfg, const char *username)
 				  &response_len))
     goto out;
   yubikey_hex_encode(response_hex, (char *)response, response_len > 20 ? 20 : response_len);
-  if (strcmp(response_hex, expected_response) == 0)
+  if (strcmp(response_hex, expected_response) == 0) {
     ret = PAM_SUCCESS;
+  } else {
+    D(("Unexpected C/R response : %s", response_hex));
+    ret = PAM_AUTH_ERR;
+    goto out;
+  }
 
-  /* Ok, got a good validation.  Generate a new challenge */
+  D(("Got the expected response, generating new challenge."));
 
   if (generate_challenge(challenge_hex, 64) < 0)
     goto out;
