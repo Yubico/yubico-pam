@@ -450,7 +450,7 @@ do_challenge_response(struct cfg *cfg, const char *username)
   FILE *f = NULL;
   char challenge_hex[64], expected_response[64];
   char challenge[32];
-  int r, slot, ret;
+  int r, slot, ret, fd;
 
   unsigned char response[64];
   unsigned char response_hex[sizeof(response) * 2];
@@ -524,11 +524,22 @@ do_challenge_response(struct cfg *cfg, const char *username)
 				  20,
 				  &response_len))
     goto out;
+
+  /* the yk_* functions leave 'junk' in errno */
+  errno = 0;
+
   yubikey_hex_encode(response_hex, (char *)response, response_len > 20 ? 20 : response_len);
   rewind(f);
-  fprintf(f, "%s:%s:%d\n", challenge_hex, response_hex, slot);
-  if (fsync(f) < 0)
+  fd = fileno(f);
+  if (fd == -1)
     goto out;
+  if (ftruncate(fd, 0))
+    goto out;
+  fprintf(f, "%s:%s:%d\n", challenge_hex, response_hex, slot);
+  if (fsync(fd) < 0)
+    goto out;
+
+  D(("Challenge-response success!"));
 
  out:
   if (yk_errno) {
