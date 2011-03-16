@@ -356,7 +356,7 @@ struct cfg
 static int
 do_challenge_response(struct cfg *cfg, const char *username)
 {
-  char *userfile = NULL;
+  char *userfile = NULL, *tmpfile = NULL;
   FILE *f = NULL;
   unsigned char buf[CR_RESPONSE_SIZE + 16], response_hex[CR_RESPONSE_SIZE * 2 + 1];
   int ret;
@@ -391,10 +391,15 @@ do_challenge_response(struct cfg *cfg, const char *username)
   D(("Loading challenge from file %s", userfile));
 
   /* XXX should drop root privileges before opening file in user's home directory */
-  f = fopen(userfile, "r+");
+  f = fopen(userfile, "r");
 
   if (! load_chalresp_state(f, &state))
     goto out;
+
+  if (fclose(f) < 0) {
+    f = NULL;
+    goto out;
+  }
 
   if (! challenge_response(yk, state.slot, state.challenge, state.challenge_len,
 			   true, flags, false,
@@ -443,8 +448,27 @@ do_challenge_response(struct cfg *cfg, const char *username)
   memcpy (state.response, buf, response_len);
   state.response_len = response_len;
 
+  /* Write out the new file */
+  tmpfile = malloc(strlen(userfile) + 1 + 4);
+  if (! tmpfile)
+    goto out;
+  strcpy(tmpfile, userfile);
+  strcat(tmpfile, ".tmp");
+
+  f = fopen(tmpfile, "w");
+  if (! f)
+    goto out;
+
   if (! write_chalresp_state (f, &state))
     goto out;
+  if (fclose(f) < 0) {
+    f = NULL;
+    goto out;
+  }
+  f = NULL;
+  if (rename(tmpfile, userfile) < 0) {
+    goto out;
+  }
 
   D(("Challenge-response success!"));
 
@@ -469,6 +493,7 @@ do_challenge_response(struct cfg *cfg, const char *username)
     fclose(f);
 
   free(userfile);
+  free(tmpfile);
   return ret;
 }
 #undef USERFILE
