@@ -446,7 +446,7 @@ get_user_challenge_file(struct cfg *cfg, const char *username, char **fn)
 static int
 do_challenge_response(struct cfg *cfg, const char *username)
 {
-  char *userfile = NULL;
+  char *userfile = NULL, *tmpfile = NULL;
   FILE *f = NULL;
   char challenge_hex[64], expected_response[64];
   char challenge[32];
@@ -472,7 +472,7 @@ do_challenge_response(struct cfg *cfg, const char *username)
   D(("Loading challenge from file %s", userfile));
 
   /* XXX should drop root privileges before opening file in user's home directory */
-  f = fopen(userfile, "r+");
+  f = fopen(userfile, "r");
   if (! f)
     goto out;
   r = fscanf(f, "%63[0-9a-z]:%63[0-9a-z]:%d", &challenge_hex, &expected_response, &slot);
@@ -529,15 +529,38 @@ do_challenge_response(struct cfg *cfg, const char *username)
   errno = 0;
 
   yubikey_hex_encode(response_hex, (char *)response, response_len > 20 ? 20 : response_len);
-  rewind(f);
+  /* Write out the new file */
+  if (fclose(f) < 0) {
+    f = NULL;
+    goto out;
+  }
+
+  tmpfile = malloc(strlen(userfile) + 1 + 4);
+  if (! tmpfile)
+    goto out;
+  strcpy(tmpfile, userfile);
+  strcat(tmpfile, ".tmp");
+
+  f = fopen(tmpfile, "w");
+  if (! f)
+    goto out;
+
   fd = fileno(f);
   if (fd == -1)
     goto out;
-  if (ftruncate(fd, 0))
-    goto out;
   fprintf(f, "%s:%s:%d\n", challenge_hex, response_hex, slot);
+  if (fflush(f) < 0)
+    goto out;
   if (fsync(fd) < 0)
     goto out;
+  if (fclose(f) < 0) {
+    f = NULL;
+    goto out;
+  }
+  f = NULL;
+  if (rename(tmpfile, userfile) < 0) {
+    goto out;
+  }
 
   D(("Challenge-response success!"));
 
@@ -562,6 +585,7 @@ do_challenge_response(struct cfg *cfg, const char *username)
     fclose(f);
 
   free(userfile);
+  free(tmpfile);
   return ret;
 }
 #undef USERFILE
