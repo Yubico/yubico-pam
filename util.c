@@ -184,3 +184,86 @@ int challenge_response(YK_KEY *yk, int slot,
 
 	return 1;
 }
+
+int
+load_chalresp_state(FILE *f, CR_STATE *state)
+{
+  unsigned char challenge_hex[CR_CHALLENGE_SIZE * 2 + 1], response_hex[CR_RESPONSE_SIZE * 2 + 1];
+  int slot;
+  int r;
+
+  if (! f)
+    goto out;
+
+  /* XXX not ideal with hard coded lengths in this scan string.
+   * 126 corresponds to twice the size of CR_CHALLENGE_SIZE,
+   * 40 is twice the size of CR_RESPONSE_SIZE
+   * (twice because we hex encode the challenge and response)
+   */
+  r = fscanf(f, "%126[0-9a-z]:%40[0-9a-z]:%d", &challenge_hex, &response_hex, &slot);
+  D(("Challenge: %s, response: %s, slot: %d", challenge_hex, response_hex, slot));
+  if (r != 3)
+    goto out;
+
+  if (! yubikey_hex_p(challenge_hex)) {
+    D(("Invalid challenge hex input : %s", challenge_hex));
+    goto out;
+  }
+
+  if (! yubikey_hex_p(response_hex)) {
+    D(("Invalid expected response hex input : %s", response_hex));
+    goto out;
+  }
+
+  if (slot != 1 && slot != 2) {
+    D(("Invalid slot input : %i", slot));
+    goto out;
+  }
+
+  yubikey_hex_decode(state->challenge, challenge_hex, sizeof(state->challenge));
+  state->challenge_len = strlen(challenge_hex) / 2;
+
+  yubikey_hex_decode(state->response, response_hex, sizeof(state->response));
+  state->response_len = strlen(response_hex) / 2;
+
+  state->slot = slot;
+
+  return 1;
+
+ out:
+  return 0;
+}
+
+int
+write_chalresp_state(FILE *f, CR_STATE *state)
+{
+  unsigned char challenge_hex[CR_CHALLENGE_SIZE * 2 + 1], response_hex[CR_RESPONSE_SIZE * 2 + 1];
+  int fd;
+
+  memset(challenge_hex, 0, sizeof(challenge_hex));
+  memset(response_hex, 0, sizeof(response_hex));
+
+  yubikey_hex_encode(challenge_hex, (char *)state->challenge, state->challenge_len);
+  yubikey_hex_encode(response_hex, (char *)state->response, state->response_len);
+
+  rewind(f);
+
+  fd = fileno(f);
+  if (fd == -1)
+    goto out;
+
+  if (ftruncate(fd, 0))
+    goto out;
+
+  fprintf(f, "%s:%s:%d\n", challenge_hex, response_hex, state->slot);
+
+  if (fflush(f) < 0)
+    goto out;
+
+  if (fsync(fd) < 0)
+    goto out;
+
+  return 1;
+ out:
+  return 0;
+}
