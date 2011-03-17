@@ -200,7 +200,7 @@ load_chalresp_state(FILE *f, CR_STATE *state)
    * 40 is twice the size of CR_RESPONSE_SIZE
    * (twice because we hex encode the challenge and response)
    */
-  r = fscanf(f, "%126[0-9a-z]:%40[0-9a-z]:%d", &challenge_hex, &response_hex, &slot);
+  r = fscanf(f, "v1:%126[0-9a-z]:%40[0-9a-z]:%d", &challenge_hex, &response_hex, &slot);
   D(("Challenge: %s, response: %s, slot: %d", challenge_hex, response_hex, slot));
   if (r != 3)
     goto out;
@@ -255,7 +255,7 @@ write_chalresp_state(FILE *f, CR_STATE *state)
   if (ftruncate(fd, 0))
     goto out;
 
-  fprintf(f, "%s:%s:%d\n", challenge_hex, response_hex, state->slot);
+  fprintf(f, "v1:%s:%s:%d\n", challenge_hex, response_hex, state->slot);
 
   if (fsync(fd) < 0)
     goto out;
