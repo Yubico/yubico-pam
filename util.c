@@ -186,6 +186,43 @@ int challenge_response(YK_KEY *yk, int slot,
 }
 
 int
+get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *username, char **fn)
+{
+  /* Getting file from user home directory, i.e. ~/.yubico/challenge, or
+   * from a system wide directory.
+   *
+   * Format is hex(challenge):hex(response):slot num
+   */
+
+  /* The challenge to use is located in a file in the user's home directory,
+   * which therefor can't be encrypted. If an encrypted home directory is used,
+   * the option chalresp_path can be used to point to a system-wide directory.
+   */
+  
+  const char *filename; /* not including directory */
+  unsigned int serial = 0;
+  
+  if (! yk_get_serial(yk, 0, 0, &serial)) {
+    D (("Failed to read serial number (serial-api-visible disabled?)."));
+    if (! chalresp_path)
+      filename = "challenge";
+    else
+      filename = username;
+  } else {
+    /* We have serial number */
+    int res = asprintf (&filename, "%s-%i", chalresp_path == NULL ? "challenge" : username, serial);
+    
+    if (res < 1)
+      filename = NULL;
+  }
+  
+  if (filename == NULL)
+    return 0;
+  
+  return get_user_cfgfile_path (chalresp_path, filename, username, fn);
+}
+
+int
 load_chalresp_state(FILE *f, CR_STATE *state)
 {
   unsigned char challenge_hex[CR_CHALLENGE_SIZE * 2 + 1], response_hex[CR_RESPONSE_SIZE * 2 + 1];
@@ -201,9 +238,12 @@ load_chalresp_state(FILE *f, CR_STATE *state)
    * (twice because we hex encode the challenge and response)
    */
   r = fscanf(f, "v1:%126[0-9a-z]:%40[0-9a-z]:%d", &challenge_hex, &response_hex, &slot);
-  D(("Challenge: %s, response: %s, slot: %d", challenge_hex, response_hex, slot));
-  if (r != 3)
+  if (r != 3) {
+    D(("Could not parse contents of chalres_state file (%i)", r));
     goto out;
+  }
+
+  D(("Challenge: %s, response: %s, slot: %d", challenge_hex, response_hex, slot));
 
   if (! yubikey_hex_p(challenge_hex)) {
     D(("Invalid challenge hex input : %s", challenge_hex));
