@@ -34,6 +34,8 @@
 #include <ctype.h>
 #include <syslog.h>
 
+#include "util.h"
+
 /* Libtool defines PIC for shared objects */
 #ifndef PIC
 #define PAM_STATIC
@@ -85,9 +87,6 @@
 #define PAM_EXTERN extern
 #endif
 #endif
-
-#include <sys/types.h>
-#include <pwd.h>
 
 #define TOKEN_OTP_LEN 32
 #define MAX_TOKEN_ID_LEN 16
@@ -174,25 +173,13 @@ authorize_user_token (const char *authfile,
     }
   else
     {
+      char *userfile = NULL;
+
       /* Getting file from user home directory
          ..... i.e. ~/.yubico/authorized_yubikeys
        */
-      struct passwd *p;
-      char *userfile = NULL;
-
-#define USERFILE "/.yubico/authorized_yubikeys"
-
-      p = getpwnam (username);
-      if (p)
-	{
-	  userfile = malloc ((p->pw_dir ? strlen (p->pw_dir) : 0)
-			     + strlen (USERFILE) + 1);
-	  if (!userfile)
-	    return 0;
-
-	  strcpy (userfile, p->pw_dir);
-	  strcat (userfile, USERFILE);
-	}
+      if (! get_user_cfgfile_path (NULL, "authorized_yubikeys", username, &userfile))
+	return 0;
 
       retval = check_user_token (userfile, username, otp_id);
 
@@ -389,62 +376,23 @@ struct cfg
   char *chalresp_path;
 };
 
-/* Fill buf with len bytes of random data */
-
-static int generate_challenge(char *buf, int len)
-{
-  FILE *u;
-  int i, res;
-
-  u = fopen("/dev/urandom", "r");
-  if (!u) {
-    return -1;
-  }
-
-  res = fread(buf, 1, (size_t) len, u);
-  fclose(u);
-
-  return (res != len);
-}
-
 int
-get_user_challenge_file(struct cfg *cfg, const char *username, char **fn)
+get_user_challenge_file(const char *chalresp_path, const char *username, char **fn)
 {
   /* Getting file from user home directory, i.e. ~/.yubico/challenge, or
    * from a system wide directory.
    *
    * Format is hex(challenge):hex(response):slot num
    */
-  struct passwd *p;
-  char *userfile;
-
-  if (cfg->chalresp_path) {
-    if (asprintf (&userfile, "%s/%s", cfg->chalresp_path, username) >= 0)
-      *fn = userfile;
-    return (userfile >= 0);
-  }
 
   /* The challenge to use is located in a file in the user's home directory,
-   * which therefor can't be encrypted.
+   * which therefor can't be encrypted. If an encrypted home directory is used,
+   * the option chalresp_path can be used to point to a system-wide directory.
    */
-#define USERFILE "/.yubico/challenge"
 
-  p = getpwnam (username);
-  if (!p)
-    goto out;
-  userfile = malloc ((p->pw_dir ? strlen (p->pw_dir) : 0)
-		     + strlen (USERFILE) + 1);
-  if (!userfile)
-    goto out;
+  char *filename = "challenge";
 
-  strcpy (userfile, p->pw_dir);
-  strcat (userfile, USERFILE);
-
-  *fn = userfile;
-  return 1;
-
- out:
-  return 0;
+  return get_user_cfgfile_path (chalresp_path, filename, username, fn);
 }
 
 static int
@@ -468,7 +416,7 @@ do_challenge_response(struct cfg *cfg, const char *username)
   ret = PAM_AUTH_ERR;
   flags |= YK_FLAG_MAYBLOCK;
 
-  if (! get_user_challenge_file (cfg, username, &userfile)) {
+  if (! get_user_challenge_file (cfg->chalresp_path, username, &userfile)) {
     D(("Failed getting user challenge file for user %s", username));
     goto out;
   }
@@ -535,7 +483,7 @@ do_challenge_response(struct cfg *cfg, const char *username)
 
   D(("Got the expected response, generating new challenge (%i bytes).", CR_CHALLENGE_SIZE));
 
-  if (generate_challenge(challenge, CR_CHALLENGE_SIZE)) {
+  if (generate_random(challenge, CR_CHALLENGE_SIZE)) {
     D(("Failed generating new challenge!"));
     goto out;
   }
