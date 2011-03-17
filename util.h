@@ -36,8 +36,42 @@
 #include <ykstatus.h>
 #include <ykdef.h>
 
+#ifndef D
+#if defined(DEBUG_PAM)
+# if defined(HAVE_SECURITY__PAM_MACROS_H)
+#  define DEBUG
+#  include <security/_pam_macros.h>
+# else
+#  define D(x) do {							\
+    printf ("debug: %s:%d (%s): ", __FILE__, __LINE__, __FUNCTION__);	\
+    printf x;								\
+    printf ("\n");							\
+  } while (0)
+# endif /* HAVE_SECURITY__PAM_MACROS_H */
+#endif /* DEBUG_PAM */
+#endif /* D */
+
+/* Challenges can be 0..63 or 64 bytes long, depending on YubiKey configuration.
+ * We settle for 63 bytes to have something that works with all configurations.
+ */
+#define CR_CHALLENGE_SIZE	63
+#define CR_RESPONSE_SIZE	20
+
+struct chalresp_state {
+  unsigned char challenge[CR_CHALLENGE_SIZE];
+  uint8_t challenge_len;
+  unsigned char response[CR_RESPONSE_SIZE];
+  uint8_t response_len;
+  uint8_t slot;
+};
+
+typedef struct chalresp_state CR_STATE;
+
 int generate_random(char *buf, int len);
 int get_user_cfgfile_path(const char *common_path, const char *filename, const char *username, char **fn);
+
+int load_chalresp_state(FILE *f, CR_STATE *state);
+int write_chalresp_state(FILE *f, CR_STATE *state);
 
 int init_yubikey(YK_KEY **yk);
 int check_firmware_version(YK_KEY *yk, bool verbose, bool quiet);

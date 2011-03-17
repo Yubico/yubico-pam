@@ -51,19 +51,6 @@
 #include <security/pam_modules.h>
 #endif
 
-#if defined(DEBUG_PAM)
-# if defined(HAVE_SECURITY__PAM_MACROS_H)
-#  define DEBUG
-#  include <security/_pam_macros.h>
-# else
-#  define D(x) do {							\
-    printf ("debug: %s:%d (%s): ", __FILE__, __LINE__, __FUNCTION__);	\
-    printf x;								\
-    printf ("\n");							\
-  } while (0)
-# endif
-#endif
-
 #ifdef HAVE_LIBLDAP
 /* Some functions like ldap_init, ldap_simple_bind_s, ldap_unbind are
    deprecated but still available. We will drop support for 'ldapserver'
@@ -87,12 +74,6 @@
 #define TOKEN_OTP_LEN 32
 #define MAX_TOKEN_ID_LEN 16
 #define DEFAULT_TOKEN_ID_LEN 12
-
-/* Challenges can be 0..63 or 64 bytes long, depending on YubiKey configuration.
- * We settle for 63 bytes to have something that works with all configurations.
- */
-#define CR_CHALLENGE_SIZE	63
-#define CR_RESPONSE_SIZE	20
 
 /*
  * This function will look for users name with valid user token id. It
@@ -396,17 +377,15 @@ do_challenge_response(struct cfg *cfg, const char *username)
 {
   char *userfile = NULL;
   FILE *f = NULL;
-  unsigned char challenge[CR_CHALLENGE_SIZE + 1];
-  unsigned char challenge_hex[sizeof(challenge) * 2 + 1], expected_response[CR_RESPONSE_SIZE * 2 + 1];
-  int r, slot, ret, fd;
+  unsigned char buf[CR_RESPONSE_SIZE + 16], response_hex[CR_RESPONSE_SIZE * 2 + 1];
+  int ret;
 
-  unsigned char response[CR_RESPONSE_SIZE + 16]; /* Need some extra bytes in this read buffer */
-  unsigned char response_hex[CR_RESPONSE_SIZE * 2 + 1];
-  int yk_cmd;
   unsigned int flags = 0;
   unsigned int response_len = 0;
   unsigned int expect_bytes = 0;
   YK_KEY *yk = NULL;
+  CR_STATE state;
+
   int len;
 
   ret = PAM_AUTH_ERR;
@@ -421,31 +400,9 @@ do_challenge_response(struct cfg *cfg, const char *username)
 
   /* XXX should drop root privileges before opening file in user's home directory */
   f = fopen(userfile, "r+");
-  if (! f)
-    goto out;
-  /* XXX not ideal with hard coded lengths in this scan string.
-   * 126 corresponds to twice the size of CR_CHALLENGE_SIZE,
-   * 40 is twice the size of CR_RESPONSE_SIZE
-   * (twice because we hex encode the challenge and response)
-   */
-  r = fscanf(f, "%126[0-9a-z]:%40[0-9a-z]:%d", &challenge_hex, &expected_response, &slot);
-  D(("Challenge: %s, response: %s, slot: %d", challenge_hex, expected_response, slot));
-  if (r != 3)
-    goto out;
 
-  if (! yubikey_hex_p(challenge_hex)) {
-    D(("Invalid challenge hex input : %s", challenge_hex));
+  if (! load_chalresp_state(f, &state))
     goto out;
-  }
-
-  if (! yubikey_hex_p(expected_response)) {
-    D(("Invalid expected response hex input : %s", expected_response));
-    goto out;
-  }
-
-  if (slot != 1 && slot != 2) {
-    D(("Invalid slot input : %i", slot));
-  }
 
   if (! init_yubikey(&yk)) {
     D(("Failed initializing YubiKey"));
@@ -457,11 +414,9 @@ do_challenge_response(struct cfg *cfg, const char *username)
     goto out;
   }
 
-  yubikey_hex_decode(challenge, challenge_hex, sizeof(challenge));
-  len = strlen(challenge_hex) / 2;
-
-  if (! challenge_response(yk, slot, challenge, len, true, flags, false,
-			   response, sizeof(response), &response_len)) {
+  if (! challenge_response(yk, state.slot, state.challenge, state.challenge_len,
+			   true, flags, false,
+			   buf, sizeof(buf), &response_len)) {
     D(("Challenge-response FAILED"));
     goto out;
   }
@@ -470,9 +425,9 @@ do_challenge_response(struct cfg *cfg, const char *username)
    * Check YubiKey response against the expected response
    */
 
-  yubikey_hex_encode(response_hex, (char *)response, response_len);
+  yubikey_hex_encode(response_hex, (char *)buf, response_len);
 
-  if (strcmp(response_hex, expected_response) == 0) {
+  if (memcmp(buf, state.response, response_len) == 0) {
     ret = PAM_SUCCESS;
   } else {
     D(("Unexpected C/R response : %s", response_hex));
@@ -481,13 +436,14 @@ do_challenge_response(struct cfg *cfg, const char *username)
 
   D(("Got the expected response, generating new challenge (%i bytes).", CR_CHALLENGE_SIZE));
 
-  if (generate_random(challenge, CR_CHALLENGE_SIZE)) {
+  if (generate_random(state.challenge, sizeof(state.challenge))) {
     D(("Failed generating new challenge!"));
     goto out;
   }
 
-  if (! challenge_response(yk, slot, challenge, CR_CHALLENGE_SIZE, true, flags, false,
-			   response, sizeof(response), &response_len)) {
+  if (! challenge_response(yk, state.slot, state.challenge, CR_CHALLENGE_SIZE,
+			   true, flags, false,
+			   buf, sizeof(buf), &response_len)) {
     D(("Second challenge-response FAILED"));
     goto out;
   }
@@ -498,19 +454,14 @@ do_challenge_response(struct cfg *cfg, const char *username)
   /*
    * Write the challenge and response we will expect the next time to the state file.
    */
+  if (response_len > sizeof(state.response)) {
+    D(("Got too long response ??? (%i/%i)", response_len, sizeof(state.response)));
+    goto out;
+  }
+  memcpy (state.response, buf, response_len);
+  state.response_len = response_len;
 
-  memset(challenge_hex, 0, sizeof(challenge_hex));
-  memset(response_hex, 0, sizeof(response_hex));
-  yubikey_hex_encode(challenge_hex, (char *)challenge, CR_CHALLENGE_SIZE);
-  yubikey_hex_encode(response_hex, (char *)response, response_len);
-  rewind(f);
-  fd = fileno(f);
-  if (fd == -1)
-    goto out;
-  if (ftruncate(fd, 0))
-    goto out;
-  fprintf(f, "%s:%s:%d\n", challenge_hex, response_hex, slot);
-  if (fsync(fd) < 0)
+  if (! write_chalresp_state (f, &state))
     goto out;
 
   D(("Challenge-response success!"));
