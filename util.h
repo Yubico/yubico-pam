@@ -31,5 +31,17 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <ykclient.h>
+#include <ykcore.h>
+#include <ykstatus.h>
+#include <ykdef.h>
+
 int generate_random(char *buf, int len);
 int get_user_cfgfile_path(const char *common_path, const char *filename, const char *username, char **fn);
+
+int init_yubikey(YK_KEY **yk);
+int check_firmware_version(YK_KEY *yk, bool verbose, bool quiet);
+int challenge_response(YK_KEY *yk, int slot,
+		       unsigned char *challenge, unsigned int len,
+		       bool hmac, unsigned int flags, bool verbose,
+		       unsigned char *response, int res_size, int *res_len);
