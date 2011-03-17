@@ -472,9 +472,10 @@ do_challenge_response(struct cfg *cfg, const char *username)
 
   yubikey_hex_encode(response_hex, (char *)response, response_len);
 
-  if (strcmp(response_hex, expected_response) != 0) {
-    D(("Unexpected C/R response : %s != %s", response_hex, expected_response));
-    ret = PAM_AUTH_ERR;
+  if (strcmp(response_hex, expected_response) == 0) {
+    ret = PAM_SUCCESS;
+  } else {
+    D(("Unexpected C/R response : %s", response_hex));
     goto out;
   }
 
@@ -513,7 +514,6 @@ do_challenge_response(struct cfg *cfg, const char *username)
     goto out;
 
   D(("Challenge-response success!"));
-  ret = PAM_SUCCESS;
 
  out:
   if (yk_errno) {
