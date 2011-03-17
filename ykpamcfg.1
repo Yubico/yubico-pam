@@ -1,0 +1,113 @@
+.\" Copyright (c) 2011 Yubico AB
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions are
+.\" met:
+.\"
+.\"     * Redistributions of source code must retain the above copyright
+.\"       notice, this list of conditions and the following disclaimer.
+.\"
+.\"     * Redistributions in binary form must reproduce the above
+.\"       copyright notice, this list of conditions and the following
+.\"       disclaimer in the documentation and/or other materials provided
+.\"       with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+.\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" The following commands are required for all man pages.
+.de URL
+\\$2 \(laURL: \\$1 \(ra\\$3
+..
+.if \n[.g] .mso www.tmac
+.TH ykpamcfg "1" "March 2011" "yubikey-personalization"
+.SH NAME
+ykpamcfg - Manage user settings for the Yubico PAM module.
+.SH SYNOPSIS
+.B ykpamcfg
+[\fI-1\fR | \fI-2\fR] [\fI-A\fR] [\fI-v\fR] [\fI-h\fR]
+.\".SH DESCRIPTION
+.\" Add any additional description here
+.SH OPTIONS
+.PP
+.TP
+\fB\-1\fR
+use slot 1.  This is the default.
+.TP
+\fB\-2\fR
+use slot 2.
+.TP
+\fB\-A \fIaction\fR
+choose action to perform. See ACTIONS below.
+.TP
+\fB\-v\fR
+enable verbose mode.
+
+.SH ACTIONS
+.TP
+\fBadd_hmac_chalresp\fR
+The PAM module can utilize the HMAC-SHA1 Challenge-Response mode found in YubiKeys
+starting with version 2.2 for \fBoffline authentication\fR.  This action creates the initial state
+information with the C/R to be issued at the next logon.
+
+The utility currently outputs the state information to a file in the current user's
+home directory (\fI~/.yubico/challenge-123456\fR for a YubiKey with serial number API readout
+enabled, and \fI~/.yubico/challenge\fR for one without).
+
+The PAM module supports a system wide directory for these state files (in case the user's
+home directories are encrypted), but in a system wide directory, the 'challenge' part should
+be replaced with the username. Example : \fI/var/yubico/challenges/alice-123456\fR.
+
+To use the system-wide mode, you currently have to move the generated state files manually and
+configure the PAM module accordingly.
+
+.SH EXAMPLE
+First, program a YubiKey for challenge response on Slot 2 :
+.HP
+.nf
+$ \fBykpersonalize -2 -ochal-resp -ochal-hmac -ohmac-lt64 -oserial-api-visible\fR
+ ...
+Commit? (y/n) [n]: y
+$
+.fi
+.HP
+Now, set the current user to require this YubiKey for logon :
+.HP
+.nf
+$ \fBykpamcfg -2 -v\fR
+...
+Stored initial challenge and expected response in '/home/alice/.yubico/challenge-123456'.
+$
+.fi
+.HP
+Then, configure authentication with PAM for example like this (\fImake a backup first\fR) :
+.HP
+\fI/etc/pam.d/common-auth\fR (from Ubuntu 10.10) :
+
+.nf
+auth	required	pam_unix.so nullok_secure try_first_pass
+auth	[success=1 new_authtok_reqd=ok ignore=ignore default=die]	pam_yubico.so mode=challenge-response
+auth	requisite	pam_deny.so
+auth	required	pam_permit.so
+auth	optional	pam_ecryptfs.so unwrap
+.fi
+
+.SH BUGS
+Report ykpamcfg bugs in
+.URL "http://code.google.com/p/yubico-pam/issues/list" "the issue tracker"
+.SH "SEE ALSO"
+The
+.URL "http://code.google.com/p/yubico-pam/" "yubico-pam home page"
+.PP
+YubiKeys can be obtained from
+.URL "http://www.yubico.com/" "Yubico" "."
