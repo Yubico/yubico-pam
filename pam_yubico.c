@@ -353,25 +353,6 @@ struct cfg
   char *chalresp_path;
 };
 
-int
-get_user_challenge_file(const char *chalresp_path, const char *username, char **fn)
-{
-  /* Getting file from user home directory, i.e. ~/.yubico/challenge, or
-   * from a system wide directory.
-   *
-   * Format is hex(challenge):hex(response):slot num
-   */
-
-  /* The challenge to use is located in a file in the user's home directory,
-   * which therefor can't be encrypted. If an encrypted home directory is used,
-   * the option chalresp_path can be used to point to a system-wide directory.
-   */
-
-  char *filename = "challenge";
-
-  return get_user_cfgfile_path (chalresp_path, filename, username, fn);
-}
-
 static int
 do_challenge_response(struct cfg *cfg, const char *username)
 {
@@ -391,7 +372,18 @@ do_challenge_response(struct cfg *cfg, const char *username)
   ret = PAM_AUTH_ERR;
   flags |= YK_FLAG_MAYBLOCK;
 
-  if (! get_user_challenge_file (cfg->chalresp_path, username, &userfile)) {
+  if (! init_yubikey(&yk)) {
+    D(("Failed initializing YubiKey"));
+    goto out;
+  }
+
+  if (! check_firmware_version(yk, false, true)) {
+    D(("YubiKey does not support Challenge-Response (version 2.2 required)"));
+    goto out;
+  }
+
+
+  if (! get_user_challenge_file (yk, cfg->chalresp_path, username, &userfile)) {
     D(("Failed getting user challenge file for user %s", username));
     goto out;
   }
@@ -403,16 +395,6 @@ do_challenge_response(struct cfg *cfg, const char *username)
 
   if (! load_chalresp_state(f, &state))
     goto out;
-
-  if (! init_yubikey(&yk)) {
-    D(("Failed initializing YubiKey"));
-    goto out;
-  }
-
-  if (! check_firmware_version(yk, false, true)) {
-    D(("YubiKey does not support Challenge-Response (version 2.2 required)"));
-    goto out;
-  }
 
   if (! challenge_response(yk, state.slot, state.challenge, state.challenge_len,
 			   true, flags, false,
