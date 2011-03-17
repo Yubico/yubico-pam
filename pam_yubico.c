@@ -64,10 +64,6 @@
 # endif
 #endif
 
-#include <ykclient.h>
-#include <ykcore.h>
-#include <ykdef.h>
-
 #ifdef HAVE_LIBLDAP
 /* Some functions like ldap_init, ldap_simple_bind_s, ldap_unbind are
    deprecated but still available. We will drop support for 'ldapserver'
@@ -400,8 +396,8 @@ do_challenge_response(struct cfg *cfg, const char *username)
 {
   char *userfile = NULL;
   FILE *f = NULL;
-  char challenge[CR_CHALLENGE_SIZE + 1];
-  char challenge_hex[sizeof(challenge) * 2 + 1], expected_response[CR_RESPONSE_SIZE * 2 + 1];
+  unsigned char challenge[CR_CHALLENGE_SIZE + 1];
+  unsigned char challenge_hex[sizeof(challenge) * 2 + 1], expected_response[CR_RESPONSE_SIZE * 2 + 1];
   int r, slot, ret, fd;
 
   unsigned char response[CR_RESPONSE_SIZE + 16]; /* Need some extra bytes in this read buffer */
@@ -447,36 +443,37 @@ do_challenge_response(struct cfg *cfg, const char *username)
     goto out;
   }
 
-  yubikey_hex_decode(challenge, challenge_hex, strlen(challenge_hex));
-  len = strlen(challenge_hex) / 2;
-  if (slot == 1) {
-    yk_cmd = SLOT_CHAL_HMAC1;
-  } else if (slot == 2) {
-    yk_cmd = SLOT_CHAL_HMAC2;
-  } else {
+  if (slot != 1 && slot != 2) {
     D(("Invalid slot input : %i", slot));
   }
 
-  if (!yk_init())
+  if (! init_yubikey(&yk)) {
+    D(("Failed initializing YubiKey"));
     goto out;
+  }
 
-  if (!(yk = yk_open_first_key()))
+  if (! check_firmware_version(yk, false, true)) {
+    D(("YubiKey does not support Challenge-Response (version 2.2 required)"));
     goto out;
+  }
 
-  if (!yk_write_to_key(yk, yk_cmd, challenge, len))
-    goto out;
+  yubikey_hex_decode(challenge, challenge_hex, sizeof(challenge));
+  len = strlen(challenge_hex) / 2;
 
-  if (! yk_read_response_from_key(yk, slot, flags,
-				  &response, sizeof(response),
-				  CR_RESPONSE_SIZE,
-				  &response_len))
+  if (! challenge_response(yk, slot, challenge, len, true, flags, false,
+			   response, sizeof(response), &response_len)) {
+    D(("Challenge-response FAILED"));
     goto out;
-  /* response read includes some extra bytes (CRC etc.) */
-  if (response_len > CR_RESPONSE_SIZE)
-    response_len = CR_RESPONSE_SIZE;
+  }
+
+  /*
+   * Check YubiKey response against the expected response
+   */
+
   yubikey_hex_encode(response_hex, (char *)response, response_len);
+
   if (strcmp(response_hex, expected_response) != 0) {
-    D(("Unexpected C/R response : %s", response_hex));
+    D(("Unexpected C/R response : %s != %s", response_hex, expected_response));
     ret = PAM_AUTH_ERR;
     goto out;
   }
@@ -488,21 +485,18 @@ do_challenge_response(struct cfg *cfg, const char *username)
     goto out;
   }
 
-  if (!yk_write_to_key(yk, yk_cmd, challenge, CR_CHALLENGE_SIZE))
+  if (! challenge_response(yk, slot, challenge, CR_CHALLENGE_SIZE, true, flags, false,
+			   response, sizeof(response), &response_len)) {
+    D(("Second challenge-response FAILED"));
     goto out;
-
-  if (! yk_read_response_from_key(yk, slot, flags,
-				  &response, sizeof(response),
-				  CR_RESPONSE_SIZE,
-				  &response_len))
-    goto out;
-
-  /* response read includes some extra bytes (CRC etc.) */
-  if (response_len > CR_RESPONSE_SIZE)
-    response_len = CR_RESPONSE_SIZE;
+  }
 
   /* the yk_* functions leave 'junk' in errno */
   errno = 0;
+
+  /*
+   * Write the challenge and response we will expect the next time to the state file.
+   */
 
   memset(challenge_hex, 0, sizeof(challenge_hex));
   memset(response_hex, 0, sizeof(response_hex));
