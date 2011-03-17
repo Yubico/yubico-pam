@@ -475,8 +475,7 @@ do_challenge_response(struct cfg *cfg, const char *username)
   if (strcmp(response_hex, expected_response) == 0) {
     ret = PAM_SUCCESS;
   } else {
-    D(("Unexpected C/R response : %s != %s", response_hex, expected_response));
-    ret = PAM_AUTH_ERR;
+    D(("Unexpected C/R response : %s", response_hex));
     goto out;
   }
 
