@@ -354,7 +354,35 @@ struct cfg
 };
 
 static int
-do_challenge_response(struct cfg *cfg, const char *username)
+display_error(pam_handle_t *pamh, char *message) {
+  struct pam_conv *conv;
+  struct pam_message *pmsg[1], msg[1];
+  struct pam_response *resp = NULL;
+  int retval;
+
+  retval = pam_get_item (pamh, PAM_CONV, (const void **) &conv);
+  if (retval != PAM_SUCCESS) {
+    D(("get conv returned error: %s", pam_strerror (pamh, retval)));
+    return retval;
+  }
+
+  pmsg[0] = &msg[0];
+  msg[0].msg = message;
+  msg[0].msg_style = PAM_ERROR_MSG;
+  retval = conv->conv(1, (const struct pam_message **) pmsg,
+		      &resp, conv->appdata_ptr);
+
+  if (retval != PAM_SUCCESS) {
+    D(("conv returned error: %s", pam_strerror (pamh, retval)));
+    return retval;
+  }
+
+  D(("conv returned: '%s'", resp->resp));
+  return retval;
+}
+
+static int
+do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
 {
   char *userfile = NULL, *tmpfile = NULL;
   FILE *f = NULL;
@@ -368,6 +396,7 @@ do_challenge_response(struct cfg *cfg, const char *username)
   CR_STATE state;
 
   int len;
+  char *errstr = NULL;
 
   ret = PAM_AUTH_ERR;
   flags |= YK_FLAG_MAYBLOCK;
@@ -423,11 +452,13 @@ do_challenge_response(struct cfg *cfg, const char *username)
 
   D(("Got the expected response, generating new challenge (%i bytes).", CR_CHALLENGE_SIZE));
 
+  errstr = "Error generating new challenge, please check syslog or contact your system administrator";
   if (generate_random(state.challenge, sizeof(state.challenge))) {
     D(("Failed generating new challenge!"));
     goto out;
   }
 
+  errstr = "Error communicating with Yubikey, please check syslog or contact your system administrator";
   if (! challenge_response(yk, state.slot, state.challenge, CR_CHALLENGE_SIZE,
 			   true, flags, false,
 			   buf, sizeof(buf), &response_len)) {
@@ -459,6 +490,7 @@ do_challenge_response(struct cfg *cfg, const char *username)
   if (! f)
     goto out;
 
+  errstr = "Error updating Yubikey challenge, please check syslog or contact your system administrator";
   if (! write_chalresp_state (f, &state))
     goto out;
   if (fclose(f) < 0) {
@@ -471,6 +503,7 @@ do_challenge_response(struct cfg *cfg, const char *username)
   }
 
   D(("Challenge-response success!"));
+  errstr = NULL;
 
  out:
   if (yk_errno) {
@@ -480,6 +513,9 @@ do_challenge_response(struct cfg *cfg, const char *username)
       syslog(LOG_ERR, "Yubikey core error: %s", yk_strerror(yk_errno));
     }
   }
+
+  if (errstr)
+    display_error(pamh, errstr);
 
   if (errno) {
     syslog(LOG_ERR, "Challenge response failed: %s", strerror(errno));
@@ -623,7 +659,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
   DBG (("get user returned: %s", user));
 
   if (cfg.mode == CHRESP) {
-    return do_challenge_response(&cfg, user);
+    return do_challenge_response(pamh, &cfg, user);
   }
 
   if (cfg.try_first_pass || cfg.use_first_pass)
