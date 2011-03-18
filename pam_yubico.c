@@ -396,6 +396,11 @@ do_challenge_response(struct cfg *cfg, const char *username)
   if (! load_chalresp_state(f, &state))
     goto out;
 
+  if (fclose(f) < 0) {
+    f = NULL;
+    goto out;
+  }
+
   if (! challenge_response(yk, state.slot, state.challenge, state.challenge_len,
 			   true, flags, false,
 			   buf, sizeof(buf), &response_len)) {
@@ -436,12 +441,14 @@ do_challenge_response(struct cfg *cfg, const char *username)
   /*
    * Write the challenge and response we will expect the next time to the state file.
    */
-  /* Write out the new file */
-  if (fclose(f) < 0) {
-    f = NULL;
+  if (response_len > sizeof(state.response)) {
+    D(("Got too long response ??? (%i/%i)", response_len, sizeof(state.response)));
     goto out;
   }
+  memcpy (state.response, buf, response_len);
+  state.response_len = response_len;
 
+  /* Write out the new file */
   tmpfile = malloc(strlen(userfile) + 1 + 4);
   if (! tmpfile)
     goto out;
@@ -452,16 +459,8 @@ do_challenge_response(struct cfg *cfg, const char *username)
   if (! f)
     goto out;
 
-  if (response_len > sizeof(state.response)) {
-    D(("Got too long response ??? (%i/%i)", response_len, sizeof(state.response)));
-    goto out;
-  }
-  memcpy (state.response, buf, response_len);
-  state.response_len = response_len;
-
   if (! write_chalresp_state (f, &state))
     goto out;
-
   if (fclose(f) < 0) {
     f = NULL;
     goto out;
