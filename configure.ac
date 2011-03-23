@@ -64,6 +64,13 @@ if test "$ac_cv_libykclient" != yes; then
    AC_MSG_ERROR([[Libykclient v2.4+ required, see http://code.google.com/p/yubico-c-client/]])
 fi
 
+AC_LIB_HAVE_LINKFLAGS(yubikey,,
+		      [#include <yubikey.h>],                                                                                                                               			  [yubikey_modhex_p("foo")])
+if test "$ac_cv_libyubikey" != yes; then
+  AC_MSG_ERROR([libyubikey v1.5+ not found, see http://code.google.com/p/yubico-c/])
+fi
+
+
 PKG_CHECK_MODULES([YKPERS], [ykpers-1]);
 
 AC_SUBST(PAMDIR, "\$(exec_prefix)/lib/security")
