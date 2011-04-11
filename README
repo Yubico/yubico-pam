@@ -84,7 +84,8 @@ in /etc/pam.d/:
   auth sufficient pam_yubico.so id=16 debug
 ------
 
-and move pam_yubico.so into /lib/security/ :
+and move pam_yubico.so into /lib/security/ (or wherever PAM modules
+live in your system) :
 
 ------
   mv /usr/local/lib/security/pam_yubico.so /lib/security/
@@ -96,11 +97,18 @@ Supported PAM module parameters are:
 
 ------
   "authfile":   to indicate the location of the file that holds the
-                mappings of yubikey token IDs to user names.
+                mappings of Yubikey token IDs to user names.
 
   "id":         to indicate your client identity.
 
   "key":        to indicate your client key in base64 format.
+		The client key is also known as API key, and provides
+		integrity in the communication between the client (you)
+		and the validation server.
+		If you want to get one for use with the default YubiCloud
+		service, visit this URL :
+
+		https://upgrade.yubico.com/getapikey/
 
   "debug":      to enable debug output to stdout.
 
@@ -120,7 +128,14 @@ Supported PAM module parameters are:
 
   "url":        specify the URL template to use, this is set by calling
                 yubikey_client_set_url_template, which defaults to:
+
                 http://api.yubico.com/wsapi/verify?id=%d&otp=%s
+
+		  or
+
+                http://api.yubico.com/wsapi/2.0/verify?id=%d&otp=%s
+
+		depending on your version of yubico-c-client.
 
   "verbose_otp":
                 This argument is used to show the OTP when it is entered,
@@ -144,7 +159,7 @@ Supported PAM module parameters are:
 
   "user_attr":  specify the LDAP attribute used to store user names (eg:cn).
 
-  "yubi_attr":  specify the LDAP attribute used to store the yubikey id.
+  "yubi_attr":  specify the LDAP attribute used to store the Yubikey id.
 
   "capath":     Path to a directory with SSL CA certs you trust.
 ------
@@ -153,14 +168,14 @@ If you are using "debug" you may find it useful to create a
 world-writable log file:
 
 ------
-  touch /var/run/pam-debug.log 
-  chmod go+w /var/run/pam-debug.log 
+  touch /var/run/pam-debug.log
+  chmod go+w /var/run/pam-debug.log
 ------
 
 
 Authorization Mapping Files
 ---------------------------
-A mapping must be made between the yubikey token ID and the user ID it is
+A mapping must be made between the Yubikey token ID and the user ID it is
 attached to. There are two ways to do this, either centrally in one file, or
 individually, where users can create the mapping in their home directories.
 If the central authorization mapping file is being used, user home directory
@@ -172,14 +187,14 @@ Central authorization mapping
 -----------------------------
 
 Create a /etc/yubikey_mappings, the file must contain a user name and the
-yubikey token ID separated by colons (same format as the passwd file) for
-each user you want to allow onto the system using a yubikey.
+Yubikey token ID separated by colons (same format as the passwd file) for
+each user you want to allow onto the system using a Yubikey.
 
 The mappings should look like this, one per line:
 
 ------
-   <user name>:<yubikey token ID>:<yubikey token ID>:….
-   <user name>:<yubikey token ID>:<yubikey token ID>:….
+   <user name>:<Yubikey token ID>:<Yubikey token ID>:….
+   <user name>:<Yubikey token ID>:<Yubikey token ID>:….
 ------
 
 Now add authfile=/etc/yubikey_mappings to your PAM configuration line, so it
@@ -197,24 +212,23 @@ directory and places the mapping in that file, the file must have only one
 line:
 
 ------
-   <user name>:<yubikey token ID>:<yubikey token ID>
+   <user name>:<Yubikey token ID>:<Yubikey token ID>
 ------
 
 This is much the same concept as the SSH authorized_keys file.
 
 
-Obtaining the yubikey token ID
-------------------------------
-You can obtain the yubikey token ID in two places, one is by capturing the 
-the first twelve digits of any OTP generated with your yubikey, the other 
-is by using the modhex calculator located here: 
+Obtaining the Yubikey token ID (a.k.a. public ID)
+-------------------------------------------------
+You can obtain the Yubikey token ID in two places. One is by removing the
+last 32 characters of any OTP generated with your Yubikey, the other
+is by using the modhex calculator located here :
 
 http://radius.yubico.com/demo/Modhex_Calculator.php
 
-Enter your yubikey OTP and convert it, your yubikey token ID is 12 digits and listed as:
+Enter your Yubikey OTP and convert it, your Yubikey token ID is 12 digits and listed as:
 
    Modhex encoded: XXXXXXX
-
 
 Examples
 --------
