@@ -142,7 +142,7 @@ int challenge_response(YK_KEY *yk, int slot,
 
 	if (res_size < sizeof(64 + 16))
 	  return 0;
-	
+
 	memset(response, 0, sizeof(response));
 
 	if (verbose) {
@@ -198,10 +198,10 @@ get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *usern
    * which therefor can't be encrypted. If an encrypted home directory is used,
    * the option chalresp_path can be used to point to a system-wide directory.
    */
-  
+
   const char *filename; /* not including directory */
   unsigned int serial = 0;
-  
+
   if (! yk_get_serial(yk, 0, 0, &serial)) {
     D (("Failed to read serial number (serial-api-visible disabled?)."));
     if (! chalresp_path)
@@ -211,14 +211,14 @@ get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *usern
   } else {
     /* We have serial number */
     int res = asprintf (&filename, "%s-%i", chalresp_path == NULL ? "challenge" : username, serial);
-    
+
     if (res < 1)
       filename = NULL;
   }
-  
+
   if (filename == NULL)
     return 0;
-  
+
   return get_user_cfgfile_path (chalresp_path, filename, username, fn);
 }
 

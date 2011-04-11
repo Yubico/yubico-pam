@@ -52,7 +52,7 @@ const char *usage =
   "\n"
   "\t-1           Send challenge to slot 1. This is the default.\n"
   "\t-2           Send challenge to slot 2.\n"
-  "\t-A action    What to do.\n"	
+  "\t-A action    What to do.\n"
   "\n"
   "\t-v           verbose\n"
   "\t-h           help (this text)\n"
@@ -111,7 +111,7 @@ parse_args(int argc, char **argv,
     return 0;
     }
   }
-  
+
   return 1;
 }
 
