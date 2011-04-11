@@ -1,6 +1,30 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
-* Version 2.6 (unreleased)
+* Version 2.6 (released 2011-04-11)
+
+** This release includes lots of patches by members of our open
+source community. Thank you all!
+
+** Add Challenge-Response mode for offline validation (requires
+YubiKey 2.2). Patch by Tollef Fog Heen.
+
+** Eliminate all problems with pam_get_data by simply getting rid
+of that code completely. This seems to have caused problems for a lot
+of people.
+
+** Numerous LDAP bug fixes and improvements, including community
+patches by judas.iscariote and maxsanna81@gmail.com. Change to
+LDAPv3, since v2 has been declared historic for a looong time.
+
+** Support passing capath parameter to Yubico validation client.
+Patch by Remi Mollon.
+
+** Support public id's longer/shorter than 6 bytes. Patch by
+fraser.scott@gmail.com.
+
+** Convert documentation to Asciidoc format used in Github wiki.
+
+** Try to never log passwords in debug logs.
 
 * Version 2.5 (released 2010-09-10)
 
