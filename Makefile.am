@@ -32,6 +32,8 @@ libdir = $(PAMDIR)
 
 lib_LTLIBRARIES = pam_yubico.la
 
+include_HEADERS = util.h
+
 pam_yubico_la_SOURCES = pam_yubico.c util.c
 # XXX add -Wl,-x too?  PAM documentation suggests it.
 pam_yubico_la_LIBADD = @LTLIBYKCLIENT@ @LIBLDAP@ @YKPERS_LIBS@ @LTLIBYUBIKEY@
@@ -88,7 +90,7 @@ release:
 	gpg --detach-sign --default-key $(KEYID) $(PACKAGE)-$(VERSION).tar.gz
 	gpg --verify $(PACKAGE)-$(VERSION).tar.gz.sig
 	cd $(srcdir) && git push
-	cd $(srcdir) && git tag -u $(KEYID)! -m $(VERSION) v$(VERSION)
+	cd $(srcdir) && git tag -u $(KEYID)! -m $(VERSION) $(VERSION)
 	cd $(srcdir) && git push --tags
 	mkdir -p ../releases/$(PACKAGE)/ && \
 		cp -v $(PACKAGE)-$(VERSION).tar.gz* ../releases/$(PACKAGE)/
