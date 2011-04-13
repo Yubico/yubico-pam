@@ -63,12 +63,16 @@ ykclient library from:
 
   http://code.google.com/p/yubico-c-client/
 
-It in turn requires Curl, which you need to have installed.
+It in turn requires Curl, which you need to have installed, and
+libyubikey. Get libyubikey from
+
+  http://code.google.com/p/yubico-c/
 
 The new Challenge-Response offline authentication requires libykpers-1
 from the yubikey-personalization project :
 
   http://code.google.com/p/yubikey-personalization/
+
 
 The build system uses Autoconf, to set up the build system run:
 
