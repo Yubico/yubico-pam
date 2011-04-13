@@ -10,9 +10,15 @@ specialized applications such as NCSA !MyProxy.
 Status and Roadmap
 ------------------
 
-The module is working for multi-user systems.  It does not support
-disconnected mode, for that there is another Yubico PAM module that
-stores the AES key on disk.
+The module is working for multi-user systems. The primary mode of
+operation is by doing online validation using a YubiKey validation
+service (such as the YubiCloud, or a private one configured using
+the 'url' parameter).
+
+In version 2.6, offline validation was also made possible through
+the use of HMAC-SHA1 Challenge-Response found in YubiKey 2.2 and
+later. This has introduced a currently mandatory dependency of
+libykpers-1 from the ykpersonalize package.
 
 The development community is co-ordinated via Google Code :
 
@@ -55,9 +61,14 @@ You will need to have libykclient (ykclient.h, libykclient.so) and
 libpam-dev (security/pam_appl.h, libpam.so) installed.  Get the
 ykclient library from:
 
-http://code.google.com/p/yubico-c-client/
+  http://code.google.com/p/yubico-c-client/
 
 It in turn requires Curl, which you need to have installed.
+
+The new Challenge-Response offline authentication requires libykpers-1
+from the yubikey-personalization project :
+
+  http://code.google.com/p/yubikey-personalization/
 
 The build system uses Autoconf, to set up the build system run:
 
@@ -72,6 +83,21 @@ Then build the code, run the self-test and install the binaries:
 ------
   make check install
 ------
+
+
+Ubuntu PPA
+----------
+
+There is an Ubuntu PPA (Private Package Archive) for yubico-pam that
+can be installed using the following commands on reasonably modern
+Ubuntu platforms :
+
+  $ sudo add-apt-repository ppa:fredrikt/yubico-pam
+  $ sudo apt-get update
+  $ sudo apt-get install yubico-pam
+
+You will have to configure pam_yubico manually in /etc/pam.d/common-auth
+manually after installing.
 
 
 Configuration
