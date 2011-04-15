@@ -87,17 +87,22 @@
 static int
 check_user_token (const char *authfile,
 		  const char *username,
-		  const char *otp_id)
+		  const char *otp_id,
+		  const int dbg)
 {
   char buf[1024];
   char *s_user, *s_token;
   int retval = 0;
   FILE *opwfile;
+#ifdef DBG
+#undef DBG
+#endif
+#define DBG(x) if (dbg) { D(x); }
 
   opwfile = fopen (authfile, "r");
   if (opwfile == NULL)
     {
-      D (("Cannot open file: %s", authfile));
+      DBG (("Cannot open file: %s", authfile));
       return retval;
     }
 
@@ -105,18 +110,18 @@ check_user_token (const char *authfile,
     {
       if (buf[strlen (buf) - 1] == '\n')
 	buf[strlen (buf) - 1] = '\0';
-      D (("Authorization line: %s", buf));
+      DBG (("Authorization line: %s", buf));
       s_user = strtok (buf, ":");
       if (s_user && strcmp (username, s_user) == 0)
 	{
-	  D (("Matched user: %s", s_user));
+	  DBG (("Matched user: %s", s_user));
 	  do
 	    {
 	      s_token = strtok (NULL, ":");
-	      D (("Authorization token: %s", s_token));
+	      DBG (("Authorization token: %s", s_token));
 	      if (s_token && strcmp (otp_id, s_token) == 0)
 		{
-		  D (("Match user/token as %s/%s", username, otp_id));
+		  DBG (("Match user/token as %s/%s", username, otp_id));
 		  fclose (opwfile);
 		  return 1;
 		}
@@ -137,7 +142,8 @@ check_user_token (const char *authfile,
 static int
 authorize_user_token (const char *authfile,
 		      const char *username,
-		      const char *otp_id)
+		      const char *otp_id,
+		      const int dbg)
 {
   int retval;
 
@@ -146,7 +152,7 @@ authorize_user_token (const char *authfile,
       /* Administrator had configured the file and specified is name
          as an argument for this module.
        */
-      retval = check_user_token (authfile, username, otp_id);
+      retval = check_user_token (authfile, username, otp_id, dbg);
     }
   else
     {
@@ -158,7 +164,7 @@ authorize_user_token (const char *authfile,
       if (! get_user_cfgfile_path (NULL, "authorized_yubikeys", username, &userfile))
 	return 0;
 
-      retval = check_user_token (userfile, username, otp_id);
+      retval = check_user_token (userfile, username, otp_id, dbg);
 
       free (userfile);
     }
@@ -188,10 +194,15 @@ authorize_user_token_ldap (const char *ldap_uri,
 			   const char *user_attr,
 			   const char *yubi_attr,
 			   const char *user,
-			   const char *token_id)
+			   const char *token_id,
+			   const int dbg)
 {
+#ifdef DBG
+#undef DBG
+#endif
+#define DBG(x) if (dbg) { D(x); }
 
-  D(("called"));
+  DBG(("called"));
   int retval = 0;
   int protocol;
 #ifdef HAVE_LIBLDAP
@@ -207,15 +218,15 @@ authorize_user_token_ldap (const char *ldap_uri,
   char *find = NULL, *sr = NULL;
 
   if (user_attr == NULL) {
-    D (("Trying to look up user to YubiKey mapping in LDAP, but user_attr not set!"));
+    DBG (("Trying to look up user to YubiKey mapping in LDAP, but user_attr not set!"));
     return 0;
   }
   if (yubi_attr == NULL) {
-    D (("Trying to look up user to YubiKey mapping in LDAP, but yubi_attr not set!"));
+    DBG (("Trying to look up user to YubiKey mapping in LDAP, but yubi_attr not set!"));
     return 0;
   }
   if (ldapdn == NULL) {
-    D (("Trying to look up user to YubiKey mapping in LDAP, but ldapdn not set!"));
+    DBG (("Trying to look up user to YubiKey mapping in LDAP, but ldapdn not set!"));
     return 0;
   }
 
@@ -225,7 +236,7 @@ authorize_user_token_ldap (const char *ldap_uri,
       rc = ldap_initialize (&ld,ldap_uri);
       if (rc != LDAP_SUCCESS)
 	{
-	  D (("ldap_init: %s", ldap_err2string (rc)));
+	  DBG (("ldap_init: %s", ldap_err2string (rc)));
 	  retval = 0;
 	  goto done;
 	}
@@ -234,7 +245,7 @@ authorize_user_token_ldap (const char *ldap_uri,
     {
       if ((ld = ldap_init (ldapserver, PORT_NUMBER)) == NULL)
 	{
-	  D (("ldap_init"));
+	  DBG (("ldap_init"));
 	  retval = 0;
 	  goto done;
 	}
@@ -248,7 +259,7 @@ authorize_user_token_ldap (const char *ldap_uri,
   rc = ldap_simple_bind_s (ld, NULL, NULL);
   if (rc != LDAP_SUCCESS)
     {
-      D (("ldap_simple_bind_s: %s", ldap_err2string (rc)));
+      DBG (("ldap_simple_bind_s: %s", ldap_err2string (rc)));
       retval = 0;
       goto done;
     }
@@ -260,14 +271,14 @@ authorize_user_token_ldap (const char *ldap_uri,
 
   attrs[0] = (char *) yubi_attr;
 
-  D(("LDAP : look up object '%s', ask for attribute '%s'", find, yubi_attr));
+  DBG(("LDAP : look up object '%s', ask for attribute '%s'", find, yubi_attr));
 
   /* Search for the entry. */
   if ((rc = ldap_search_ext_s (ld, find, LDAP_SCOPE_BASE,
 			       NULL, attrs, 0, NULL, NULL, LDAP_NO_LIMIT,
 			       LDAP_NO_LIMIT, &result)) != LDAP_SUCCESS)
     {
-      D (("ldap_search_ext_s: %s", ldap_err2string (rc)));
+      DBG (("ldap_search_ext_s: %s", ldap_err2string (rc)));
 
       retval = 0;
       goto done;
@@ -276,7 +287,7 @@ authorize_user_token_ldap (const char *ldap_uri,
   e = ldap_first_entry (ld, result);
   if (e == NULL)
     {
-      D (("No result from LDAP search"));
+      DBG (("No result from LDAP search"));
     }
   else
     {
@@ -291,12 +302,12 @@ authorize_user_token_ldap (const char *ldap_uri,
 		{
 		  if (!strncmp (token_id, vals[i]->bv_val, strlen (token_id)))
 		    {
-		      D (("Token Found :: %s", vals[i]->bv_val));
+		      DBG (("Token Found :: %s", vals[i]->bv_val));
 		      retval = 1;
 		    }
 		  else
 		    {
-		      D (("No match : (%s) %s != %s", a, vals[i]->bv_val, token_id));
+		      DBG (("No match : (%s) %s != %s", a, vals[i]->bv_val, token_id));
 		    }
 		}
 	      ldap_value_free_len (vals);
@@ -320,8 +331,8 @@ authorize_user_token_ldap (const char *ldap_uri,
     free(sr);
 
 #else
-  D (("Trying to use LDAP, but this function is not compiled in pam_yubico!!"));
-  D (("Install libldap-dev and then recompile pam_yubico."));
+  DBG (("Trying to use LDAP, but this function is not compiled in pam_yubico!!"));
+  DBG (("Install libldap-dev and then recompile pam_yubico."));
 #endif
   return retval;
 }
@@ -626,7 +637,9 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
       D (("chalresp_path=%d", cfg->chalresp_path));
     }
 }
-
+#ifdef DBG
+#undef DBG
+#endif
 #define DBG(x) if (cfg.debug) { D(x); }
 
 PAM_EXTERN int
@@ -825,9 +838,9 @@ pam_sm_authenticate (pam_handle_t * pamh,
   if (cfg.ldapserver != NULL || cfg.ldap_uri != NULL)
     valid_token = authorize_user_token_ldap (cfg.ldap_uri, cfg.ldapserver,
 					     cfg.ldapdn, cfg.user_attr,
-					     cfg.yubi_attr, user, otp_id);
+					     cfg.yubi_attr, user, otp_id, cfg.debug);
   else
-    valid_token = authorize_user_token (cfg.auth_file, user, otp_id);
+    valid_token = authorize_user_token (cfg.auth_file, user, otp_id, cfg.debug);
 
   if (valid_token == 0)
     {
