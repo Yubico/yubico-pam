@@ -418,7 +418,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
     goto out;
   }
 
-  D(("Loading challenge from file %s", userfile));
+  DBG(("Loading challenge from file %s", userfile));
 
   /* XXX should drop root privileges before opening file in user's home directory */
   f = fopen(userfile, "r");
@@ -451,7 +451,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
     goto out;
   }
 
-  D(("Got the expected response, generating new challenge (%i bytes).", CR_CHALLENGE_SIZE));
+  DBG(("Got the expected response, generating new challenge (%i bytes).", CR_CHALLENGE_SIZE));
 
   errstr = "Error generating new challenge, please check syslog or contact your system administrator";
   if (generate_random(state.challenge, sizeof(state.challenge))) {
@@ -503,15 +503,17 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
     goto out;
   }
 
-  D(("Challenge-response success!"));
+  DBG(("Challenge-response success!"));
   errstr = NULL;
 
  out:
   if (yk_errno) {
     if (yk_errno == YK_EUSBERR) {
       syslog(LOG_ERR, "USB error: %s", yk_usb_strerror());
+      D(("USB error: %s", yk_usb_strerror()));
     } else {
       syslog(LOG_ERR, "Yubikey core error: %s", yk_strerror(yk_errno));
+      D(("Yubikey core error: %s", yk_strerror(yk_errno)));
     }
   }
 
@@ -520,6 +522,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
 
   if (errno) {
     syslog(LOG_ERR, "Challenge response failed: %s", strerror(errno));
+    D(("Challenge response failed: %s", strerror(errno)));
   }
 
   if (yk)
