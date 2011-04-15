@@ -543,24 +543,10 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 {
   int i;
 
+  memset (cfg, 0, sizeof(struct cfg));
   cfg->client_id = -1;
-  cfg->client_key = NULL;
-  cfg->debug = 0;
-  cfg->alwaysok = 0;
-  cfg->verbose_otp = 0;
-  cfg->try_first_pass = 0;
-  cfg->use_first_pass = 0;
-  cfg->auth_file = NULL;
-  cfg->capath = NULL;
-  cfg->url = NULL;
-  cfg->ldapserver = NULL;
-  cfg->ldap_uri = NULL;
-  cfg->ldapdn = NULL;
-  cfg->user_attr = NULL;
-  cfg->yubi_attr = NULL;
   cfg->token_id_length = DEFAULT_TOKEN_ID_LEN;
   cfg->mode = CLIENT;
-  cfg->chalresp_path = NULL;
 
   for (i = 0; i < argc; i++)
     {
