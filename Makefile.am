@@ -1,5 +1,5 @@
 # Written by Simon Josefsson <simon@yubico.com>.
-# Copyright (c) 2006, 2007, 2008, 2009, 2010 Yubico AB
+# Copyright (c) 2006, 2007, 2008, 2009, 2010, 2011 Yubico AB
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -84,10 +84,17 @@ check-doc-dist:
 		(echo 'error: README and doc/ReadMe.asciidoc does not match!'; exit 1)
 
 PROJECT = yubico-pam
-GOOGLEACCOUNT ?= $(PACKAGE_BUGREPORT)
-KEYID ?= B9156397
 
 release:
+	@if test -z "$(USER)" || test -z "$(KEYID)"; then \
+		echo "Try this instead:"; \
+		echo "  make release USER=[GOOGLEUSERNAME] KEYID=[PGPKEYID]"; \
+		echo "For example:"; \
+		echo "  make release USER=simon@yubico.com KEYID=2117364A"; \
+		exit 1; \
+	fi
+	@head -3 $(srcdir)/NEWS | grep -q "Version $(VERSION) .released `date -I`" || \
+		(echo 'error: Update date/version in $(srcdir)/NEWS.'; exit 1)
 	rm -f ChangeLog
 	make check-doc-dist ChangeLog distcheck
 	gpg --detach-sign --default-key $(KEYID) $(PACKAGE)-$(VERSION).tar.gz
@@ -98,6 +105,6 @@ release:
 	mkdir -p ../releases/$(PACKAGE)/ && \
 		cp -v $(PACKAGE)-$(VERSION).tar.gz* ../releases/$(PACKAGE)/
 	googlecode_upload.py -s "OpenPGP signature for $(PACKAGE) $(VERSION)." \
-	 -p $(PROJECT) -u $(GOOGLEACCOUNT) $(PACKAGE)-$(VERSION).tar.gz.sig
+	 -p $(PROJECT) -u $(USER) $(PACKAGE)-$(VERSION).tar.gz.sig
 	googlecode_upload.py -s "$(PACKAGE) $(VERSION)" \
-	 -p $(PROJECT) -u $(GOOGLEACCOUNT) $(PACKAGE)-$(VERSION).tar.gz 
+	 -p $(PROJECT) -u $(USER) $(PACKAGE)-$(VERSION).tar.gz
