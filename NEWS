@@ -1,6 +1,6 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
-* Version 2.7 (unreleased)
+* Version 2.7 (released 2011-06-06)
 
 ** Make dependency on libykpers optional.
 Use --without-cr to force it.  Reported by Jussi Sallinen <jussi@jus.si>.
