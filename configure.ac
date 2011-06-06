@@ -26,7 +26,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-AC_INIT([pam_yubico], [2.6], [simon@yubico.com])
+AC_INIT([pam_yubico], [2.7], [simon@yubico.com])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([foreign])
@@ -64,14 +64,24 @@ if test "$ac_cv_libykclient" != yes; then
    AC_MSG_ERROR([[Libykclient v2.4+ required, see http://code.google.com/p/yubico-c-client/]])
 fi
 
-AC_LIB_HAVE_LINKFLAGS(yubikey,,
-		      [#include <yubikey.h>],                                                                                                                               			  [yubikey_modhex_p("foo")])
+AC_LIB_HAVE_LINKFLAGS(yubikey,, [#include <yubikey.h>],
+                      [yubikey_modhex_p("foo")])
 if test "$ac_cv_libyubikey" != yes; then
-  AC_MSG_ERROR([libyubikey v1.5+ not found, see http://code.google.com/p/yubico-c/])
+  AC_MSG_ERROR([Libyubikey v1.5+ not found, see http://code.google.com/p/yubico-c/])
 fi
 
-
-PKG_CHECK_MODULES([YKPERS], [ykpers-1]);
+AC_ARG_WITH([cr],
+  [AS_HELP_STRING([--without-cr],
+    [disable support for challenge/response])],
+  [],
+  [with_cr=yes])
+if test "x$with_cr" != xno; then
+  PKG_CHECK_MODULES([YKPERS], [ykpers-1]);
+fi
+if test -n "$YKPERS_LIBS"; then
+  AC_DEFINE([HAVE_CR], [1], [Define if you have libykpers-1])
+fi
+AM_CONDITIONAL([YKPERS], [test -n "$YKPERS_LIBS"])
 
 AC_SUBST(PAMDIR, "\$(exec_prefix)/lib/security")
 AC_ARG_WITH(pam-dir,

@@ -44,14 +44,17 @@ DEFS = -DDEBUG_PAM -DPAM_DEBUG @DEFS@
 
 # The command line tools.
 
+if YKPERS
 bin_PROGRAMS = ykpamcfg
+endif
 
 ykpamcfg_SOURCES = ykpamcfg.c util.c
 ykpamcfg_LDADD = @LTLIBYKCLIENT@ @YKPERS_LIBS@ @LTLIBYUBIKEY@
 ykpamcfg_CPPFLAGS = @YKPERS_CFLAGS@
 
+if YKPERS
 dist_man1_MANS = ykpamcfg.1
-
+endif
 
 # Self tests.
 

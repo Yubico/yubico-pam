@@ -39,11 +39,35 @@
 
 #include "util.h"
 
-#include <ykclient.h>
-#include <ykcore.h>
-#include <ykstatus.h>
-#include <ykdef.h>
+int
+get_user_cfgfile_path(const char *common_path, const char *filename, const char *username, char **fn)
+{
+  /* Getting file from user home directory, e.g. ~/.yubico/challenge, or
+   * from a system wide directory.
+   *
+   * Format is hex(challenge):hex(response):slot num
+   */
+  struct passwd *p;
+  char *userfile;
 
+  if (common_path != NULL) {
+    if (asprintf (&userfile, "%s/%s", common_path, filename) >= 0)
+      *fn = userfile;
+    return (userfile >= 0);
+  }
+
+  /* No common path provided. Construct path to user's ~/.yubico/filename */
+
+  p = getpwnam (username);
+  if (!p)
+    return 0;
+
+  if (asprintf (&userfile, "%s/.yubico/%s", p->pw_dir, filename) >= 0)
+    *fn = userfile;
+  return (userfile >= 0);
+}
+
+#if HAVE_CR
 /* Fill buf with len bytes of random data */
 int generate_random(char *buf, int len)
 {
@@ -59,34 +83,6 @@ int generate_random(char *buf, int len)
 	fclose(u);
 
 	return (res != len);
-}
-
-int
-get_user_cfgfile_path(const char *common_path, const char *filename, const char *username, char **fn)
-{
-	/* Getting file from user home directory, e.g. ~/.yubico/challenge, or
-	 * from a system wide directory.
-	 *
-	 * Format is hex(challenge):hex(response):slot num
-	 */
-	struct passwd *p;
-	char *userfile;
-
-	if (common_path != NULL) {
-		if (asprintf (&userfile, "%s/%s", common_path, filename) >= 0)
-			*fn = userfile;
-		return (userfile >= 0);
-	}
-
-	/* No common path provided. Construct path to user's ~/.yubico/filename */
-
-	p = getpwnam (username);
-	if (!p)
-		return 0;
-
-	if (asprintf (&userfile, "%s/.yubico/%s", p->pw_dir, filename) >= 0)
-		*fn = userfile;
-	return (userfile >= 0);
 }
 
 int
@@ -307,3 +303,4 @@ write_chalresp_state(FILE *f, CR_STATE *state)
  out:
   return 0;
 }
+#endif /* HAVE_CR */

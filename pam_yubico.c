@@ -382,6 +382,7 @@ display_error(pam_handle_t *pamh, char *message) {
   return retval;
 }
 
+#if HAVE_LIBYKPERS_1
 static int
 do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
 {
@@ -537,6 +538,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   return ret;
 }
 #undef USERFILE
+#endif
 
 static void
 parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
@@ -648,7 +650,13 @@ pam_sm_authenticate (pam_handle_t * pamh,
   DBG (("get user returned: %s", user));
 
   if (cfg->mode == CHRESP) {
+#if HAVE_LIBYKPERS_1
     return do_challenge_response(pamh, cfg, user);
+#else
+    DBG (("no support for challenge/response"));
+    retval = PAM_AUTH_ERR;
+    goto done;
+#endif
   }
 
   if (cfg->try_first_pass || cfg->use_first_pass)

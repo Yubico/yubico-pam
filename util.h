@@ -37,9 +37,7 @@
 #include <stdio.h>
 
 #include <ykclient.h>
-#include <ykcore.h>
-#include <ykstatus.h>
-#include <ykdef.h>
+
 
 #if defined(DEBUG_PAM)
 # if defined(HAVE_SECURITY__PAM_MACROS_H)
@@ -53,6 +51,14 @@
   } while (0)
 # endif /* HAVE_SECURITY__PAM_MACROS_H */
 #endif /* DEBUG_PAM */
+
+int get_user_cfgfile_path(const char *common_path, const char *filename, const char *username, char **fn);
+
+#if HAVE_CR
+
+#include <ykcore.h>
+#include <ykstatus.h>
+#include <ykdef.h>
 
 /* Challenges can be 0..63 or 64 bytes long, depending on YubiKey configuration.
  * We settle for 63 bytes to have something that works with all configurations.
@@ -72,7 +78,6 @@ typedef struct chalresp_state CR_STATE;
 
 int generate_random(char *buf, int len);
 
-int get_user_cfgfile_path(const char *common_path, const char *filename, const char *username, char **fn);
 int get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *username, char **fn);
 
 int load_chalresp_state(FILE *f, CR_STATE *state);
@@ -84,5 +89,7 @@ int challenge_response(YK_KEY *yk, int slot,
 		       unsigned char *challenge, unsigned int len,
 		       bool hmac, unsigned int flags, bool verbose,
 		       unsigned char *response, int res_size, int *res_len);
+
+#endif /* HAVE_CR */
 
 #endif /* __PAM_YUBICO_UTIL_H_INCLUDED__ */
