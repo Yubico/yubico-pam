@@ -1,5 +1,14 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
+* Version 2.8 (released 2011-08-26)
+
+** Fix big security hole: Authentication succeeded when no password
+was given, unless use_first_pass was being used.
+This is fatal if pam_yubico is considered 'sufficient' in the PAM
+configuration.
+
+Reported and patched by Nanakos Chrysostomos <nanakos@wired-net.gr>.
+
 * Version 2.7 (released 2011-06-07)
 
 ** Make dependency on libykpers optional.
