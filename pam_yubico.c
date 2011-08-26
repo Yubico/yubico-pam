@@ -747,6 +747,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
       if (resp->resp == NULL)
 	{
 	  DBG (("conv returned NULL passwd?"));
+	  retval = PAM_AUTH_ERR;
 	  goto done;
 	}
 
