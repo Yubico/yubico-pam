@@ -686,11 +686,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
       goto done;
     }
 
-  if (cfg->client_key)
-  {
-    ykclient_set_verify_signature (ykc, 1);
-    rc = ykclient_set_client_b64 (ykc, cfg->client_id, cfg->client_key);
-  }
+  rc = ykclient_set_client_b64 (ykc, cfg->client_id, cfg->client_key);
   if (rc != YKCLIENT_OK)
     {
       DBG (("ykclient_set_client_b64() failed (%d): %s",
@@ -698,6 +694,17 @@ pam_sm_authenticate (pam_handle_t * pamh,
       retval = PAM_AUTHINFO_UNAVAIL;
       goto done;
     }
+
+  if (cfg->client_key && NULL != cfg->client_key && cfg->client_id && NULL != cfg->client_id)
+  {
+    ykclient_set_verify_signature (ykc, 1);
+    if (rc != YKCLIENT_OK)
+      {
+        DBG (("ykclient_set_verify_signature() failed (%d): %s", rc, ykclient_strerror (rc)));
+        retval = PAM_AUTHINFO_UNAVAIL;
+        goto done;
+      }
+  }
 
   if (cfg->capath)
     ykclient_set_ca_path (ykc, cfg->capath);
