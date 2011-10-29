@@ -695,7 +695,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
       goto done;
     }
 
-  if (cfg->client_key && NULL != cfg->client_key && cfg->client_id && NULL != cfg->client_id)
+  if (cfg->client_key)
   {
     ykclient_set_verify_signature (ykc, 1);
     if (rc != YKCLIENT_OK)
