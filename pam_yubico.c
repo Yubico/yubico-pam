@@ -698,12 +698,6 @@ pam_sm_authenticate (pam_handle_t * pamh,
   if (cfg->client_key)
   {
     ykclient_set_verify_signature (ykc, 1);
-    if (rc != YKCLIENT_OK)
-      {
-        DBG (("ykclient_set_verify_signature() failed (%d): %s", rc, ykclient_strerror (rc)));
-        retval = PAM_AUTHINFO_UNAVAIL;
-        goto done;
-      }
   }
 
   if (cfg->capath)
