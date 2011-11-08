@@ -695,6 +695,9 @@ pam_sm_authenticate (pam_handle_t * pamh,
       goto done;
     }
 
+  if (cfg->client_key)
+    ykclient_set_verify_signature (ykc, 1);
+
   if (cfg->capath)
     ykclient_set_ca_path (ykc, cfg->capath);
 
