@@ -1,5 +1,13 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
+* Version 2.9 (released 2011-11-08)
+
+** Security: Explicitly request ykclient to verify server signature.
+ykclient <= 2.5 strangely enough defaults to signing requests, but not
+verifying signatures in responses when it is supplied with a client key.
+
+Reported and patched by Dominic Rutherford <dominic@rutherfordfamily.co.uk>.
+
 * Version 2.8 (released 2011-08-26)
 
 ** Fix big security hole: Authentication succeeded when no password
