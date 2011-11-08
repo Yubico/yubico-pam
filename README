@@ -96,12 +96,13 @@ There is an Ubuntu PPA (Private Package Archive) for yubico-pam that
 can be installed using the following commands on reasonably modern
 Ubuntu platforms :
 
-  $ sudo add-apt-repository ppa:fredrikt/yubico-pam
+  $ sudo add-apt-repository ppa:fredrikt/yubico
   $ sudo apt-get update
-  $ sudo apt-get install yubico-pam
+  $ sudo apt-get install libpam-yubikey
 
 You will have to configure pam_yubico manually in /etc/pam.d/common-auth
-manually after installing.
+manually after installing, minimally adding an "id" parameter. See the
+file /usr/share/doc/libpam-yubikey/README.Debian after installing.
 
 
 Configuration
