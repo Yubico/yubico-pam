@@ -1,6 +1,6 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
-* Version 2.9 (released 2011-11-08)
+* Version 2.9 (released 2011-11-17)
 
 ** Security: Explicitly request ykclient to verify server signature.
 ykclient <= 2.5 strangely enough defaults to signing requests, but not
