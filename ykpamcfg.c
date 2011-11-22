@@ -88,7 +88,7 @@ parse_args(int argc, char **argv,
 	   unsigned char **action,
 	   int *exit_code)
 {
-  char c;
+  int c;
 
   while((c = getopt(argc, argv, optstring)) != -1) {
     switch (c) {
