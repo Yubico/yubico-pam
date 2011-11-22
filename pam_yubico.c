@@ -197,7 +197,6 @@ authorize_user_token (struct cfg *cfg,
     }
 
   return retval;
-#undef USERFILE
 }
 
 /*
@@ -232,7 +231,7 @@ authorize_user_token_ldap (struct cfg *cfg,
   struct berval **vals;
   int i, rc;
 
-  char *find = NULL, *sr = NULL;
+  char *find = NULL;
 
   if (cfg->user_attr == NULL) {
     DBG (("Trying to look up user to YubiKey mapping in LDAP, but user_attr not set!"));
@@ -349,8 +348,6 @@ authorize_user_token_ldap (struct cfg *cfg,
   /* free memory allocated for search strings */
   if (find != NULL)
     free(find);
-  if (sr != NULL)
-    free(sr);
 
 #else
   DBG (("Trying to use LDAP, but this function is not compiled in pam_yubico!!"));
@@ -542,7 +539,6 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   free(tmpfile);
   return ret;
 }
-#undef USERFILE
 #endif
 
 static void
