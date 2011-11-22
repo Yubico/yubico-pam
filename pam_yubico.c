@@ -282,7 +282,12 @@ authorize_user_token_ldap (struct cfg *cfg,
     }
 
   /* Allocation of memory for search strings depending on input size */
-  find = malloc((strlen(cfg->user_attr)+strlen(cfg->ldapdn)+strlen(user)+3)*sizeof(char));
+  i = (strlen(cfg->user_attr) + strlen(cfg->ldapdn) + strlen(user) + 3) * sizeof(char);
+  if ((find = malloc(i)) == NULL) {
+    DBG (("Failed allocating %i bytes", i));
+    retval = 0;
+    goto done;
+  }
 
   sprintf (find, "%s=%s,%s", cfg->user_attr, user, cfg->ldapdn);
 
