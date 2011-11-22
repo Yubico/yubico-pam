@@ -791,6 +791,11 @@ pam_sm_authenticate (pam_handle_t * pamh,
     {
       char *onlypasswd = strdup (password);
 
+      if (! onlypasswd) {
+	retval = PAM_BUF_ERR;
+	goto done;
+      }
+
       onlypasswd[password_len - (TOKEN_OTP_LEN + cfg->token_id_length)] = '\0';
 
       DBG (("Extracted a probable system password entered before the OTP - "
