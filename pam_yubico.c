@@ -439,7 +439,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   char *userfile = NULL, *tmpfile = NULL;
   FILE *f = NULL;
   unsigned char buf[CR_RESPONSE_SIZE + 16], response_hex[CR_RESPONSE_SIZE * 2 + 1];
-  int ret;
+  int ret, fd;
 
   unsigned int flags = 0;
   unsigned int response_len = 0;
@@ -451,6 +451,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   char *errstr = NULL;
 
   struct passwd *p;
+  struct stat st;
 
   ret = PAM_AUTH_ERR;
   flags |= YK_FLAG_MAYBLOCK;
@@ -485,8 +486,30 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
       goto out;
   }
 
-  /* XXX may want to check that userfile is a regular file. */
-  f = fopen(userfile, "r");
+  fd = open(userfile, O_RDONLY, 0);
+  if (fd < 0) {
+      DBG (("Cannot open file: %s (%s)", userfile, strerror(errno)));
+      goto out;
+  }
+
+  if (fstat(fd, &st) < 0) {
+      DBG (("Cannot stat file: %s (%s)", userfile, strerror(errno)));
+      close(fd);
+      goto out;
+  }
+
+  if (!S_ISREG(st.st_mode)) {
+      DBG (("%s is not a regular file", userfile));
+      close(fd);
+      goto out;
+  }
+
+  f = fdopen(fd, "r");
+  if (f == NULL) {
+      DBG (("fdopen: %s", strerror(errno)));
+      close(fd);
+      goto out;
+  }
 
   if (! load_chalresp_state(f, &state))
     goto out;
