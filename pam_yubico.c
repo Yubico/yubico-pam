@@ -197,7 +197,8 @@ check_user_token (struct cfg *cfg,
 static int
 authorize_user_token (struct cfg *cfg,
 		      const char *username,
-		      const char *otp_id)
+		      const char *otp_id,
+		      pam_handle_t *pamh)
 {
   int retval;
   struct passwd *p;
@@ -208,7 +209,7 @@ authorize_user_token (struct cfg *cfg,
       return 0;
   }
 
-  if (drop_privileges(p) < 0) {
+  if (drop_privileges(p, pamh) < 0) {
     D (("could not drop privileges"));
     return 0;
   }
@@ -235,7 +236,7 @@ authorize_user_token (struct cfg *cfg,
       free (userfile);
     }
 
-  if (restore_privileges() < 0)
+  if (restore_privileges(pamh) < 0)
     {
       DBG (("could not restore privileges"));
       return 0;
@@ -479,7 +480,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   }
 
   /* Drop privileges before opening user file. */
-  if (drop_privileges(p) < 0) {
+  if (drop_privileges(p, pamh) < 0) {
       D (("could not drop privileges"));
       goto out;
   }
@@ -495,7 +496,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
     goto out;
   }
 
-  if (restore_privileges() < 0) {
+  if (restore_privileges(pamh) < 0) {
       DBG (("could not restore privileges"));
       goto out;
   }
@@ -898,7 +899,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
   if (cfg->ldapserver != NULL || cfg->ldap_uri != NULL)
     valid_token = authorize_user_token_ldap (cfg, user, otp_id);
   else
-    valid_token = authorize_user_token (cfg, user, otp_id);
+    valid_token = authorize_user_token (cfg, user, otp_id, pamh);
 
   if (valid_token == 0)
     {

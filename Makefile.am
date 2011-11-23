@@ -32,9 +32,9 @@ libdir = $(PAMDIR)
 
 lib_LTLIBRARIES = pam_yubico.la
 
-include_HEADERS = util.h
+include_HEADERS = util.h drop_privs.h
 
-pam_yubico_la_SOURCES = pam_yubico.c util.c
+pam_yubico_la_SOURCES = pam_yubico.c util.c drop_privs.c
 # XXX add -Wl,-x too?  PAM documentation suggests it.
 pam_yubico_la_LIBADD = @LTLIBYKCLIENT@ @LIBLDAP@ @YKPERS_LIBS@ @LTLIBYUBIKEY@ -lpam
 pam_yubico_la_LDFLAGS = -module -avoid-version

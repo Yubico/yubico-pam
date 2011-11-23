@@ -37,8 +37,10 @@ AC_PROG_LIBTOOL
 
 AC_CHECK_HEADERS([security/pam_appl.h], [],
   [AC_MSG_ERROR([[PAM header files not found, install libpam-dev.]])])
-AC_CHECK_HEADERS([security/pam_modules.h security/_pam_macros.h], [], [],
+AC_CHECK_HEADERS([security/pam_modules.h security/_pam_macros.h security/pam_modutil.h], [], [],
   [#include <security/pam_appl.h>])
+
+AC_CHECK_LIB([pam], [pam_start])
 
 AC_ARG_WITH([ldap],
             [AS_HELP_STRING([--without-ldap],
@@ -82,6 +84,8 @@ if test -n "$YKPERS_LIBS"; then
   AC_DEFINE([HAVE_CR], [1], [Define if you have libykpers-1])
 fi
 AM_CONDITIONAL([YKPERS], [test -n "$YKPERS_LIBS"])
+
+AC_CHECK_FUNCS([pam_modutil_drop_priv])
 
 AC_SUBST(PAMDIR, "\$(exec_prefix)/lib/security")
 AC_ARG_WITH(pam-dir,

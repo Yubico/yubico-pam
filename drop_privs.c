@@ -1,5 +1,8 @@
 /* Written by Ricky Zhou <ricky@fedoraproject.org>
+ * Fredrik Thulin <fredrik@yubico.com> implemented pam_modutil_drop_priv
+ *
  * Copyright (c) 2011 Ricky Zhou <ricky@fedoraproject.org>
+ * Copyright (c) 2011 Yubico AB
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,13 +38,34 @@
 
 #include "util.h"
 
+#ifdef HAVE_SECURITY_PAM_APPL_H
+#include <security/pam_appl.h>
+#endif
+#ifdef HAVE_SECURITY_PAM_MODULES_H
+#include <security/pam_modules.h>
+#endif
+
+#ifdef HAVE_PAM_MODUTIL_DROP_PRIV
+#ifdef HAVE_SECURITY_PAM_MODUTIL_H
+#include <security/pam_modutil.h>
+#endif /* HAVE_SECURITY_PAM_MODUTIL_H */
+static struct pam_modutil_privs *pam_privs;
+#else
 static uid_t saved_euid;
 static gid_t saved_egid;
 
 static gid_t *saved_groups;
 static int saved_groups_length;
+#endif /* HAVE_PAM_MODUTIL_DROP_PRIV */
 
-int drop_privileges(struct passwd *pw) {
+int drop_privileges(struct passwd *pw, pam_handle_t *pamh) {
+#ifdef HAVE_PAM_MODUTIL_DROP_PRIV
+  int res;
+  res = pam_modutil_drop_priv(pamh, pam_privs, pw);
+  if (res)
+    D (("pam_modutil_drop_priv: %i", res));
+  return res;
+#else
     saved_euid = geteuid();
     saved_egid = getegid();
 
@@ -80,9 +104,17 @@ int drop_privileges(struct passwd *pw) {
     }
 
     return 0;
+#endif /* HAVE_PAM_MODUTIL_DROP_PRIV */
 }
 
-int restore_privileges(void) {
+int restore_privileges(pam_handle_t *pamh) {
+#ifdef HAVE_PAM_MODUTIL_DROP_PRIV
+  int res;
+  res = pam_modutil_regain_priv(pamh, pam_privs);
+  if (res)
+    D (("pam_modutil_drop_priv: %i", res));
+  return res;
+#else
     if (seteuid(saved_euid) < 0) {
         D (("seteuid: %s", strerror(errno)));
         return -1;
@@ -101,4 +133,5 @@ int restore_privileges(void) {
     free(saved_groups);
 
     return 0;
+#endif /* HAVE_PAM_MODUTIL_DROP_PRIV */
 }
