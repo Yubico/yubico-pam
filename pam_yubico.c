@@ -34,7 +34,14 @@
 #include <ctype.h>
 #include <syslog.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
+
 #include "util.h"
+#include "drop_privs.h"
 
 /* Libtool defines PIC for shared objects */
 #ifndef PIC
@@ -125,14 +132,34 @@ check_user_token (struct cfg *cfg,
   char buf[1024];
   char *s_user, *s_token;
   int retval = 0;
+  int fd;
+  struct stat st;
   FILE *opwfile;
 
-  opwfile = fopen (authfile, "r");
-  if (opwfile == NULL)
-    {
+  fd = open(authfile, O_RDONLY, 0);
+  if (fd < 0) {
       DBG (("Cannot open file: %s", authfile));
       return retval;
-    }
+  }
+
+  if (fstat(fd, &st) < 0) {
+      DBG (("Cannot stat file: %s", authfile));
+      close(fd);
+      return retval;
+  }
+
+  if (!S_ISREG(st.st_mode)) {
+      DBG (("%s is not a regular file", authfile));
+      close(fd);
+      return retval;
+  }
+
+  opwfile = fdopen(fd, "r");
+  if (opwfile == NULL) {
+      DBG (("fdopen: %s", strerror(errno)));
+      close(fd);
+      return retval;
+  }
 
   while (fgets (buf, 1024, opwfile))
     {
@@ -173,6 +200,18 @@ authorize_user_token (struct cfg *cfg,
 		      const char *otp_id)
 {
   int retval;
+  struct passwd *p;
+
+  p = getpwnam (username);
+  if (p == NULL) {
+      DBG (("getpwnam: %s", strerror(errno)));
+      return 0;
+  }
+
+  if (drop_privileges(p) < 0) {
+    D (("could not drop privileges"));
+    return 0;
+  }
 
   if (cfg->auth_file)
     {
@@ -194,6 +233,12 @@ authorize_user_token (struct cfg *cfg,
       retval = check_user_token (cfg, userfile, username, otp_id);
 
       free (userfile);
+    }
+
+  if (restore_privileges() < 0)
+    {
+      DBG (("could not restore privileges"));
+      return 0;
     }
 
   return retval;
@@ -356,6 +401,7 @@ authorize_user_token_ldap (struct cfg *cfg,
   return retval;
 }
 
+#if HAVE_LIBYKPERS_1
 static int
 display_error(pam_handle_t *pamh, char *message) {
   struct pam_conv *conv;
@@ -383,6 +429,7 @@ display_error(pam_handle_t *pamh, char *message) {
   D(("conv returned: '%s'", resp->resp));
   return retval;
 }
+#endif
 
 #if HAVE_LIBYKPERS_1
 static int
@@ -401,6 +448,8 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
 
   int len;
   char *errstr = NULL;
+
+  struct passwd *p;
 
   ret = PAM_AUTH_ERR;
   flags |= YK_FLAG_MAYBLOCK;
@@ -423,7 +472,19 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
 
   DBG(("Loading challenge from file %s", userfile));
 
-  /* XXX should drop root privileges before opening file in user's home directory */
+  p = getpwnam (username);
+  if (p == NULL) {
+      DBG (("getpwnam: %s", strerror(errno)));
+      goto out;
+  }
+
+  /* Drop privileges before opening user file. */
+  if (drop_privileges(p) < 0) {
+      D (("could not drop privileges"));
+      goto out;
+  }
+
+  /* XXX may want to check that userfile is a regular file. */
   f = fopen(userfile, "r");
 
   if (! load_chalresp_state(f, &state))
@@ -432,6 +493,11 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   if (fclose(f) < 0) {
     f = NULL;
     goto out;
+  }
+
+  if (restore_privileges() < 0) {
+      DBG (("could not restore privileges"));
+      goto out;
   }
 
   if (! challenge_response(yk, state.slot, state.challenge, state.challenge_len,
