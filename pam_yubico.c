@@ -573,6 +573,12 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   memcpy (state.response, buf, response_len);
   state.response_len = response_len;
 
+  /* Drop privileges before creating new challenge file. */
+  if (drop_privileges(p, pamh) < 0) {
+      D (("could not drop privileges"));
+      goto out;
+  }
+
   /* Write out the new file */
   tmpfile = malloc(strlen(userfile) + 1 + 4);
   if (! tmpfile)
@@ -594,6 +600,11 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   f = NULL;
   if (rename(tmpfile, userfile) < 0) {
     goto out;
+  }
+
+  if (restore_privileges(pamh) < 0) {
+      DBG (("could not restore privileges"));
+      goto out;
   }
 
   DBG(("Challenge-response success!"));
