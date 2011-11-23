@@ -401,7 +401,7 @@ authorize_user_token_ldap (struct cfg *cfg,
   return retval;
 }
 
-#if HAVE_LIBYKPERS_1
+#if HAVE_CR
 static int
 display_error(pam_handle_t *pamh, char *message) {
   struct pam_conv *conv;
@@ -429,9 +429,9 @@ display_error(pam_handle_t *pamh, char *message) {
   D(("conv returned: '%s'", resp->resp));
   return retval;
 }
-#endif
+#endif /* HAVE_CR */
 
-#if HAVE_LIBYKPERS_1
+#if HAVE_CR
 static int
 do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
 {
@@ -605,7 +605,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   free(tmpfile);
   return ret;
 }
-#endif
+#endif /* HAVE_CR */
 
 static void
 parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
@@ -717,7 +717,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
   DBG (("get user returned: %s", user));
 
   if (cfg->mode == CHRESP) {
-#if HAVE_LIBYKPERS_1
+#if HAVE_CR
     return do_challenge_response(pamh, cfg, user);
 #else
     DBG (("no support for challenge/response"));
