@@ -138,12 +138,12 @@ check_user_token (struct cfg *cfg,
 
   fd = open(authfile, O_RDONLY, 0);
   if (fd < 0) {
-      DBG (("Cannot open file: %s", authfile));
+      DBG (("Cannot open file: %s (%s)", authfile, strerror(errno)));
       return retval;
   }
 
   if (fstat(fd, &st) < 0) {
-      DBG (("Cannot stat file: %s", authfile));
+      DBG (("Cannot stat file: %s (%s)", authfile, strerror(errno)));
       close(fd);
       return retval;
   }
