@@ -75,7 +75,7 @@ configure the PAM module accordingly.
 First, program a YubiKey for challenge response on Slot 2 :
 .HP
 .nf
-$ \fBykpersonalize -2 -ochal-resp -ochal-hmac -ohmac-lt64 -oserial-api-visible\fR
+$ \fBykpersonalize -2 \-ochal-resp \-ochal-hmac \-ohmac-lt64 \-oserial-api-visible\fR
  ...
 Commit? (y/n) [n]: y
 $
@@ -84,8 +84,8 @@ $
 Now, set the current user to require this YubiKey for logon :
 .HP
 .nf
-$ \fBykpamcfg -2 -v\fR
-...
+$ \fBykpamcfg \-2 \-v\fR
+ ...
 Stored initial challenge and expected response in '/home/alice/.yubico/challenge-123456'.
 $
 .fi
