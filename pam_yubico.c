@@ -448,11 +448,9 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
 
   unsigned int flags = 0;
   unsigned int response_len = 0;
-  unsigned int expect_bytes = 0;
   YK_KEY *yk = NULL;
   CR_STATE state;
 
-  int len;
   char *errstr = NULL;
 
   struct passwd *p;
