@@ -72,7 +72,7 @@ get_user_cfgfile_path(const char *common_path, const char *filename, const char 
 int generate_random(char *buf, int len)
 {
 	FILE *u;
-	int i, res;
+	int res;
 
 	u = fopen("/dev/urandom", "r");
 	if (!u) {
