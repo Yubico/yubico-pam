@@ -167,6 +167,8 @@ int challenge_response(YK_KEY *yk, int slot,
 	case 2:
 		yk_cmd = (hmac == true) ? SLOT_CHAL_HMAC2 : SLOT_CHAL_OTP2;
 		break;
+	default:
+		return 0;
 	}
 
 	if (!yk_write_to_key(yk, yk_cmd, challenge, len))
