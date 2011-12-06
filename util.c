@@ -49,11 +49,16 @@ get_user_cfgfile_path(const char *common_path, const char *filename, const char 
    */
   struct passwd *p;
   char *userfile;
+  int len;
 
   if (common_path != NULL) {
-    if (asprintf (&userfile, "%s/%s", common_path, filename) >= 0)
-      *fn = userfile;
-    return (userfile >= 0);
+    len = strlen(common_path) + 1 + strlen(filename) + 1;
+    if ((userfile = malloc(len)) == NULL) {
+      return 0;
+    }
+    snprintf(userfile, len, "%s/%s", common_path, filename);
+    *fn = userfile;
+    return 1;
   }
 
   /* No common path provided. Construct path to user's ~/.yubico/filename */
@@ -62,14 +67,18 @@ get_user_cfgfile_path(const char *common_path, const char *filename, const char 
   if (!p)
     return 0;
 
-  if (asprintf (&userfile, "%s/.yubico/%s", p->pw_dir, filename) >= 0)
-    *fn = userfile;
-  return (userfile >= 0);
+  len = strlen(p->pw_dir) + 9 + strlen(filename) + 1;
+  if ((userfile = malloc(len)) == NULL) {
+    return 0;
+  }
+  snprintf(userfile, len, "%s/.yubico/%s", p->pw_dir, filename);
+  *fn = userfile;
+  return 1;
 }
 
 #if HAVE_CR
 /* Fill buf with len bytes of random data */
-int generate_random(char *buf, int len)
+int generate_random(void *buf, int len)
 {
 	FILE *u;
 	int res;
@@ -193,7 +202,7 @@ get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *usern
    * the option chalresp_path can be used to point to a system-wide directory.
    */
 
-  const char *filename; /* not including directory */
+  char *filename; /* not including directory */
   unsigned int serial = 0;
 
   if (! yk_get_serial(yk, 0, 0, &serial)) {
@@ -201,13 +210,20 @@ get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *usern
     if (! chalresp_path)
       filename = "challenge";
     else
-      filename = username;
+      filename = (char *) username;
   } else {
     /* We have serial number */
-    int res = asprintf (&filename, "%s-%i", chalresp_path == NULL ? "challenge" : username, serial);
-
-    if (res < 1)
-      filename = NULL;
+    int len;
+    /* 0xffffffff == 4294967295 == 10 digits */
+    len = strlen(chalresp_path == NULL ? "challenge" : username) + 1 + 10 + 1;
+    if ((filename = malloc(len)) != NULL) {
+      int res = snprintf(filename, len, "%s-%i", chalresp_path == NULL ? "challenge" : username, serial);
+      if (res < 0 || res > len) {
+	/* Not enough space, strangely enough. */
+	free(filename);
+	filename = NULL;
+      }
+    }
   }
 
   if (filename == NULL)
