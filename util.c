@@ -128,9 +128,9 @@ init_yubikey(YK_KEY **yk)
 }
 
 int challenge_response(YK_KEY *yk, int slot,
-		       unsigned char *challenge, unsigned int len,
+		       char *challenge, unsigned int len,
 		       bool hmac, unsigned int flags, bool verbose,
-		       unsigned char *response, int res_size, int *res_len)
+		       char *response, int res_size, int *res_len)
 {
 	int yk_cmd;
 	unsigned int response_len = 0;
@@ -186,8 +186,6 @@ get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *usern
 {
   /* Getting file from user home directory, i.e. ~/.yubico/challenge, or
    * from a system wide directory.
-   *
-   * Format is hex(challenge):hex(response):slot num
    */
 
   /* The challenge to use is located in a file in the user's home directory,
@@ -221,7 +219,12 @@ get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *usern
 int
 load_chalresp_state(FILE *f, CR_STATE *state)
 {
-  unsigned char challenge_hex[CR_CHALLENGE_SIZE * 2 + 1], response_hex[CR_RESPONSE_SIZE * 2 + 1];
+  /*
+   * Load the current challenge and expected response information from a file handle.
+   *
+   * Format is hex(challenge):hex(response):slot num
+   */
+  char challenge_hex[CR_CHALLENGE_SIZE * 2 + 1], response_hex[CR_RESPONSE_SIZE * 2 + 1];
   int slot;
   int r;
 
@@ -273,7 +276,7 @@ load_chalresp_state(FILE *f, CR_STATE *state)
 int
 write_chalresp_state(FILE *f, CR_STATE *state)
 {
-  unsigned char challenge_hex[CR_CHALLENGE_SIZE * 2 + 1], response_hex[CR_RESPONSE_SIZE * 2 + 1];
+  char challenge_hex[CR_CHALLENGE_SIZE * 2 + 1], response_hex[CR_RESPONSE_SIZE * 2 + 1];
   int fd;
 
   memset(challenge_hex, 0, sizeof(challenge_hex));

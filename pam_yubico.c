@@ -438,7 +438,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
 {
   char *userfile = NULL, *tmpfile = NULL;
   FILE *f = NULL;
-  unsigned char buf[CR_RESPONSE_SIZE + 16], response_hex[CR_RESPONSE_SIZE * 2 + 1];
+  char buf[CR_RESPONSE_SIZE + 16], response_hex[CR_RESPONSE_SIZE * 2 + 1];
   int ret, fd;
 
   unsigned int flags = 0;
@@ -535,7 +535,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
    * Check YubiKey response against the expected response
    */
 
-  yubikey_hex_encode(response_hex, (char *)buf, response_len);
+  yubikey_hex_encode(response_hex, buf, response_len);
 
   if (memcmp(buf, state.response, response_len) == 0) {
     ret = PAM_SUCCESS;
