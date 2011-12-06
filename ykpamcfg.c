@@ -118,7 +118,7 @@ parse_args(int argc, char **argv,
 int
 do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, int *exit_code)
 {
-  unsigned char buf[CR_RESPONSE_SIZE + 16];
+  char buf[CR_RESPONSE_SIZE + 16];
   CR_STATE state;
   unsigned int flags = 0;
   int ret = 0;

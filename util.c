@@ -144,7 +144,7 @@ init_yubikey(YK_KEY **yk)
 int challenge_response(YK_KEY *yk, int slot,
 		       char *challenge, unsigned int len,
 		       bool hmac, unsigned int flags, bool verbose,
-		       char *response, int res_size, int *res_len)
+		       char *response, int res_size, unsigned int *res_len)
 {
 	int yk_cmd;
 	unsigned int response_len = 0;
