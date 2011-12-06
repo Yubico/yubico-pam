@@ -39,6 +39,11 @@
 
 #include "util.h"
 
+#if HAVE_CR
+/* for yubikey_hex_decode and yubikey_hex_p */
+#include <yubikey.h>
+#endif /* HAVE_CR */
+
 int
 get_user_cfgfile_path(const char *common_path, const char *filename, const char *username, char **fn)
 {

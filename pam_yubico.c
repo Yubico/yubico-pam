@@ -43,6 +43,11 @@
 #include "util.h"
 #include "drop_privs.h"
 
+#if HAVE_CR
+/* for yubikey_hex_decode and yubikey_hex_p */
+#include <yubikey.h>
+#endif /* HAVE_CR */
+
 /* Libtool defines PIC for shared objects */
 #ifndef PIC
 #define PAM_STATIC
