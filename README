@@ -17,8 +17,9 @@ the 'url' parameter).
 
 In version 2.6, offline validation was also made possible through
 the use of HMAC-SHA1 Challenge-Response found in YubiKey 2.2 and
-later. This has introduced a currently mandatory dependency of
-libykpers-1 from the ykpersonalize package.
+later. This has introduced a dependency of libykpers-1 from the
+ykpersonalize package. Pass `--without-cr' to `configure' to avoid
+this dependency.
 
 The development community is co-ordinated via Google Code :
 
@@ -193,6 +194,18 @@ Supported PAM module parameters are:
   "yubi_attr":  specify the LDAP attribute used to store the Yubikey id.
 
   "capath":     Path to a directory with SSL CA certs you trust.
+
+  "token_id_length":
+		Length of ID prefixing the OTP (this is 12 if using the
+		YubiCloud).
+  "mode":
+		Mode of operation. Use "client" for online validation with
+		a YubiKey validation service such as the YubiCloud, or use
+		"challenge-response" for offline validation using YubiKeys
+		with HMAC-SHA-1 Challenge-Response configurations. See the
+		man-page ykpamcfg(1) for further details on how to configure
+		offline Challenge-Response validation.
+
 ------
 
 If you are using "debug" you may find it useful to create a
