@@ -1,0 +1,42 @@
+Main files
+----------
+
+Simon Josefsson <simon@yubico.com>
+Fredrik Thulin <fredrik@yubico.com>
+
+
+Patches
+-------
+
+Tollef Fog Heen <tfheen@err.no>
+Challenge-response support for offline use.
+
+zubrick433@gmail.com
+LDAP support.
+
+Erinn Looney-Triggs <erinn.looneytriggs@gmail.com>
+Documentation.
+
+qistoph@gmail.com
+verbose_otp option.
+
+Remi Mollon <remi.mollon@cern.ch>
+capath option.
+
+fraser.scott@gmail.com
+Configurable public_id length.
+
+judas.iscariote, maxsanna81@gmail.com
+LDAP fixes.
+
+Romain Riviere <lecoyote@lecoyote.org>
+Debug macro fixes.
+
+Nanakos Chrysostomos <nanakos@wired-net.gr>
+Security fix.
+
+dr8 <github@dominicrutherford.co.uk>
+Security fix (problem really in ykclient).
+
+Ricky Zhou <ricky@fedoraproject.org>
+Drop permissions before opening user files.
