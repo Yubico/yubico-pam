@@ -206,45 +206,50 @@ authorize_user_token (struct cfg *cfg,
 		      pam_handle_t *pamh)
 {
   int retval;
-  struct passwd *p;
-
-  p = getpwnam (username);
-  if (p == NULL) {
-      DBG (("getpwnam: %s", strerror(errno)));
-      return 0;
-  }
-
-  if (drop_privileges(p, pamh) < 0) {
-    D (("could not drop privileges"));
-    return 0;
-  }
 
   if (cfg->auth_file)
     {
       /* Administrator had configured the file and specified is name
          as an argument for this module.
        */
+      DBG (("Using system-wide auth_file %s", cfg->auth_file));
       retval = check_user_token (cfg, cfg->auth_file, username, otp_id);
     }
   else
     {
       char *userfile = NULL;
+      struct passwd *p;
+
+      p = getpwnam (username);
+      if (p == NULL) {
+	DBG (("getpwnam: %s", strerror(errno)));
+	return 0;
+      }
 
       /* Getting file from user home directory
          ..... i.e. ~/.yubico/authorized_yubikeys
        */
-      if (! get_user_cfgfile_path (NULL, "authorized_yubikeys", username, &userfile))
+      if (! get_user_cfgfile_path (NULL, "authorized_yubikeys", username, &userfile)) {
+	D (("Failed figuring out per-user cfgfile"));
 	return 0;
+      }
+
+      DBG (("Dropping privileges"));
+
+      if (drop_privileges(p, pamh) < 0) {
+	D (("could not drop privileges"));
+	return 0;
+      }
 
       retval = check_user_token (cfg, userfile, username, otp_id);
 
-      free (userfile);
-    }
+      if (restore_privileges(pamh) < 0)
+	{
+	  DBG (("could not restore privileges"));
+	  return 0;
+	}
 
-  if (restore_privileges(pamh) < 0)
-    {
-      DBG (("could not restore privileges"));
-      return 0;
+      free (userfile);
     }
 
   return retval;
