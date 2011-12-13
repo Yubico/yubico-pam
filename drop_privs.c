@@ -49,7 +49,6 @@
 #ifdef HAVE_SECURITY_PAM_MODUTIL_H
 #include <security/pam_modutil.h>
 #endif /* HAVE_SECURITY_PAM_MODUTIL_H */
-static struct pam_modutil_privs *pam_privs;
 #else
 static uid_t saved_euid;
 static gid_t saved_egid;
@@ -58,10 +57,23 @@ static gid_t *saved_groups;
 static int saved_groups_length;
 #endif /* HAVE_PAM_MODUTIL_DROP_PRIV */
 
+#ifdef HAVE_PAM_MODUTIL_DROP_PRIV
+struct pam_modutil_privs * _privs_location(int force_init) {
+  static int init = 0;
+  static struct pam_modutil_privs privs;
+  if (init == 0 || force_init) {
+    PAM_MODUTIL_DEF_PRIVS(def_privs);
+    privs = def_privs;
+    init = 1;
+  }
+  return &privs;
+}
+#endif /* HAVE_PAM_MODUTIL_DROP_PRIV */
+
 int drop_privileges(struct passwd *pw, pam_handle_t *pamh) {
 #ifdef HAVE_PAM_MODUTIL_DROP_PRIV
   int res;
-  res = pam_modutil_drop_priv(pamh, pam_privs, pw);
+  res = pam_modutil_drop_priv(pamh, _privs_location(0), pw);
   if (res)
     D (("pam_modutil_drop_priv: %i", res));
   return res;
@@ -110,9 +122,11 @@ int drop_privileges(struct passwd *pw, pam_handle_t *pamh) {
 int restore_privileges(pam_handle_t *pamh) {
 #ifdef HAVE_PAM_MODUTIL_DROP_PRIV
   int res;
-  res = pam_modutil_regain_priv(pamh, pam_privs);
+  res = pam_modutil_regain_priv(pamh, _privs_location(0));
   if (res)
     D (("pam_modutil_drop_priv: %i", res));
+  /* re-initialize privs in case we want to drop privs again (sic) */
+  _privs_location(1);
   return res;
 #else
     if (seteuid(saved_euid) < 0) {
