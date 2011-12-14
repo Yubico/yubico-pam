@@ -1,6 +1,6 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
-* Version 2.10 (2011-12-13)
+* Version 2.10 (released 2011-12-14)
 
 ** Drop permissions (to the user that is trying to authenticate) before
 accessing files in the users home directory. Largely based on a patch by
