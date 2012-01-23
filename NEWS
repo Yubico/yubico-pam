@@ -1,5 +1,7 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
+* Version 2.11 (unreleased)
+
 * Version 2.10 (released 2011-12-14)
 
 ** Drop permissions (to the user that is trying to authenticate) before

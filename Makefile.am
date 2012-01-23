@@ -1,5 +1,5 @@
 # Written by Simon Josefsson <simon@yubico.com>.
-# Copyright (c) 2006, 2007, 2008, 2009, 2010, 2011 Yubico AB
+# Copyright (c) 2006-2012 Yubico AB
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without

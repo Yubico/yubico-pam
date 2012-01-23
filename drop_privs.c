@@ -1,8 +1,8 @@
 /* Written by Ricky Zhou <ricky@fedoraproject.org>
  * Fredrik Thulin <fredrik@yubico.com> implemented pam_modutil_drop_priv
  *
+ * Copyright (c) 2011-2012 Yubico AB
  * Copyright (c) 2011 Ricky Zhou <ricky@fedoraproject.org>
- * Copyright (c) 2011 Yubico AB
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
