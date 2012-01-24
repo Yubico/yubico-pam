@@ -381,6 +381,7 @@ authorize_user_token_ldap (struct cfg *cfg,
 	      /* Compare each value for the attribute against the token id. */
 	      for (i = 0; vals[i] != NULL; i++)
 		{
+		  /* Only values containing this prefix are considered. */
 		  if ((!cfg->yubi_prefix || !strncmp (cfg->yubi_prefix, vals[i]->bv_val, yubi_prefix_len)))
 		    {
 		      if(!strncmp (token_id, vals[i]->bv_val + yubi_prefix_len, strlen (token_id)))
