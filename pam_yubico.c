@@ -526,6 +526,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
     f = NULL;
     goto out;
   }
+  f = NULL;
 
   if (restore_privileges(pamh) < 0) {
       DBG (("could not restore privileges"));
