@@ -153,7 +153,7 @@ int challenge_response(YK_KEY *yk, int slot,
 	if (res_size < sizeof(64 + 16))
 	  return 0;
 
-	memset(response, 0, sizeof(response));
+	memset(response, 0, res_size);
 
 	if (verbose) {
 		fprintf(stderr, "Sending %i bytes %s challenge to slot %i\n", len, (hmac == true)?"HMAC":"Yubico", slot);
