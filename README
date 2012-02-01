@@ -168,6 +168,10 @@ Supported PAM module parameters are:
 
 		depending on your version of yubico-c-client.
 
+  "capath":	specify the path where X509 certificates are stored. This is
+		required if 'https' or 'ldaps' are used in 'url' and 'ldap_uri'
+		respectively.
+
   "verbose_otp":
                 This argument is used to show the OTP when it is entered,
 		i.e. to enable terminal echo of entered characters.
@@ -191,6 +195,10 @@ Supported PAM module parameters are:
   "user_attr":  specify the LDAP attribute used to store user names (eg:cn).
 
   "yubi_attr":  specify the LDAP attribute used to store the Yubikey id.
+
+  "yubi_attr_prefix":
+		specify the prefix of the LDAP attribute's value, in case
+		of a generic attribute, used to store several types of ids.
 
   "capath":     Path to a directory with SSL CA certs you trust.
 
