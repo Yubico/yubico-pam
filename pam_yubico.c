@@ -110,6 +110,7 @@ struct cfg
   char *ldapdn;
   char *user_attr;
   char *yubi_attr;
+  char *yubi_attr_prefix;
   int token_id_length;
   enum key_mode mode;
   char *chalresp_path;
@@ -279,6 +280,7 @@ authorize_user_token_ldap (struct cfg *cfg,
   int retval = 0;
   int protocol;
 #ifdef HAVE_LIBLDAP
+  int yubi_attr_prefix_len = 0;
   LDAP *ld = NULL;
   LDAPMessage *result = NULL, *e;
   BerElement *ber;
@@ -375,17 +377,24 @@ authorize_user_token_ldap (struct cfg *cfg,
 	{
 	  if ((vals = ldap_get_values_len (ld, e, a)) != NULL)
 	    {
+	      DBG(("LDAP : Found %i values - checking if any of them match '%s%s'",
+		   ldap_count_values_len(vals),
+		   cfg->yubi_attr_prefix ? cfg->yubi_attr_prefix : "",
+		   token_id));
+
+	      yubi_attr_prefix_len = cfg->yubi_attr_prefix ? strlen(cfg->yubi_attr_prefix) : 0;
+
 	      /* Compare each value for the attribute against the token id. */
 	      for (i = 0; vals[i] != NULL; i++)
 		{
-		  if (!strncmp (token_id, vals[i]->bv_val, strlen (token_id)))
+		  /* Only values containing this prefix are considered. */
+		  if ((!cfg->yubi_attr_prefix || !strncmp (cfg->yubi_attr_prefix, vals[i]->bv_val, yubi_attr_prefix_len)))
 		    {
-		      DBG (("Token Found :: %s", vals[i]->bv_val));
-		      retval = 1;
-		    }
-		  else
-		    {
-		      DBG (("No match : (%s) %s != %s", a, vals[i]->bv_val, token_id));
+		      if(!strncmp (token_id, vals[i]->bv_val + yubi_attr_prefix_len, strlen (token_id)))
+		        {
+		          DBG (("Token Found :: %s", vals[i]->bv_val));
+		          retval = 1;
+		        }
 		    }
 		}
 	      ldap_value_free_len (vals);
@@ -694,6 +703,8 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->user_attr = (char *) argv[i] + 10;
       if (strncmp (argv[i], "yubi_attr=", 10) == 0)
 	cfg->yubi_attr = (char *) argv[i] + 10;
+      if (strncmp (argv[i], "yubi_attr_prefix=", 17) == 0)
+	cfg->yubi_attr_prefix = (char *) argv[i] + 17;
       if (strncmp (argv[i], "token_id_length=", 16) == 0)
 	sscanf (argv[i], "token_id_length=%d", &cfg->token_id_length);
       if (strcmp (argv[i], "mode=challenge-response") == 0)
@@ -723,6 +734,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
       D (("ldapdn=%s", cfg->ldapdn ? cfg->ldapdn : "(null)"));
       D (("user_attr=%s", cfg->user_attr ? cfg->user_attr : "(null)"));
       D (("yubi_attr=%s", cfg->yubi_attr ? cfg->yubi_attr : "(null)"));
+      D (("yubi_attr_prefix=%s", cfg->yubi_attr_prefix ? cfg->yubi_attr_prefix : "(null)"));
       D (("url=%s", cfg->url ? cfg->url : "(null)"));
       D (("capath=%s", cfg->capath ? cfg->capath : "(null)"));
       D (("token_id_length=%d", cfg->token_id_length));
