@@ -2,6 +2,19 @@ pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
 * Version 2.11 (unreleased)
 
+** Fix crash-bug with challenge-response mode when button press is required,
+but button is never pressed. Reported and fixed by
+Lingzhu Xiang <xianglingzhu@gmail.com>.
+
+** Fix a memset() with wrong size as reported by clang, as well as some
+other problems/warnings when building on Mac OS X, thanks to
+Clemens Lang <neverpanic@gmail.com>.
+
+** Add prefix-matching of LDAP fetched values, so you can store the
+token-to-user mapping in a multi-value attribute with values like
+"yubikey:publicid", "other-token:something" etc. Patch by
+Remi Mollon <remi.mollon@cern.ch>.
+
 * Version 2.10 (released 2011-12-14)
 
 ** Drop permissions (to the user that is trying to authenticate) before
