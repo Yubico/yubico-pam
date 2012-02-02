@@ -200,8 +200,6 @@ Supported PAM module parameters are:
 		specify the prefix of the LDAP attribute's value, in case
 		of a generic attribute, used to store several types of ids.
 
-  "capath":     Path to a directory with SSL CA certs you trust.
-
   "token_id_length":
 		Length of ID prefixing the OTP (this is 12 if using the
 		YubiCloud).
