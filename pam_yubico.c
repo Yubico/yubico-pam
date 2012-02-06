@@ -841,7 +841,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
       {
 	const char *query_template = "Yubikey for `%s': ";
 	size_t len = strlen (query_template) + strlen (user);
-	size_t wrote;
+	int wrote;
 
 	msg[0].msg = malloc (len);
 	if (!msg[0].msg)
