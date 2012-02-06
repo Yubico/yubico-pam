@@ -739,7 +739,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
       D (("capath=%s", cfg->capath ? cfg->capath : "(null)"));
       D (("token_id_length=%d", cfg->token_id_length));
       D (("mode=%s", cfg->mode == CLIENT ? "client" : "chresp" ));
-      D (("chalresp_path=%d", cfg->chalresp_path));
+      D (("chalresp_path=%s", cfg->chalresp_path ? cfg->chalresp_path : "(null)"));
     }
 }
 
