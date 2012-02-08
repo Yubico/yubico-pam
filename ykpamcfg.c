@@ -155,7 +155,7 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, i
     goto out;
 
   if (response_len > sizeof (state.response)) {
-    fprintf (stderr, "Got too long response ??? (%i/%i)", response_len, sizeof(state.response));
+    fprintf (stderr, "Got too long response ??? (%u/%lu)", response_len, (unsigned long) sizeof(state.response));
     goto out;
   }
   memcpy (state.response, buf, response_len);

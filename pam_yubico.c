@@ -586,7 +586,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
    * Write the challenge and response we will expect the next time to the state file.
    */
   if (response_len > sizeof(state.response)) {
-    D(("Got too long response ??? (%i/%i)", response_len, sizeof(state.response)));
+    D(("Got too long response ??? (%u/%lu)", response_len, (unsigned long) sizeof(state.response)));
     goto out;
   }
   memcpy (state.response, buf, response_len);
@@ -878,7 +878,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
 	  goto done;
 	}
 
-      DBG (("conv returned %i bytes", strlen(resp->resp)));
+      DBG (("conv returned %l bytes", (unsigned long) strlen(resp->resp)));
 
       password = resp->resp;
     }
