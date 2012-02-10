@@ -878,7 +878,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
 	  goto done;
 	}
 
-      DBG (("conv returned %l bytes", (unsigned long) strlen(resp->resp)));
+      DBG (("conv returned %lu bytes", (unsigned long) strlen(resp->resp)));
 
       password = resp->resp;
     }
