@@ -260,7 +260,7 @@ load_chalresp_state(FILE *f, CR_STATE *state)
    * 40 is twice the size of CR_RESPONSE_SIZE
    * (twice because we hex encode the challenge and response)
    */
-  r = fscanf(f, "v1:%126[0-9a-z]:%40[0-9a-z]:%d", &challenge_hex, &response_hex, &slot);
+  r = fscanf(f, "v1:%126[0-9a-z]:%40[0-9a-z]:%d", &challenge_hex[0], &response_hex[0], &slot);
   if (r != 3) {
     D(("Could not parse contents of chalres_state file (%i)", r));
     goto out;
