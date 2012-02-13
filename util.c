@@ -241,7 +241,7 @@ get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *usern
 }
 
 int
-load_chalresp_state(FILE *f, CR_STATE *state)
+load_chalresp_state(FILE *f, CR_STATE *state, bool verbose)
 {
   /*
    * Load the current challenge and expected response information from a file handle.
@@ -262,11 +262,12 @@ load_chalresp_state(FILE *f, CR_STATE *state)
    */
   r = fscanf(f, "v1:%126[0-9a-z]:%40[0-9a-z]:%d", &challenge_hex[0], &response_hex[0], &slot);
   if (r != 3) {
-    D(("Could not parse contents of chalres_state file (%i)", r));
+    D(("Could not parse contents of chalresp_state file (%i)", r));
     goto out;
   }
 
-  D(("Challenge: %s, response: %s, slot: %d", challenge_hex, response_hex, slot));
+  if (verbose)
+    D(("Challenge: %s, expected response: %s, slot: %d", challenge_hex, response_hex, slot));
 
   if (! yubikey_hex_p(challenge_hex)) {
     D(("Invalid challenge hex input : %s", challenge_hex));

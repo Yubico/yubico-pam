@@ -82,7 +82,7 @@ int generate_random(void *buf, int len);
 
 int get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *username, char **fn);
 
-int load_chalresp_state(FILE *f, CR_STATE *state);
+int load_chalresp_state(FILE *f, CR_STATE *state, bool verbose);
 int write_chalresp_state(FILE *f, CR_STATE *state);
 
 int init_yubikey(YK_KEY **yk);

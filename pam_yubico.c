@@ -529,7 +529,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
       goto out;
   }
 
-  if (! load_chalresp_state(f, &state))
+  if (! load_chalresp_state(f, &state, cfg->debug))
     goto out;
 
   if (fclose(f) < 0) {
