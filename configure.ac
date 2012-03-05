@@ -69,9 +69,6 @@ fi
 
 AC_LIB_HAVE_LINKFLAGS(yubikey,, [#include <yubikey.h>],
                       [yubikey_modhex_p("foo")])
-if test "$ac_cv_libyubikey" != yes; then
-  AC_MSG_ERROR([Libyubikey v1.5+ not found, see http://code.google.com/p/yubico-c/])
-fi
 
 AC_ARG_WITH([cr],
   [AS_HELP_STRING([--without-cr],
@@ -80,9 +77,13 @@ AC_ARG_WITH([cr],
   [with_cr=yes])
 if test "x$with_cr" != xno; then
   PKG_CHECK_MODULES([YKPERS], [ykpers-1]);
+  # libyubikey required for HAVE_CR
+  if test "$ac_cv_libyubikey" != yes; then
+    AC_MSG_ERROR([Libyubikey v1.5+ not found, see http://code.google.com/p/yubico-c/ (required for challenge-response)])
+  fi
 fi
 if test -n "$YKPERS_LIBS"; then
-  AC_DEFINE([HAVE_CR], [1], [Define if you have libykpers-1])
+  AC_DEFINE([HAVE_CR], [1], [Define if you have libykpers-1 and libyubikey])
 fi
 AM_CONDITIONAL([YKPERS], [test -n "$YKPERS_LIBS"])
 
@@ -101,3 +102,14 @@ AC_MSG_NOTICE([PAM installation path $PAMDIR])
 
 AC_CONFIG_FILES(Makefile)
 AC_OUTPUT
+
+AC_MSG_NOTICE([Summary of build options:
+
+  Version:            ${VERSION}
+  Host type:          ${host}
+  Install prefix:     ${prefix}
+  Compiler:           ${CC}
+  Library types:      Shared=${enable_shared}, Static=${enable_static}
+  LDAP:               ${with_ldap}
+  Challenge-Response: ${with_cr}
+])
