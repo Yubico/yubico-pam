@@ -39,7 +39,8 @@ AC_PROG_LIBTOOL
 AC_CHECK_HEADERS([security/pam_appl.h], [],
   [AC_MSG_ERROR([[PAM header files not found, install libpam-dev.]])])
 AC_CHECK_HEADERS([security/pam_modules.h security/_pam_macros.h security/pam_modutil.h], [], [],
-  [#include <security/pam_appl.h>])
+  [#include <sys/types.h>
+   #include <security/pam_appl.h>])
 
 AC_CHECK_LIB([pam], [pam_start])
 
