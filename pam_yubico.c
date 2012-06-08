@@ -605,9 +605,17 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   strcpy(tmpfile, userfile);
   strcat(tmpfile, ".tmp");
 
-  f = fopen(tmpfile, "w");
-  if (! f)
+  fd = open(tmpfile, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+  if (fd < 0) {
+      DBG (("Cannot open file: %s (%s)", tmpfile, strerror(errno)));
+      goto out;
+  }
+
+  f = fdopen(fd, "w");
+  if (! f) {
+    close(fd);
     goto out;
+  }
 
   errstr = "Error updating Yubikey challenge, please check syslog or contact your system administrator";
   if (! write_chalresp_state (f, &state))
