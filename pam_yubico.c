@@ -579,6 +579,12 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
     goto out;
   }
 
+  /* There is a bug that makes the YubiKey 2.2 send the same response for all challenges
+     unless HMAC_LT64 is set, check for that here */
+  if (memcmp(buf, state.response response_len) == 0) {
+    D(("Same response for second challenge, YubiKey should be reconfigured with the option HMAC_LT64"));
+  }
+
   /* the yk_* functions leave 'junk' in errno */
   errno = 0;
 
