@@ -1,5 +1,7 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
+* Version 2.12 (unreleased)
+
 * Version 2.11 (released 2012-02-10)
 
 ** Fix crash-bug with challenge-response mode when button press is required,
