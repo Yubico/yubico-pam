@@ -55,6 +55,10 @@ Generate the build system using:
    $ autoreconf --install
 ------
 
+If you get "linking libraries using a non-POSIX archiver requires 'AM_PROG_AR' in 'configure.ac'"
+you're probably using automake 1.12, use 1.11 or add -Wno-extra-portability in configure.ac. Adding
+this breaks compability with automake before 1.11.2.
+
 
 Building
 --------
