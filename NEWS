@@ -1,5 +1,7 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
+* Version 2.13 (unreleased)
+
 * Version 2.12 (released 2012-06-15)
 
 ** Only use libyubikey when --with-cr is used.
