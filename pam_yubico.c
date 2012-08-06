@@ -579,6 +579,13 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
     goto out;
   }
 
+  /* There is a bug that makes the YubiKey 2.2 send the same response for all challenges
+     unless HMAC_LT64 is set, check for that here */
+  if (memcmp(buf, state.response, response_len) == 0) {
+    errstr = "Same response for second challenge, YubiKey should be reconfigured with the option HMAC_LT64";
+    goto out;
+  }
+
   /* the yk_* functions leave 'junk' in errno */
   errno = 0;
 
@@ -605,9 +612,17 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   strcpy(tmpfile, userfile);
   strcat(tmpfile, ".tmp");
 
-  f = fopen(tmpfile, "w");
-  if (! f)
+  fd = open(tmpfile, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+  if (fd < 0) {
+      DBG (("Cannot open file: %s (%s)", tmpfile, strerror(errno)));
+      goto out;
+  }
+
+  f = fdopen(fd, "w");
+  if (! f) {
+    close(fd);
     goto out;
+  }
 
   errstr = "Error updating Yubikey challenge, please check syslog or contact your system administrator";
   if (! write_chalresp_state (f, &state))

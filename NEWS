@@ -1,5 +1,18 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
+* Version 2.13 (unreleased)
+
+* Version 2.12 (released 2012-06-15)
+
+** Only use libyubikey when --with-cr is used.
+
+** Set correct permissions on tempfile.
+
+** YubiKey 2.2 contains a bug in challenge-response that makes it output the
+same response to all challenges unless HMAC_LT64 is set. Add warnings to
+ykpamcfg and a warning through conversate in the pam module. Keys programmed
+like this should be reprogrammed with the HMAC_LT64 flag set.
+
 * Version 2.11 (released 2012-02-10)
 
 ** Fix crash-bug with challenge-response mode when button press is required,

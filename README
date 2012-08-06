@@ -55,6 +55,10 @@ Generate the build system using:
    $ autoreconf --install
 ------
 
+If you get "linking libraries using a non-POSIX archiver requires 'AM_PROG_AR' in 'configure.ac'"
+you're probably using automake 1.12, use 1.11 or add -Wno-extra-portability in configure.ac. Adding
+this breaks compability with automake before 1.11.2.
+
 
 Building
 --------
@@ -65,13 +69,15 @@ ykclient library from:
 
   http://code.google.com/p/yubico-c-client/
 
-It in turn requires Curl, which you need to have installed.
+It in turn requires Curl, which you need to have installed, and
+libyubikey. Get libyubikey from
+
+  http://code.google.com/p/yubico-c/
 
 The new Challenge-Response offline authentication requires libykpers-1
-from the yubikey-personalization project, and libyubikey from yubico-c :
+from the yubikey-personalization project :
 
   http://code.google.com/p/yubikey-personalization/
-  http://code.google.com/p/yubico-c/
 
 
 The build system uses Autoconf, to set up the build system run:
@@ -81,7 +87,6 @@ The build system uses Autoconf, to set up the build system run:
 ------
 
 Use --without-ldap to disable ldap support.
-Use --without-cr to disable challenge-response support.
 
 Then build the code, run the self-test and install the binaries:
 

@@ -154,6 +154,30 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, i
 			   buf, sizeof(buf), &response_len))
     goto out;
 
+  /* Make sure we get different responses for different challenges
+     There is a firmware bug in YubiKey 2.2 that makes it issue same
+     response for all challenges unless HMAC_LT64 is set. */
+  {
+    char buf2[CR_RESPONSE_SIZE + 16];
+    char challenge[CR_CHALLENGE_SIZE];
+    CR_STATE state2;
+
+    if (generate_random(challenge, CR_CHALLENGE_SIZE)) {
+      fprintf (stderr, "FAILED getting %i bytes of random data\n", CR_CHALLENGE_SIZE);
+      goto out;
+    }
+    if (! challenge_response(yk, state.slot, challenge, CR_CHALLENGE_SIZE,
+          true, flags, verbose,
+          buf2, sizeof(buf2), &response_len))
+      goto out;
+
+    if (memcmp(buf, buf2, response_len) == 0) {
+      fprintf (stderr, "FAILED YubiKey is outputting the same response for different challenges."
+          "Make sure you configure the key with the option HMAC_LT64.\n");
+      goto out;
+    }
+  }
+
   if (response_len > sizeof (state.response)) {
     fprintf (stderr, "Got too long response ??? (%u/%lu)", response_len, (unsigned long) sizeof(state.response));
     goto out;
