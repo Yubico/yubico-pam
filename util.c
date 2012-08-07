@@ -332,3 +332,28 @@ write_chalresp_state(FILE *f, CR_STATE *state)
   return 0;
 }
 #endif /* HAVE_CR */
+
+int
+check_modhex(const char *input, const int len)
+{
+  const char *end;
+  for (end = input + len; input < end; ++input) {
+    if (*input < 0x62) {
+      return -1;
+    }
+    if (*input > 0x76) {
+      return -1;
+    }
+    if ((*input > 0x6C)
+        && (*input < 0x74)) {
+      switch (*input) {
+        case 'n':
+        case 'r':
+          break;
+        default:
+          return -1;
+      }
+    }
+  }
+  return 0;
+}

@@ -921,6 +921,13 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
   DBG (("OTP: %s ID: %s ", otp, otp_id));
 
+  /* Verify the OTP */
+  if (check_modhex(otp, strlen(otp))) {
+     DBG (("OTP contains non-authorized character (non modhex): '%s'.", otp));
+     retval = PAM_AUTH_ERR;
+     goto done;
+  }
+
   /* user entered their system password followed by generated OTP? */
   if (password_len > TOKEN_OTP_LEN + cfg->token_id_length)
     {

@@ -55,6 +55,7 @@
 #endif /* DEBUG_PAM */
 
 int get_user_cfgfile_path(const char *common_path, const char *filename, const char *username, char **fn);
+int check_modhex(const char *input, const int len);
 
 #if HAVE_CR
 
