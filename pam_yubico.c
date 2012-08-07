@@ -781,6 +781,13 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
   parse_cfg (flags, argc, argv, cfg);
 
+  if (cfg->token_id_length > MAX_TOKEN_ID_LEN)
+  {
+    DBG (("configuration error: token_id_length too long. Maximum acceptable value : %d", MAX_TOKEN_ID_LEN));
+    retval = PAM_AUTHINFO_UNAVAIL;
+    goto done;
+  }
+
   retval = pam_get_user (pamh, &user, NULL);
   if (retval != PAM_SUCCESS)
     {
