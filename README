@@ -283,6 +283,7 @@ Enter your Yubikey OTP and convert it, your Yubikey token ID is 12 digits and li
 
    Modhex encoded: XXXXXXX
 
+
 Yubico PAM module and SELinux.
 ------------------------------
 Users with SELinux in enforcing mode (the default on Fedora 17+) may experience
