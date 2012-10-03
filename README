@@ -177,8 +177,8 @@ Supported PAM module parameters are:
 		respectively.
 
   "verbose_otp":
-                This argument is used to show the OTP (One Time Password) when it is entered,
-		i.e. to enable terminal echo of entered characters.
+                This argument is used to show the OTP (One Time Password) when it
+                is entered, i.e. to enable terminal echo of entered characters.
                 You are advised to not use this, if you are using two factor
                 authentication because that will display your password on the
                 screen.
