@@ -283,6 +283,22 @@ Enter your Yubikey OTP and convert it, your Yubikey token ID is 12 digits and li
 
    Modhex encoded: XXXXXXX
 
+Yubico PAM module and SELinux.
+------------------------------
+Users with SELinux in enforcing mode (the default on Fedora 17+) may experience
+login problems with services including those validated via
+polkit-agent-helper-1, sshd and login.
+
+This is documented in the PAM Yubico issue tracker [1] and Red Hat bugzilla
+including a work around [2] for ssh (Equivalent files could be created for
+other services). Systems in 'permissive' mode will generate AVC warnings but
+authentication will succeed.
+
+[1] http://code.google.com/p/yubico-pam/issues/detail?id=43
+[2] https://bugzilla.redhat.com/show_bug.cgi?id=841693#c3
+
+To determine if you have SELinux enforcing or not run the 'sestatus' command.
+
 Examples
 --------
 
