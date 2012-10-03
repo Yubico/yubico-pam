@@ -246,8 +246,8 @@ each user you want to allow onto the system using a Yubikey.
 The mappings should look like this, one per line:
 
 ------
-   <user name>:<Yubikey token ID>:<Yubikey token ID>:….
-   <user name>:<Yubikey token ID>:<Yubikey token ID>:….
+   <first user name>:<Yubikey token ID1>:<Yubikey token ID2>:….
+   <second user name>:<Yubikey token ID3>:<Yubikey token ID4>:….
 ------
 
 Now add authfile=/etc/yubikey_mappings to your PAM configuration line, so it
@@ -265,7 +265,7 @@ directory and places the mapping in that file, the file must have only one
 line:
 
 ------
-   <user name>:<Yubikey token ID>:<Yubikey token ID>
+   <user name>:<Yubikey token ID1>:<Yubikey token ID2>
 ------
 
 This is much the same concept as the SSH authorized_keys file.
