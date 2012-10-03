@@ -177,7 +177,7 @@ Supported PAM module parameters are:
 		respectively.
 
   "verbose_otp":
-                This argument is used to show the OTP when it is entered,
+                This argument is used to show the OTP (One Time Password) when it is entered,
 		i.e. to enable terminal echo of entered characters.
                 You are advised to not use this, if you are using two factor
                 authentication because that will display your password on the
@@ -274,7 +274,7 @@ This is much the same concept as the SSH authorized_keys file.
 Obtaining the Yubikey token ID (a.k.a. public ID)
 -------------------------------------------------
 You can obtain the Yubikey token ID in two places. One is by removing the
-last 32 characters of any OTP generated with your Yubikey, the other
+last 32 characters of any OTP (One Time Password) generated with your Yubikey, the other
 is by using the modhex calculator located here :
 
 http://radius.yubico.com/demo/Modhex_Calculator.php
