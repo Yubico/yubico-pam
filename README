@@ -21,9 +21,13 @@ later. This has introduced a dependency of libykpers-1 from the
 ykpersonalize package. Pass `--without-cr' to `configure' to avoid
 this dependency.
 
-The development community is co-ordinated via Google Code :
+The development community is co-ordinated via Google Code and GitHub :
 
 http://code.google.com/p/yubico-pam/
+https://github.com/Yubico/yubico-pam/
+
+The split is roughly Google Code hosting the bug tracker with GitHub
+hosting the Wiki and code repository.
 
 The project is licensed under a BSD license.  See the file COPYING for
 exact wording.  For any copyright year range specified as YYYY-ZZZZ in
