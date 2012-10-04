@@ -102,7 +102,7 @@ Then build the code, run the self-test and install the binaries:
 Ubuntu PPA
 ----------
 
-There is an Ubuntu PPA (Private Package Archive) for yubico-pam that
+There is an Ubuntu PPA (Personal Package Archive) for yubico-pam that
 can be installed using the following commands on reasonably modern
 Ubuntu platforms :
 
