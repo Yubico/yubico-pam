@@ -27,6 +27,7 @@ m4/lt~obsolete.m4
 missing
 pam_yubico-*.tar.gz
 pam_yubico.la
+pam_yubico_la-drop_privs.lo
 pam_yubico_la-pam_yubico.lo
 pam_yubico_la-util.lo
 test
