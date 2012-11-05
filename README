@@ -283,7 +283,7 @@ is by using the modhex calculator located here :
 
 http://radius.yubico.com/demo/Modhex_Calculator.php
 
-Enter your Yubikey OTP and convert it, your Yubikey token ID is 12 digits and listed as:
+Enter your Yubikey OTP and convert it, your Yubikey token ID is 12 characters and listed as:
 
    Modhex encoded: XXXXXXX
 
