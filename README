@@ -102,7 +102,7 @@ There is an Ubuntu PPA (Personal Package Archive) for yubico-pam that
 can be installed using the following commands on reasonably modern
 Ubuntu platforms :
 
-  $ sudo add-apt-repository ppa:fredrikt/yubico
+  $ sudo add-apt-repository ppa:yubico/stable
   $ sudo apt-get update
   $ sudo apt-get install libpam-yubico
 
