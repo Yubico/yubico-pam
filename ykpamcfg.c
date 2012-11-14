@@ -53,6 +53,7 @@ const char *usage =
   "\t-1           Send challenge to slot 1. This is the default.\n"
   "\t-2           Send challenge to slot 2.\n"
   "\t-A action    What to do.\n"
+  "\t-p path      Specify an output path for the challenge file.\n"
   "\n"
   "\t-v           verbose\n"
   "\t-h           help (this text)\n"
@@ -63,7 +64,7 @@ const char *usage =
   "\n"
   "\n"
   ;
-const char *optstring = "12A:vh";
+const char *optstring = "12A:p:vh";
 
 static void
 report_yk_error()
@@ -85,7 +86,7 @@ report_yk_error()
 int
 parse_args(int argc, char **argv,
 	   int *slot, bool *verbose,
-	   char **action,
+	   char **action, char **output_dir,
 	   int *exit_code)
 {
   int c;
@@ -100,6 +101,9 @@ parse_args(int argc, char **argv,
       break;
     case 'A':
       *action = optarg;
+      break;
+    case 'p':
+      *output_dir = optarg;
       break;
     case 'v':
       *verbose = true;
@@ -216,6 +220,7 @@ main(int argc, char **argv)
   /* Options */
   bool verbose = false;
   char *action = ACTION_ADD_HMAC_CHALRESP;
+  char *output_dir = NULL;
   int slot = 1;
 
   ykp_errno = 0;
@@ -223,7 +228,7 @@ main(int argc, char **argv)
 
   if (! parse_args(argc, argv,
 		   &slot, &verbose,
-		   &action,
+		   &action, &output_dir,
 		   &exit_code))
     goto err;
 
@@ -239,7 +244,7 @@ main(int argc, char **argv)
     if (! check_firmware_version(yk, verbose, false))
       goto err;
 
-    if (! do_add_hmac_chalresp (yk, slot, verbose, NULL, &exit_code))
+    if (! do_add_hmac_chalresp (yk, slot, verbose, output_dir, &exit_code))
       goto err;
   } else {
     fprintf (stderr, "Unknown action '%s'\n", action);
