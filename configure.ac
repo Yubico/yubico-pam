@@ -33,9 +33,7 @@ AM_INIT_AUTOMAKE([1.10 foreign -Wall -Werror])
 AM_SILENT_RULES([yes])
 AM_PROG_CC_C_O
 
-# needed for automake 1.12 and other workarounds break 1.11...
-m4_pattern_allow([AM_PROG_AR])
-AM_PROG_AR
+m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 
 AC_LIBTOOL_WIN32_DLL
 AC_DISABLE_STATIC
