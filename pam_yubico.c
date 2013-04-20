@@ -241,7 +241,8 @@ authorize_user_token (struct cfg *cfg,
 
       if (drop_privileges(p, pamh) < 0) {
 	D (("could not drop privileges"));
-	return 0;
+	retval = 0;
+	goto free_out;
       }
 
       retval = check_user_token (cfg, userfile, username, otp_id);
@@ -249,9 +250,11 @@ authorize_user_token (struct cfg *cfg,
       if (restore_privileges(pamh) < 0)
 	{
 	  DBG (("could not restore privileges"));
-	  return 0;
+	  retval = 0;
+	  goto free_out;
 	}
 
+free_out:
       free (userfile);
     }
 
@@ -508,34 +511,34 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   fd = open(userfile, O_RDONLY, 0);
   if (fd < 0) {
       DBG (("Cannot open file: %s (%s)", userfile, strerror(errno)));
-      goto out;
+      goto restpriv_out;
   }
 
   if (fstat(fd, &st) < 0) {
       DBG (("Cannot stat file: %s (%s)", userfile, strerror(errno)));
       close(fd);
-      goto out;
+      goto restpriv_out;
   }
 
   if (!S_ISREG(st.st_mode)) {
       DBG (("%s is not a regular file", userfile));
       close(fd);
-      goto out;
+      goto restpriv_out;
   }
 
   f = fdopen(fd, "r");
   if (f == NULL) {
       DBG (("fdopen: %s", strerror(errno)));
       close(fd);
-      goto out;
+      goto restpriv_out;
   }
 
   if (! load_chalresp_state(f, &state, cfg->debug))
-    goto out;
+    goto restpriv_out;
 
   if (fclose(f) < 0) {
     f = NULL;
-    goto out;
+    goto restpriv_out;
   }
   f = NULL;
 
@@ -614,20 +617,20 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   /* Write out the new file */
   tmpfile = malloc(strlen(userfile) + 1 + 4);
   if (! tmpfile)
-    goto out;
+    goto restpriv_out;
   strcpy(tmpfile, userfile);
   strcat(tmpfile, ".tmp");
 
   fd = open(tmpfile, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
   if (fd < 0) {
       DBG (("Cannot open file: %s (%s)", tmpfile, strerror(errno)));
-      goto out;
+      goto restpriv_out;
   }
 
   f = fdopen(fd, "w");
   if (! f) {
     close(fd);
-    goto out;
+    goto restpriv_out;
   }
 
   errstr = "Error updating Yubikey challenge, please check syslog or contact your system administrator";
@@ -635,11 +638,11 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
     goto out;
   if (fclose(f) < 0) {
     f = NULL;
-    goto out;
+    goto restpriv_out;
   }
   f = NULL;
   if (rename(tmpfile, userfile) < 0) {
-    goto out;
+    goto restpriv_out;
   }
 
   if (restore_privileges(pamh) < 0) {
@@ -650,6 +653,12 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   DBG(("Challenge-response success!"));
   errstr = NULL;
   errno = 0;
+  goto out;
+
+restpriv_out:
+  if (restore_privileges(pamh) < 0) {
+      DBG (("could not restore privileges"));
+  }
 
  out:
   if (yk_errno) {

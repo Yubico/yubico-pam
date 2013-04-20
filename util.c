@@ -37,6 +37,7 @@
 #include <sys/types.h>
 #include <pwd.h>
 #include <unistd.h>
+#include <alloca.h>
 
 #include "util.h"
 
@@ -213,11 +214,10 @@ get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *usern
     int len;
     /* 0xffffffff == 4294967295 == 10 digits */
     len = strlen(chalresp_path == NULL ? "challenge" : username) + 1 + 10 + 1;
-    if ((filename = malloc(len)) != NULL) {
+    if ((filename = alloca(len)) != NULL) {
       int res = snprintf(filename, len, "%s-%i", chalresp_path == NULL ? "challenge" : username, serial);
       if (res < 0 || res > len) {
 	/* Not enough space, strangely enough. */
-	free(filename);
 	filename = NULL;
       }
     }
