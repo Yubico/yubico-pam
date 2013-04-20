@@ -54,7 +54,7 @@
 static uid_t saved_euid;
 static gid_t saved_egid;
 
-static gid_t *saved_groups;
+static gid_t *saved_groups = NULL;
 static int saved_groups_length;
 #endif /* HAVE_PAM_MODUTIL_DROP_PRIV */
 
@@ -82,6 +82,11 @@ int drop_privileges(struct passwd *pw, pam_handle_t *pamh) {
     saved_euid = geteuid();
     saved_egid = getegid();
 
+    if ((saved_euid == pw->pw_uid) && (saved_egid == pw->pw_gid)) {
+        D (("Privilges already dropped, pretend it is all right"));
+        return 0;
+    }
+ 
     saved_groups_length = getgroups(0, NULL);
     if (saved_groups_length < 0) {
         D (("getgroups: %s", strerror(errno)));
@@ -89,6 +94,7 @@ int drop_privileges(struct passwd *pw, pam_handle_t *pamh) {
     }
 
     if (saved_groups_length > 0) {
+        if (saved_groups) free(saved_groups); /* size might have changed */
         saved_groups = malloc(saved_groups_length * sizeof(gid_t));
         if (saved_groups == NULL) {
             D (("malloc: %s", strerror(errno)));
@@ -97,26 +103,30 @@ int drop_privileges(struct passwd *pw, pam_handle_t *pamh) {
 
         if (getgroups(saved_groups_length, saved_groups) < 0) {
             D (("getgroups: %s", strerror(errno)));
-            return -1;
+            goto free_out;
         }
     }
 
     if (initgroups(pw->pw_name, pw->pw_gid) < 0) {
         D (("initgroups: %s", strerror(errno)));
-        return -1;
+        goto free_out;
     }
 
     if (setegid(pw->pw_gid) < 0) {
         D (("setegid: %s", strerror(errno)));
-        return -1;
+        goto free_out;
     }
 
     if (seteuid(pw->pw_uid) < 0) {
         D (("seteuid: %s", strerror(errno)));
-        return -1;
+        goto free_out;
     }
 
     return 0;
+free_out:
+    free(saved_groups);
+    saved_groups = NULL;
+    return -1;
 #endif /* HAVE_PAM_MODUTIL_DROP_PRIV */
 }
 
@@ -130,6 +140,11 @@ int restore_privileges(pam_handle_t *pamh) {
   _privs_location(1);
   return res;
 #else
+    if ((saved_euid == geteuid()) && (saved_egid == getegid())) {
+        D (("Privilges already as requested, pretend it is all right"));
+        return 0;
+    }
+
     if (seteuid(saved_euid) < 0) {
         D (("seteuid: %s", strerror(errno)));
         return -1;
@@ -140,6 +155,10 @@ int restore_privileges(pam_handle_t *pamh) {
         return -1;
     }
 
+    if (saved_groups == NULL) {
+        D (("saved groups are empty, looks like a program error!"));
+        return -1;
+    }
     if (setgroups(saved_groups_length, saved_groups) < 0) {
         D (("setgroups: %s", strerror(errno)));
         return -1;
