@@ -121,8 +121,24 @@ parse_args(int argc, char **argv,
   return 1;
 }
 
+static int
+save_response(CR_STATE *state, char *buf, unsigned int response_len)
+{
+  if (response_len > sizeof (state->response)) {
+    fprintf (stderr, "Got too long response ??? (%u/%lu)",
+             response_len, (unsigned long) sizeof(state->response));
+    return 0;
+  }
+  memcpy (state->response, buf, response_len);
+  state->response_len = response_len;
+  return 1;
+}
+
 int
-do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, int *exit_code)
+update_userfile(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir,
+                int *exit_code, char *suffix,
+                int (*update_state)(CR_STATE *state, char *buf,
+                                unsigned int response_len))
 {
   char buf[CR_RESPONSE_SIZE + 16];
   CR_STATE state;
@@ -173,7 +189,7 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, i
       }
   }
 
-  if (! get_user_challenge_file(yk, output_dir, p->pw_name, &fn)) {
+  if (! get_user_challenge_file(yk, output_dir, p->pw_name, "", &fn)) {
     fprintf (stderr, "Failed getting chalresp state filename\n");
     goto out;
   }
@@ -213,12 +229,10 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, i
     }
   }
 
-  if (response_len > sizeof (state.response)) {
-    fprintf (stderr, "Got too long response ??? (%u/%lu)", response_len, (unsigned long) sizeof(state.response));
+  if (! (*update_state)(&state, buf, response_len)) {
+    fprintf (stderr, "No updated state, not writing\n");
     goto out;
   }
-  memcpy (state.response, buf, response_len);
-  state.response_len = response_len;
 
   f = fopen (fn, "w");
   if (! f) {
@@ -239,6 +253,13 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, i
     fclose (f);
 
   return ret;
+}
+
+int
+do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, int *exit_code)
+{
+  return update_userfile(yk, slot, verbose, output_dir, exit_code,
+                         "", save_response);
 }
 
 int

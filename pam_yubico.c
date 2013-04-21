@@ -488,7 +488,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   }
 
 
-  if (! get_user_challenge_file (yk, cfg->chalresp_path, username, &userfile)) {
+  if (! get_user_challenge_file (yk, cfg->chalresp_path, username, "", &userfile)) {
     D(("Failed getting user challenge file for user %s", username));
     goto out;
   }
