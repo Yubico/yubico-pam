@@ -62,6 +62,12 @@ enable verbose mode.
 The PAM module can utilize the HMAC-SHA1 Challenge-Response mode found in YubiKeys
 starting with version 2.2 for \fBoffline authentication\fR.  This action creates the initial state
 information with the C/R to be issued at the next logon.
+.TP
+\fBadd_saved_password\fR
+The file is created containing challenge and secret string encrypted using the response.
+If the PAM module is run with the argument \fBsupply_authtoken\fR, this string will be injected as PAM_AUTHTOKEN,
+as if it was entered as password by the user.
+Other PAM module can subsequently use it, for instance in order to unlock the keyring.
 
 The utility currently outputs the state information to a file in the current user's
 home directory (\fI~/.yubico/challenge-123456\fR for a YubiKey with serial number API readout
