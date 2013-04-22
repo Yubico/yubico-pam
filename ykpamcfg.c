@@ -104,6 +104,7 @@ static void
 set_echo(int on)
 {
   struct termios ts;
+
   if (on) {
     if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &save_ts) == -1) {
       perror("tcsetattr");
@@ -178,7 +179,7 @@ save_encrypted_string(CR_STATE *state, char *buf, unsigned int response_len)
   char str1[CR_RESPONSE_SIZE+2];
   char str2[CR_RESPONSE_SIZE+2];
   char *p;
-  int i;
+  int i, is_tty;
 
   if (response_len > sizeof (state->response)) {
     fprintf (stderr, "Got too long response ??? (%u/%lu)",
@@ -187,22 +188,27 @@ save_encrypted_string(CR_STATE *state, char *buf, unsigned int response_len)
   }
   memset(str1,0,sizeof(str1));
   memset(str2,0,sizeof(str2));
-  set_echo(0);
-  printf("Enter secret (up to %i chars): ", response_len); fflush(stdout);
+  is_tty = isatty(STDIN_FILENO);
+  if (is_tty) {
+    set_echo(0);
+    printf("Enter secret (up to %i chars): ", response_len); fflush(stdout);
+  }
   do {
     if (fgets(str1, response_len, stdin) == NULL) return 0;
   } while (str1[0] == '\n');
-  printf("\nReenter secret to check      : "); fflush(stdout);
-  do {
-    if (fgets(str2, response_len, stdin) == NULL) return 0;
-  } while (str2[0] == '\n');
-  printf("\n");
-  set_echo(1);
-  if (strcmp(str1, str2)) {
-    fprintf (stderr, "Inputs do not match\n");
-    return 0;
+  if (is_tty) {
+    printf("\nReenter secret to check      : "); fflush(stdout);
+    do {
+      if (fgets(str2, response_len, stdin) == NULL) return 0;
+    } while (str2[0] == '\n');
+    printf("\n");
+    set_echo(1);
+    if (strcmp(str1, str2)) {
+      fprintf (stderr, "Inputs do not match\n");
+      return 0;
+    }
   }
-  if (*(p=str1+strlen(str1)-1) != '\n') *p = '\0';
+  if (*(p=str1+strlen(str1)-1) == '\n') *p = '\0';
   if (strlen(str1) > response_len) {
     fprintf (stderr, "Input too long, only %i permitted\n", response_len);
     return 0;
