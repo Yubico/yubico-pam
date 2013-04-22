@@ -114,6 +114,7 @@ struct cfg
   int token_id_length;
   enum key_mode mode;
   char *chalresp_path;
+  int supply_authtoken;
 };
 
 #ifdef DBG
@@ -240,7 +241,8 @@ authorize_user_token (struct cfg *cfg,
 
       if (drop_privileges(p, pamh) < 0) {
 	D (("could not drop privileges"));
-	return 0;
+	retval = 0;
+	goto free_out;
       }
 
       retval = check_user_token (cfg, userfile, username, otp_id);
@@ -248,9 +250,11 @@ authorize_user_token (struct cfg *cfg,
       if (restore_privileges(pamh) < 0)
 	{
 	  DBG (("could not restore privileges"));
-	  return 0;
+	  retval = 0;
+	  goto free_out;
 	}
 
+free_out:
       free (userfile);
     }
 
@@ -454,7 +458,76 @@ display_error(pam_handle_t *pamh, char *message) {
 
 #if HAVE_CR
 static int
-do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
+compare_response(CR_STATE *state, char *buf, unsigned int response_len, char **data)
+{
+  if (memcmp(buf, state->response, response_len) == 0) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+static int
+extract_data(CR_STATE *state, char *buf, unsigned int response_len, char **data)
+{
+  int i;
+  if ((*data = malloc(response_len+1)) == NULL) {
+    D(("could not get memory for the data"));
+    return 0;
+  }
+  for (i = 0; i < response_len; i++)
+    (*data)[i] = buf[i] ^ state->response[i];
+  (*data)[i] = '\0';
+  return 1;
+}
+
+static int
+save_response(CR_STATE *state, char *buf, unsigned int response_len, char *data)
+{
+  if (response_len > sizeof(state->response)) {
+    D(("Got too long response ??? (%u/%lu)",
+        response_len, (unsigned long) sizeof(state->response)));
+    return 0;
+  }
+  memcpy (state->response, buf, response_len);
+  state->response_len = response_len;
+  return 1;
+}
+
+static int
+save_data(CR_STATE *state, char *buf, unsigned int response_len, char *data)
+{
+  int i, data_len;
+
+  if (response_len > sizeof (state->response)) {
+    D (("Got too long response ??? (%u/%lu)",
+             response_len, (unsigned long) sizeof(state->response)));
+    return 0;
+  }
+  if ((data_len = strlen(data)) > response_len) {
+    D (("Input too long, only %i permitted\n", response_len));
+    return 0;
+  }
+  /* Because we limit the size of data by the size of the key, there is no   */
+  /* need in fancy encryption algorithms. We use One Time Pad (literally).   */
+  for (i = 0; i < data_len; i++)
+    state->response[i] = buf[i] ^ data[i];
+  for (; i < response_len; i++) /* fill the rest with zeroes */
+    state->response[i] = buf[i] ^ 0;
+  state->response_len = response_len;
+  return 1;
+}
+
+static int
+do_userfile_handling(pam_handle_t *pamh, struct cfg *cfg, const char *username,
+                     char *suffix,
+                     int (*check_state)(CR_STATE *state, char *buf,
+                                        unsigned int response_len,
+                                        char **data),
+                     int (*update_state)(CR_STATE *state, char *buf,
+                                         unsigned int response_len,
+                                         char *data),
+                     char **data)
 {
   char *userfile = NULL, *tmpfile = NULL;
   FILE *f = NULL;
@@ -485,7 +558,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   }
 
 
-  if (! get_user_challenge_file (yk, cfg->chalresp_path, username, &userfile)) {
+  if (! get_user_challenge_file (yk, cfg->chalresp_path, username, suffix, &userfile)) {
     D(("Failed getting user challenge file for user %s", username));
     goto out;
   }
@@ -507,34 +580,34 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   fd = open(userfile, O_RDONLY, 0);
   if (fd < 0) {
       DBG (("Cannot open file: %s (%s)", userfile, strerror(errno)));
-      goto out;
+      goto restpriv_out;
   }
 
   if (fstat(fd, &st) < 0) {
       DBG (("Cannot stat file: %s (%s)", userfile, strerror(errno)));
       close(fd);
-      goto out;
+      goto restpriv_out;
   }
 
   if (!S_ISREG(st.st_mode)) {
       DBG (("%s is not a regular file", userfile));
       close(fd);
-      goto out;
+      goto restpriv_out;
   }
 
   f = fdopen(fd, "r");
   if (f == NULL) {
       DBG (("fdopen: %s", strerror(errno)));
       close(fd);
-      goto out;
+      goto restpriv_out;
   }
 
   if (! load_chalresp_state(f, &state, cfg->debug))
-    goto out;
+    goto restpriv_out;
 
   if (fclose(f) < 0) {
     f = NULL;
-    goto out;
+    goto restpriv_out;
   }
   f = NULL;
 
@@ -556,10 +629,10 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
 
   yubikey_hex_encode(response_hex, buf, response_len);
 
-  if (memcmp(buf, state.response, response_len) == 0) {
+  if ((*check_state)(&state, buf, response_len, data)) {
     ret = PAM_SUCCESS;
   } else {
-    D(("Unexpected C/R response : %s", response_hex));
+    D(("State check failed, response was : %s", response_hex));
     goto out;
   }
 
@@ -590,14 +663,12 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   errno = 0;
 
   /*
-   * Write the challenge and response we will expect the next time to the state file.
+   * Write refreshed content to the state file.
    */
-  if (response_len > sizeof(state.response)) {
-    D(("Got too long response ??? (%u/%lu)", response_len, (unsigned long) sizeof(state.response)));
+  if (! (*update_state)(&state, buf, response_len, *data)) {
+    D (("No updated state, not writing"));
     goto out;
   }
-  memcpy (state.response, buf, response_len);
-  state.response_len = response_len;
 
   /* Drop privileges before creating new challenge file. */
   if (drop_privileges(p, pamh) < 0) {
@@ -608,20 +679,20 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   /* Write out the new file */
   tmpfile = malloc(strlen(userfile) + 1 + 4);
   if (! tmpfile)
-    goto out;
+    goto restpriv_out;
   strcpy(tmpfile, userfile);
   strcat(tmpfile, ".tmp");
 
   fd = open(tmpfile, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
   if (fd < 0) {
       DBG (("Cannot open file: %s (%s)", tmpfile, strerror(errno)));
-      goto out;
+      goto restpriv_out;
   }
 
   f = fdopen(fd, "w");
   if (! f) {
     close(fd);
-    goto out;
+    goto restpriv_out;
   }
 
   errstr = "Error updating Yubikey challenge, please check syslog or contact your system administrator";
@@ -629,11 +700,11 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
     goto out;
   if (fclose(f) < 0) {
     f = NULL;
-    goto out;
+    goto restpriv_out;
   }
   f = NULL;
   if (rename(tmpfile, userfile) < 0) {
-    goto out;
+    goto restpriv_out;
   }
 
   if (restore_privileges(pamh) < 0) {
@@ -644,6 +715,12 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   DBG(("Challenge-response success!"));
   errstr = NULL;
   errno = 0;
+  goto out;
+
+restpriv_out:
+  if (restore_privileges(pamh) < 0) {
+      DBG (("could not restore privileges"));
+  }
 
  out:
   if (yk_errno) {
@@ -674,6 +751,31 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   free(userfile);
   free(tmpfile);
   return ret;
+}
+
+static int
+do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
+{
+  char *data = NULL;
+
+  return do_userfile_handling(pamh, cfg, username, "",
+                              compare_response, save_response, &data);
+}
+
+static void
+do_supply_authtoken(pam_handle_t *pamh, struct cfg *cfg, const char *username)
+{
+  char *data = NULL;
+
+  if (do_userfile_handling(pamh, cfg, username, "-pwd",
+                         extract_data, save_data, &data) != PAM_SUCCESS) {
+    D (("Could not extract authtoken data"));
+    return;
+  }
+  if (pam_set_item (pamh, PAM_AUTHTOK, data) != PAM_SUCCESS) {
+    D (("Could not store authtoken data"));
+  }
+  free(data);
 }
 #endif /* HAVE_CR */
 
@@ -729,6 +831,8 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->mode = CLIENT;
       if (strncmp (argv[i], "chalresp_path=", 14) == 0)
 	cfg->chalresp_path = (char *) argv[i] + 14;
+      if (strcmp (argv[i], "supply_authtoken") == 0)
+        cfg->supply_authtoken = 1;
     }
 
   if (cfg->debug)
@@ -756,6 +860,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
       D (("token_id_length=%d", cfg->token_id_length));
       D (("mode=%s", cfg->mode == CLIENT ? "client" : "chresp" ));
       D (("chalresp_path=%s", cfg->chalresp_path ? cfg->chalresp_path : "(null)"));
+      D (("supply_authtoken=%s", cfg->supply_authtoken ? "yes" : "no" ));
     }
 }
 
@@ -798,7 +903,11 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
   if (cfg->mode == CHRESP) {
 #if HAVE_CR
-    return do_challenge_response(pamh, cfg, user);
+    int rc;
+    rc = do_challenge_response(pamh, cfg, user);
+    if (cfg->supply_authtoken && rc == PAM_SUCCESS)
+      do_supply_authtoken(pamh, cfg, user);
+    return rc;
 #else
     DBG (("no support for challenge/response"));
     retval = PAM_AUTH_ERR;

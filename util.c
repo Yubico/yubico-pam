@@ -37,6 +37,7 @@
 #include <sys/types.h>
 #include <pwd.h>
 #include <unistd.h>
+#include <alloca.h>
 
 #include "util.h"
 
@@ -200,7 +201,7 @@ int challenge_response(YK_KEY *yk, int slot,
 }
 
 int
-get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *username, char **fn)
+get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *username, const char *suffix, char **fn)
 {
   /* Getting file from user home directory, i.e. ~/.yubico/challenge, or
    * from a system wide directory.
@@ -213,30 +214,28 @@ get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *usern
 
   char *filename; /* not including directory */
   unsigned int serial = 0;
+  char cserial[12]; /* 0xffffffff == 4294967295 == 10 digits, + 1 + 1 */
+  int len;
 
-  if (! yk_get_serial(yk, 0, 0, &serial)) {
-    D (("Failed to read serial number (serial-api-visible disabled?)."));
-    if (! chalresp_path)
-      filename = "challenge";
-    else
-      filename = (char *) username;
+  if (yk_get_serial(yk, 0, 0, &serial)) {
+    sprintf(cserial, "-%i", serial);
   } else {
-    /* We have serial number */
-    int len;
-    /* 0xffffffff == 4294967295 == 10 digits */
-    len = strlen(chalresp_path == NULL ? "challenge" : username) + 1 + 10 + 1;
-    if ((filename = malloc(len)) != NULL) {
-      int res = snprintf(filename, len, "%s-%i", chalresp_path == NULL ? "challenge" : username, serial);
-      if (res < 0 || res > len) {
-	/* Not enough space, strangely enough. */
-	free(filename);
-	filename = NULL;
-      }
-    }
+    D (("Failed to read serial number (serial-api-visible disabled?)."));
+    cserial[0] = '\0';
   }
 
-  if (filename == NULL)
-    return 0;
+  len = strlen(chalresp_path == NULL ? "challenge" : username) +
+        strlen(suffix) + strlen(cserial) + 1;
+  if ((filename = alloca(len)) != NULL) {
+    int res = snprintf(filename, len, "%s%s%s",
+                       chalresp_path == NULL ? "challenge" : username,
+                       suffix,
+                       cserial);
+    if (res < 0 || res > len) {
+	/* Not enough space, strangely enough. */
+	return 0;
+    }
+  } else return 0;
 
   return get_user_cfgfile_path (chalresp_path, filename, username, fn);
 }

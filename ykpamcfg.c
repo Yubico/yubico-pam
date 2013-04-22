@@ -39,6 +39,8 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <signal.h>
+#include <termios.h>
 
 #include <ykpers.h>
 
@@ -46,6 +48,7 @@
 #include "util.h"
 
 #define ACTION_ADD_HMAC_CHALRESP	"add_hmac_chalresp"
+#define ACTION_ADD_SAVED_PASSWORD	"add_saved_password"
 
 const char *usage =
   "Usage: ykpamcfg [options]\n"
@@ -63,6 +66,7 @@ const char *usage =
   "Actions :\n"
   "\n"
   "\t" ACTION_ADD_HMAC_CHALRESP "\tAdds a challenge-response state file for a connected YubiKey (default)\n"
+  "\t" ACTION_ADD_SAVED_PASSWORD "\tAdds a file containig a challenge and AUTHTOKEN encrypted with the response\n"
   "\n"
   "\n"
   ;
@@ -81,6 +85,41 @@ report_yk_error()
     } else {
       fprintf(stderr, "Yubikey core error: %s\n",
 	      yk_strerror(yk_errno));
+    }
+  }
+}
+
+static struct termios save_ts;
+
+static void set_echo(int on);
+
+static void
+restore_echo(int sig)
+{
+  set_echo(1);
+  raise(sig);
+}
+
+static void
+set_echo(int on)
+{
+  struct termios ts;
+
+  if (on) {
+    if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &save_ts) == -1) {
+      perror("tcsetattr");
+    }
+    signal(SIGINT, SIG_DFL);
+  } else {
+    if (tcgetattr(STDIN_FILENO, &ts) == -1) {
+      perror("tcgetattr");
+      return;
+    }
+    save_ts = ts;
+    signal(SIGINT, restore_echo);
+    ts.c_lflag &= ~ECHO;
+    if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &ts) == -1) {
+      perror("tcsetattr");
     }
   }
 }
@@ -121,8 +160,72 @@ parse_args(int argc, char **argv,
   return 1;
 }
 
+static int
+save_response(CR_STATE *state, char *buf, unsigned int response_len)
+{
+  if (response_len > sizeof (state->response)) {
+    fprintf (stderr, "Got too long response ??? (%u/%lu)",
+             response_len, (unsigned long) sizeof(state->response));
+    return 0;
+  }
+  memcpy (state->response, buf, response_len);
+  state->response_len = response_len;
+  return 1;
+}
+
+static int
+save_encrypted_string(CR_STATE *state, char *buf, unsigned int response_len)
+{
+  char str1[CR_RESPONSE_SIZE+2];
+  char str2[CR_RESPONSE_SIZE+2];
+  char *p;
+  int i, is_tty;
+
+  if (response_len > sizeof (state->response)) {
+    fprintf (stderr, "Got too long response ??? (%u/%lu)",
+             response_len, (unsigned long) sizeof(state->response));
+    return 0;
+  }
+  memset(str1,0,sizeof(str1));
+  memset(str2,0,sizeof(str2));
+  is_tty = isatty(STDIN_FILENO);
+  if (is_tty) {
+    set_echo(0);
+    printf("Enter secret (up to %i chars): ", response_len); fflush(stdout);
+  }
+  do {
+    if (fgets(str1, response_len, stdin) == NULL) return 0;
+  } while (str1[0] == '\n');
+  if (is_tty) {
+    printf("\nReenter secret to check      : "); fflush(stdout);
+    do {
+      if (fgets(str2, response_len, stdin) == NULL) return 0;
+    } while (str2[0] == '\n');
+    printf("\n");
+    set_echo(1);
+    if (strcmp(str1, str2)) {
+      fprintf (stderr, "Inputs do not match\n");
+      return 0;
+    }
+  }
+  if (*(p=str1+strlen(str1)-1) == '\n') *p = '\0';
+  if (strlen(str1) > response_len) {
+    fprintf (stderr, "Input too long, only %i permitted\n", response_len);
+    return 0;
+  }
+  /* Because we limit the size of data by the size of the key, there is no   */
+  /* need in fancy encryption algorithms. We use One Time Pad (literally).   */
+  for (i = 0; i < response_len; i++)
+    state->response[i] = buf[i] ^ str1[i];
+  state->response_len = response_len;
+  return 1;
+}
+
 int
-do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, int *exit_code)
+update_userfile(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir,
+                int *exit_code, char *suffix,
+                int (*update_state)(CR_STATE *state, char *buf,
+                                unsigned int response_len))
 {
   char buf[CR_RESPONSE_SIZE + 16];
   CR_STATE state;
@@ -173,7 +276,7 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, i
       }
   }
 
-  if (! get_user_challenge_file(yk, output_dir, p->pw_name, &fn)) {
+  if (! get_user_challenge_file(yk, output_dir, p->pw_name, suffix, &fn)) {
     fprintf (stderr, "Failed getting chalresp state filename\n");
     goto out;
   }
@@ -213,12 +316,10 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, i
     }
   }
 
-  if (response_len > sizeof (state.response)) {
-    fprintf (stderr, "Got too long response ??? (%u/%lu)", response_len, (unsigned long) sizeof(state.response));
+  if (! (*update_state)(&state, buf, response_len)) {
+    fprintf (stderr, "No updated state, not writing\n");
     goto out;
   }
-  memcpy (state.response, buf, response_len);
-  state.response_len = response_len;
 
   f = fopen (fn, "w");
   if (! f) {
@@ -229,7 +330,7 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, i
   if (! write_chalresp_state (f, &state))
     goto out;
 
-  printf ("Stored initial challenge and expected response in '%s'.\n", fn);
+  printf ("Stored initial state in '%s'.\n", fn);
 
   *exit_code = 0;
   ret = 1;
@@ -239,6 +340,20 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, i
     fclose (f);
 
   return ret;
+}
+
+int
+do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, int *exit_code)
+{
+  return update_userfile(yk, slot, verbose, output_dir, exit_code,
+                         "", save_response);
+}
+
+int
+do_add_saved_password(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, int *exit_code)
+{
+  return update_userfile(yk, slot, verbose, output_dir, exit_code,
+                         "-pwd", save_encrypted_string);
 }
 
 int
@@ -276,6 +391,18 @@ main(int argc, char **argv)
       goto err;    
 
     if (! do_add_hmac_chalresp (yk, slot, verbose, output_dir, &exit_code))
+      goto err;
+  } else if (! strcmp(action, ACTION_ADD_SAVED_PASSWORD)) {
+    /*
+     * Set up file with encrypted saved password
+     */
+    if (! init_yubikey (&yk))
+      goto err;
+
+    if (! check_firmware_version(yk, verbose, false))
+      goto err;    
+
+    if (! do_add_saved_password (yk, slot, verbose, output_dir, &exit_code))
       goto err;
   } else {
     fprintf (stderr, "Unknown action '%s'\n", action);

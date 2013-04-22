@@ -214,6 +214,16 @@ Supported PAM module parameters are:
 		with HMAC-SHA-1 Challenge-Response configurations. See the
 		man-page ykpamcfg(1) for further details on how to configure
 		offline Challenge-Response validation.
+  "supply_authtoken":
+		If mode of operation is "challenge-response", extract
+		encrypted data from the file created by the action
+		"add_saved_password" of ykpamcfg command and supply
+		it as PAM_AUTHTOKEN for subsequent PAM modules to use.
+		This makes sense if yubikey is used as the sole
+		authentication factor (i.e. the user does not need to
+		enter password), but the password is needed for other
+		PAM module(s), for instance to decrypt Gnome/KDE
+		keyring.
 
 ------
 
