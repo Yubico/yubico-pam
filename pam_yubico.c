@@ -475,18 +475,18 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   flags |= YK_FLAG_MAYBLOCK;
 
   if (! init_yubikey(&yk)) {
-    D(("Failed initializing YubiKey"));
+    DBG(("Failed initializing YubiKey"));
     goto out;
   }
 
   if (! check_firmware_version(yk, false, true)) {
-    D(("YubiKey does not support Challenge-Response (version 2.2 required)"));
+    DBG(("YubiKey does not support Challenge-Response (version 2.2 required)"));
     goto out;
   }
 
 
   if (! get_user_challenge_file (yk, cfg->chalresp_path, username, &userfile)) {
-    D(("Failed getting user challenge file for user %s", username));
+    DBG(("Failed getting user challenge file for user %s", username));
     goto out;
   }
 
@@ -546,7 +546,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   if (! challenge_response(yk, state.slot, state.challenge, state.challenge_len,
 			   true, flags, false,
 			   buf, sizeof(buf), &response_len)) {
-    D(("Challenge-response FAILED"));
+    DBG(("Challenge-response FAILED"));
     goto out;
   }
 
@@ -559,7 +559,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   if (memcmp(buf, state.response, response_len) == 0) {
     ret = PAM_SUCCESS;
   } else {
-    D(("Unexpected C/R response : %s", response_hex));
+    DBG(("Unexpected C/R response : %s", response_hex));
     goto out;
   }
 
@@ -567,7 +567,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
 
   errstr = "Error generating new challenge, please check syslog or contact your system administrator";
   if (generate_random(state.challenge, sizeof(state.challenge))) {
-    D(("Failed generating new challenge!"));
+    DBG(("Failed generating new challenge!"));
     goto out;
   }
 
@@ -575,7 +575,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   if (! challenge_response(yk, state.slot, state.challenge, CR_CHALLENGE_SIZE,
 			   true, flags, false,
 			   buf, sizeof(buf), &response_len)) {
-    D(("Second challenge-response FAILED"));
+    DBG(("Second challenge-response FAILED"));
     goto out;
   }
 
@@ -593,7 +593,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
    * Write the challenge and response we will expect the next time to the state file.
    */
   if (response_len > sizeof(state.response)) {
-    D(("Got too long response ??? (%u/%lu)", response_len, (unsigned long) sizeof(state.response)));
+    DBG(("Got too long response ??? (%u/%lu)", response_len, (unsigned long) sizeof(state.response)));
     goto out;
   }
   memcpy (state.response, buf, response_len);
@@ -649,10 +649,10 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   if (yk_errno) {
     if (yk_errno == YK_EUSBERR) {
       syslog(LOG_ERR, "USB error: %s", yk_usb_strerror());
-      D(("USB error: %s", yk_usb_strerror()));
+      DBG(("USB error: %s", yk_usb_strerror()));
     } else {
       syslog(LOG_ERR, "Yubikey core error: %s", yk_strerror(yk_errno));
-      D(("Yubikey core error: %s", yk_strerror(yk_errno)));
+      DBG(("Yubikey core error: %s", yk_strerror(yk_errno)));
     }
   }
 
@@ -661,7 +661,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
 
   if (errno) {
     syslog(LOG_ERR, "Challenge response failed: %s", strerror(errno));
-    D(("Challenge response failed: %s", strerror(errno)));
+    DBG(("Challenge response failed: %s", strerror(errno)));
   }
 
   if (yk)
