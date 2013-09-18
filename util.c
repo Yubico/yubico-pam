@@ -216,8 +216,8 @@ get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *usern
     /* 0xffffffff == 4294967295 == 10 digits */
     len = strlen(chalresp_path == NULL ? "challenge" : username) + 1 + 10 + 1;
     if ((filename = malloc(len)) != NULL) {
-      filename_malloced = 1;
       int res = snprintf(filename, len, "%s-%i", chalresp_path == NULL ? "challenge" : username, serial);
+      filename_malloced = 1;
       if (res < 0 || res > len) {
 	/* Not enough space, strangely enough. */
 	filename = NULL;
