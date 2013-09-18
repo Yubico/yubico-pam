@@ -277,7 +277,6 @@ authorize_user_token_ldap (struct cfg *cfg,
 			   const char *user,
 			   const char *token_id)
 {
-  DBG(("called"));
   int retval = 0;
   int protocol;
 #ifdef HAVE_LIBLDAP
@@ -292,6 +291,9 @@ authorize_user_token_ldap (struct cfg *cfg,
   int i, rc;
 
   char *find = NULL;
+#endif
+  DBG(("called"));
+#ifdef HAVE_LIBLDAP
 
   if (cfg->user_attr == NULL) {
     DBG (("Trying to look up user to YubiKey mapping in LDAP, but user_attr not set!"));
@@ -425,9 +427,10 @@ authorize_user_token_ldap (struct cfg *cfg,
 
 #if HAVE_CR
 static int
-display_error(pam_handle_t *pamh, char *message) {
+display_error(pam_handle_t *pamh, const char *message) {
   struct pam_conv *conv;
-  struct pam_message *pmsg[1], msg[1];
+  const struct pam_message *pmsg[1];
+  struct pam_message msg[1];
   struct pam_response *resp = NULL;
   int retval;
 
@@ -440,8 +443,7 @@ display_error(pam_handle_t *pamh, char *message) {
   pmsg[0] = &msg[0];
   msg[0].msg = message;
   msg[0].msg_style = PAM_ERROR_MSG;
-  retval = conv->conv(1, (const struct pam_message **) pmsg,
-		      &resp, conv->appdata_ptr);
+  retval = conv->conv(1, pmsg, &resp, conv->appdata_ptr);
 
   if (retval != PAM_SUCCESS) {
     D(("conv returned error: %s", pam_strerror (pamh, retval)));
@@ -466,7 +468,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   YK_KEY *yk = NULL;
   CR_STATE state;
 
-  char *errstr = NULL;
+  const char *errstr = NULL;
 
   struct passwd *p;
   struct stat st;
@@ -556,8 +558,8 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   yubikey_hex_encode(response_hex, buf, response_len);
   if(state.salt_len > 0) { // the expected response has gone through pbkdf2
     YK_PRF_METHOD prf_method = {20, yk_hmac_sha1};
-    yk_pbkdf2(response_hex, state.salt, state.salt_len, state.iterations,
-        buf, response_len, &prf_method);
+    yk_pbkdf2(response_hex, (unsigned char*)state.salt, state.salt_len, state.iterations,
+        (unsigned char*)buf, response_len, &prf_method);
   }
 
   if (memcmp(buf, state.response, state.response_len) == 0) {
@@ -776,7 +778,8 @@ pam_sm_authenticate (pam_handle_t * pamh,
   int skip_bytes = 0;
   int valid_token = 0;
   struct pam_conv *conv;
-  struct pam_message *pmsg[1], msg[1];
+  const struct pam_message *pmsg[1];
+  struct pam_message msg[1];
   struct pam_response *resp;
   int nargs = 1;
   ykclient_t *ykc = NULL;
@@ -866,8 +869,8 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
       pmsg[0] = &msg[0];
       {
-	const char *query_template = "Yubikey for `%s': ";
-	size_t len = strlen (query_template) + strlen (user);
+#define QUERY_TEMPLATE "YubiKey for `%s': "
+	size_t len = strlen (QUERY_TEMPLATE) + strlen (user);
 	int wrote;
 
 	msg[0].msg = malloc (len);
@@ -877,7 +880,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
 	    goto done;
 	  }
 
-	wrote = snprintf ((char *) msg[0].msg, len, query_template, user);
+	wrote = snprintf ((char *) msg[0].msg, len, QUERY_TEMPLATE, user);
 	if (wrote < 0 || wrote >= len)
 	  {
 	    retval = PAM_BUF_ERR;
@@ -887,8 +890,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
       msg[0].msg_style = cfg->verbose_otp ? PAM_PROMPT_ECHO_ON : PAM_PROMPT_ECHO_OFF;
       resp = NULL;
 
-      retval = conv->conv (nargs, (const struct pam_message **) pmsg,
-			   &resp, conv->appdata_ptr);
+      retval = conv->conv (nargs, pmsg, &resp, conv->appdata_ptr);
 
       free ((char *) msg[0].msg);
 
