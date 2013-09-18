@@ -37,7 +37,6 @@
 #include <sys/types.h>
 #include <pwd.h>
 #include <unistd.h>
-#include <alloca.h>
 
 #include "util.h"
 
@@ -201,7 +200,9 @@ get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *usern
    */
 
   char *filename; /* not including directory */
+  int filename_malloced = 0;
   unsigned int serial = 0;
+  int ret;
 
   if (! yk_get_serial(yk, 0, 0, &serial)) {
     D (("Failed to read serial number (serial-api-visible disabled?)."));
@@ -214,7 +215,8 @@ get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *usern
     int len;
     /* 0xffffffff == 4294967295 == 10 digits */
     len = strlen(chalresp_path == NULL ? "challenge" : username) + 1 + 10 + 1;
-    if ((filename = alloca(len)) != NULL) {
+    if ((filename = malloc(len)) != NULL) {
+      filename_malloced = 1;
       int res = snprintf(filename, len, "%s-%i", chalresp_path == NULL ? "challenge" : username, serial);
       if (res < 0 || res > len) {
 	/* Not enough space, strangely enough. */
@@ -226,7 +228,11 @@ get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *usern
   if (filename == NULL)
     return 0;
 
-  return get_user_cfgfile_path (chalresp_path, filename, username, fn);
+  ret = get_user_cfgfile_path (chalresp_path, filename, username, fn);
+  if(filename_malloced == 1) {
+    free(filename);
+  }
+  return ret;
 }
 
 int
