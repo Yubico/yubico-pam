@@ -56,6 +56,7 @@ const char *usage =
   "\t-2           Send challenge to slot 2.\n"
   "\t-A action    What to do.\n"
   "\t-p path      Specify an output path for the challenge file.\n"
+  "\t-i iters     Number of iterations to use for pbkdf2 (defaults to 10000)\n"
   "\n"
   "\t-v           verbose\n"
   "\t-h           help (this text)\n"
@@ -66,7 +67,7 @@ const char *usage =
   "\n"
   "\n"
   ;
-const char *optstring = "12A:p:vh";
+const char *optstring = "12A:p:i:vh";
 
 static void
 report_yk_error(void)
@@ -89,6 +90,7 @@ static int
 parse_args(int argc, char **argv,
 	   int *slot, bool *verbose,
 	   char **action, char **output_dir,
+     unsigned int *iterations,
 	   int *exit_code)
 {
   int c;
@@ -107,6 +109,14 @@ parse_args(int argc, char **argv,
     case 'p':
       *output_dir = optarg;
       break;
+    case 'i':
+      *iterations = strtoul(optarg, NULL, 10);
+      if(*iterations == 0) {
+        fprintf(stderr, "iterations must be numeric, %s isn't.\n", optarg);
+        *exit_code = 1;
+        return 0;
+      }
+      break;
     case 'v':
       *verbose = true;
       break;
@@ -122,7 +132,7 @@ parse_args(int argc, char **argv,
 }
 
 static int
-do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, int *exit_code)
+do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, unsigned int iterations, int *exit_code)
 {
   char buf[CR_RESPONSE_SIZE + 16];
   CR_STATE state;
@@ -132,6 +142,7 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, i
   struct passwd *p;
   FILE *f = NULL;
 
+  state.iterations = iterations;
   state.slot = slot;
   *exit_code = 1;
 
@@ -249,6 +260,7 @@ main(int argc, char **argv)
   char *action = ACTION_ADD_HMAC_CHALRESP;
   char *output_dir = NULL;
   int slot = 1;
+  unsigned int iterations = CR_DEFAULT_ITERATIONS;
 
   ykp_errno = 0;
   yk_errno = 0;
@@ -256,7 +268,7 @@ main(int argc, char **argv)
   if (! parse_args(argc, argv,
 		   &slot, &verbose,
 		   &action, &output_dir,
-		   &exit_code))
+       &iterations, &exit_code))
     goto err;
 
   exit_code = 1;
@@ -271,7 +283,7 @@ main(int argc, char **argv)
     if (! check_firmware_version(yk, verbose, false))
       goto err;    
 
-    if (! do_add_hmac_chalresp (yk, slot, verbose, output_dir, &exit_code))
+    if (! do_add_hmac_chalresp (yk, slot, verbose, output_dir, iterations, &exit_code))
       goto err;
   } else {
     fprintf (stderr, "Unknown action '%s'\n", action);

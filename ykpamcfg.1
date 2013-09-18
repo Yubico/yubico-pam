@@ -35,7 +35,7 @@
 ykpamcfg - Manage user settings for the Yubico PAM module.
 .SH SYNOPSIS
 .B ykpamcfg
-[\fI-1\fR | \fI-2\fR] [\fI-A\fR] [\fI-p\fR] [\fI-v\fR] [\fI-h\fR]
+[\fI-1\fR | \fI-2\fR] [\fI-A\fR] [\fI-p\fR] [\fI-i\fR] [\fI-v\fR] [\fI-h\fR]
 .\".SH DESCRIPTION
 .\" Add any additional description here
 .SH OPTIONS
@@ -52,6 +52,9 @@ choose action to perform. See ACTIONS below.
 .TP
 \fB\-p \fIpath\fR
 specify output file for, default is ~/.yubico/challenge
+.TP
+\fB\-i \fIiterations\fR
+number of iterations to use for pbkdf2 of expected response
 .TP
 \fB\-v\fR
 enable verbose mode.
