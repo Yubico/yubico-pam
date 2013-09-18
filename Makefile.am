@@ -28,6 +28,8 @@
 
 ACLOCAL_AMFLAGS = -I m4
 
+AM_CFLAGS = $(WARN_CFLAGS)
+
 libdir = $(PAMDIR)
 
 lib_LTLIBRARIES = pam_yubico.la

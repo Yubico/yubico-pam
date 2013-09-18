@@ -104,6 +104,36 @@ AC_ARG_WITH(pam-dir,
             esac])
 AC_MSG_NOTICE([PAM installation path $PAMDIR])
 
+AC_ARG_ENABLE([gcc-warnings],
+  [AS_HELP_STRING([--enable-gcc-warnings],
+      [turn on lots of GCC warnings (for developers)])],
+  [case $enableval in
+     yes|no) ;;
+     *)      AC_MSG_ERROR([bad value $enableval for gcc-warnings option]) ;;
+   esac
+   gl_gcc_warnings=$enableval],
+  [gl_gcc_warnings=no]
+)
+
+if test "$gl_gcc_warnings" = yes; then
+  nw="$nw -Wsystem-headers"         # Don't let system headers trigger warnings
+  nw="$nw -Wpadded"                 # Struct's arenot padded
+  nw="$nw -Wc++-compat"             # We don't care strongly about C++ compilers
+  nw="$nw -Wtraditional"            # Warns on #elif which we use often
+  nw="$nw -Wtraditional-conversion" # Too many warnings for now
+  nw="$nw -Wconversion"             # Too many warnings for now
+  nw="$nw -Wsuggest-attribute=pure" # Is it worth using attributes?
+
+  gl_MANYWARN_ALL_GCC([ws])
+  gl_MANYWARN_COMPLEMENT(ws, [$ws], [$nw])
+  for w in $ws; do
+    gl_WARN_ADD([$w])
+  done
+
+  gl_WARN_ADD([-fdiagnostics-show-option])
+fi
+
+
 AC_CONFIG_FILES(Makefile)
 AC_OUTPUT
 
