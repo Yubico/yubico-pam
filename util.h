@@ -67,13 +67,19 @@ int get_user_cfgfile_path(const char *common_path, const char *filename, const c
  */
 #define CR_CHALLENGE_SIZE	63
 #define CR_RESPONSE_SIZE	20
+#define CR_SALT_SIZE      32
+
+#define CR_DEFAULT_ITERATIONS 10000
 
 struct chalresp_state {
   char challenge[CR_CHALLENGE_SIZE];
   uint8_t challenge_len;
   char response[CR_RESPONSE_SIZE];
   uint8_t response_len;
+  char salt[CR_SALT_SIZE];
+  uint8_t salt_len;
   uint8_t slot;
+  uint32_t iterations;
 };
 
 typedef struct chalresp_state CR_STATE;

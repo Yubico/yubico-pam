@@ -47,6 +47,7 @@
 #if HAVE_CR
 /* for yubikey_hex_decode and yubikey_hex_p */
 #include <yubikey.h>
+#include <ykpbkdf2.h>
 #endif /* HAVE_CR */
 
 /* Libtool defines PIC for shared objects */
@@ -553,8 +554,13 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
    */
 
   yubikey_hex_encode(response_hex, buf, response_len);
+  if(state.salt_len > 0) { // the expected response has gone through pbkdf2
+    YK_PRF_METHOD prf_method = {20, yk_hmac_sha1};
+    yk_pbkdf2(response_hex, state.salt, state.salt_len, state.iterations,
+        buf, response_len, &prf_method);
+  }
 
-  if (memcmp(buf, state.response, response_len) == 0) {
+  if (memcmp(buf, state.response, state.response_len) == 0) {
     ret = PAM_SUCCESS;
   } else {
     DBG(("Unexpected C/R response : %s", response_hex));
@@ -579,7 +585,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
 
   /* There is a bug that makes the YubiKey 2.2 send the same response for all challenges
      unless HMAC_LT64 is set, check for that here */
-  if (memcmp(buf, state.response, response_len) == 0) {
+  if (memcmp(buf, state.response, state.response_len) == 0) {
     errstr = "Same response for second challenge, YubiKey should be reconfigured with the option HMAC_LT64";
     goto out;
   }
