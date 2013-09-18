@@ -4,6 +4,8 @@ pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
 ** Don't install internal header files.
 
+** Don't print debug info when the "debug" parameter is not given.
+
 * Version 2.13 (released 2013-03-01)
 
 * Fix a bug in the version check to support major version > 2 (neo).
