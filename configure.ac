@@ -68,7 +68,7 @@ AC_ARG_WITH([ldap],
 AC_LIB_HAVE_LINKFLAGS([ykclient],, [#include <ykclient.h>],
                       [ykclient_set_ca_path(0, 0)])
 if test "$ac_cv_libykclient" != yes; then
-   AC_MSG_ERROR([[Libykclient v2.4+ required, see http://code.google.com/p/yubico-c-client/]])
+   AC_MSG_ERROR([[Libykclient v2.4+ required, see http://opensource.yubico.com/yubico-c-client/]])
 fi
 
 AC_LIB_HAVE_LINKFLAGS(yubikey,, [#include <yubikey.h>],
@@ -83,7 +83,7 @@ if test "x$with_cr" != xno; then
   PKG_CHECK_MODULES([YKPERS], [ykpers-1]);
   # libyubikey required for HAVE_CR
   if test "$ac_cv_libyubikey" != yes; then
-    AC_MSG_ERROR([Libyubikey v1.5+ not found, see http://code.google.com/p/yubico-c/ (required for challenge-response)])
+    AC_MSG_ERROR([Libyubikey v1.5+ not found, see http://opensource.yubico.com/yubico-c/ (required for challenge-response)])
   fi
 fi
 if test -n "$YKPERS_LIBS"; then
