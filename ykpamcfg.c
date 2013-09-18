@@ -69,7 +69,7 @@ const char *usage =
 const char *optstring = "12A:p:vh";
 
 static void
-report_yk_error()
+report_yk_error(void)
 {
   if (ykp_errno)
     fprintf(stderr, "Yubikey personalization error: %s\n",
@@ -85,7 +85,7 @@ report_yk_error()
   }
 }
 
-int
+static int
 parse_args(int argc, char **argv,
 	   int *slot, bool *verbose,
 	   char **action, char **output_dir,
@@ -121,7 +121,7 @@ parse_args(int argc, char **argv,
   return 1;
 }
 
-int
+static int
 do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, int *exit_code)
 {
   char buf[CR_RESPONSE_SIZE + 16];
@@ -147,10 +147,9 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, i
   */
   
   if (!output_dir){
-      const char *pathname = p->pw_dir; 
+      struct stat st;
       char fullpath[256];
       snprintf(fullpath, 256,"%s/.yubico",p->pw_dir);
-      struct stat st;
       
       //check if directory exists     
       if (stat(fullpath,&st)!=0 ){     
@@ -193,7 +192,6 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, i
   {
     char buf2[CR_RESPONSE_SIZE + 16];
     char challenge[CR_CHALLENGE_SIZE];
-    CR_STATE state2;
 
     if (generate_random(challenge, CR_CHALLENGE_SIZE)) {
       fprintf (stderr, "FAILED getting %i bytes of random data\n", CR_CHALLENGE_SIZE);
