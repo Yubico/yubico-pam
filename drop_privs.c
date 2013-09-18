@@ -37,6 +37,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "drop_privs.h"
 #include "util.h"
 
 #ifdef HAVE_SECURITY_PAM_APPL_H
@@ -59,7 +60,7 @@ static int saved_groups_length;
 #endif /* HAVE_PAM_MODUTIL_DROP_PRIV */
 
 #ifdef HAVE_PAM_MODUTIL_DROP_PRIV
-struct pam_modutil_privs * _privs_location(int force_init) {
+static struct pam_modutil_privs * _privs_location(int force_init) {
   static int init = 0;
   static struct pam_modutil_privs privs;
   if (init == 0 || force_init) {
