@@ -126,7 +126,6 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, i
 {
   char buf[CR_RESPONSE_SIZE + 16];
   CR_STATE state;
-  unsigned int flags = 0;
   int ret = 0;
   unsigned int response_len;
   char *fn;
@@ -134,7 +133,6 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, i
   FILE *f = NULL;
 
   state.slot = slot;
-  flags |= YK_FLAG_MAYBLOCK;
   *exit_code = 1;
 
   p = getpwuid (getuid ());
@@ -185,7 +183,7 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, i
   state.challenge_len = CR_CHALLENGE_SIZE;
 
   if (! challenge_response(yk, state.slot, state.challenge, CR_CHALLENGE_SIZE,
-			   true, flags, verbose,
+			   true, true, verbose,
 			   buf, sizeof(buf), &response_len))
     goto out;
 
@@ -202,7 +200,7 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, i
       goto out;
     }
     if (! challenge_response(yk, state.slot, challenge, CR_CHALLENGE_SIZE,
-          true, flags, verbose,
+          true, true, verbose,
           buf2, sizeof(buf2), &response_len))
       goto out;
 

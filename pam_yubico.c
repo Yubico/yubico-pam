@@ -461,7 +461,6 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   char buf[CR_RESPONSE_SIZE + 16], response_hex[CR_RESPONSE_SIZE * 2 + 1];
   int ret, fd;
 
-  unsigned int flags = 0;
   unsigned int response_len = 0;
   YK_KEY *yk = NULL;
   CR_STATE state;
@@ -472,7 +471,6 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   struct stat st;
 
   ret = PAM_AUTH_ERR;
-  flags |= YK_FLAG_MAYBLOCK;
 
   if (! init_yubikey(&yk)) {
     DBG(("Failed initializing YubiKey"));
@@ -544,7 +542,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   }
 
   if (! challenge_response(yk, state.slot, state.challenge, state.challenge_len,
-			   true, flags, false,
+			   true, true, false,
 			   buf, sizeof(buf), &response_len)) {
     DBG(("Challenge-response FAILED"));
     goto out;
@@ -573,7 +571,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
 
   errstr = "Error communicating with Yubikey, please check syslog or contact your system administrator";
   if (! challenge_response(yk, state.slot, state.challenge, CR_CHALLENGE_SIZE,
-			   true, flags, false,
+			   true, true, false,
 			   buf, sizeof(buf), &response_len)) {
     DBG(("Second challenge-response FAILED"));
     goto out;

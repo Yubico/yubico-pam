@@ -89,8 +89,8 @@ int init_yubikey(YK_KEY **yk);
 int check_firmware_version(YK_KEY *yk, bool verbose, bool quiet);
 int challenge_response(YK_KEY *yk, int slot,
 		       char *challenge, unsigned int len,
-		       bool hmac, unsigned int flags, bool verbose,
-		       char *response, int res_size, unsigned int *res_len);
+		       bool hmac, bool may_block, bool verbose,
+		       char *response, unsigned int res_size, unsigned int *res_len);
 
 #endif /* HAVE_CR */
 

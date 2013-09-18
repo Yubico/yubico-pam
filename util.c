@@ -145,15 +145,19 @@ init_yubikey(YK_KEY **yk)
 
 int challenge_response(YK_KEY *yk, int slot,
 		       char *challenge, unsigned int len,
-		       bool hmac, unsigned int flags, bool verbose,
-		       char *response, int res_size, unsigned int *res_len)
+		       bool hmac, bool may_block, bool verbose,
+		       char *response, unsigned int res_size, unsigned int *res_len)
 {
 	int yk_cmd;
-	unsigned int response_len = 0;
-	unsigned int expect_bytes = 0;
 
-	if (res_size < sizeof(64 + 16))
+  if(hmac == true) {
+    *res_len = 20;
+  } else {
+    *res_len = 16;
+  }
+	if (res_size < *res_len) {
 	  return 0;
+  }
 
 	memset(response, 0, res_size);
 
@@ -173,28 +177,11 @@ int challenge_response(YK_KEY *yk, int slot,
 		return 0;
 	}
 
-	if (!yk_write_to_key(yk, yk_cmd, challenge, len))
-		return 0;
+  if(! yk_challenge_response(yk, yk_cmd, may_block, len,
+        (unsigned char*)challenge, res_size, (unsigned char*)response)) {
+    return 0;
+  }
 
-	if (verbose) {
-		fprintf(stderr, "Reading response...\n");
-	}
-
-	/* HMAC responses are 160 bits, Yubico 128 */
-	expect_bytes = (hmac == true) ? 20 : 16;
-
-	if (! yk_read_response_from_key(yk, slot, flags,
-					response, res_size,
-					expect_bytes,
-					&response_len))
-		return 0;
-
-	if (hmac && response_len > 20)
-		response_len = 20;
-	if (! hmac && response_len > 16)
-		response_len = 16;
-
-	*res_len = response_len;
 
 	return 1;
 }
