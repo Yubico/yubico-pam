@@ -1,5 +1,5 @@
 # Written by Simon Josefsson <simon@yubico.com>.
-# Copyright (c) 2006-2012 Yubico AB
+# Copyright (c) 2006-2013 Yubico AB
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,9 +32,7 @@ libdir = $(PAMDIR)
 
 lib_LTLIBRARIES = pam_yubico.la
 
-include_HEADERS = util.h drop_privs.h
-
-pam_yubico_la_SOURCES = pam_yubico.c util.c drop_privs.c
+pam_yubico_la_SOURCES = pam_yubico.c util.h util.c drop_privs.h drop_privs.c
 # XXX add -Wl,-x too?  PAM documentation suggests it.
 pam_yubico_la_LIBADD = @LTLIBYKCLIENT@ @LIBLDAP@ @YKPERS_LIBS@ @LTLIBYUBIKEY@ -lpam
 pam_yubico_la_LDFLAGS = -module -avoid-version
