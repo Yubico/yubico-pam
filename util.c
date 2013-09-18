@@ -271,9 +271,8 @@ load_chalresp_state(FILE *f, CR_STATE *state, bool verbose)
 
     yubikey_hex_decode(state->salt, salt_hex, sizeof(state->challenge));
     state->salt_len = strlen(salt_hex) / 2;
-
-    state->iterations = iterations;
   } else {
+    rewind(f);
     r = fscanf(f, "v1:%126[0-9a-z]:%40[0-9a-z]:%d", challenge_hex, response_hex, &slot);
     if (r != 3) {
       D(("Could not parse contents of chalresp_state file (%i)", r));
@@ -283,7 +282,11 @@ load_chalresp_state(FILE *f, CR_STATE *state, bool verbose)
     if (verbose) {
       D(("Challenge: %s, expected response: %s, slot: %d", challenge_hex, response_hex, slot));
     }
+
+    iterations = CR_DEFAULT_ITERATIONS;
   }
+
+  state->iterations = iterations;
 
 
   if (! yubikey_hex_p(challenge_hex)) {
