@@ -65,7 +65,13 @@ static struct pam_modutil_privs * _privs_location(int force_init) {
   static struct pam_modutil_privs privs;
   if (init == 0 || force_init) {
     PAM_MODUTIL_DEF_PRIVS(def_privs);
+    if(privs.grplist) {
+      free(privs.grplist);
+    }
     privs = def_privs;
+    /* since we want to save the information longer than the lifetime of dev_privs
+     * we need to allocate space for the grplist.. */
+    privs.grplist = malloc(def_privs.number_of_groups * sizeof(gid_t));
     init = 1;
   }
   return &privs;
