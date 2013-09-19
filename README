@@ -283,7 +283,7 @@ Enter your Yubikey OTP and convert it, your Yubikey token ID is 12 characters an
 Not sure what that last bit meant? Here is how to get a copy of your OTP.
 
 Fast way
-========
+--------
 * Open a terminal
 * Press yubikey button
 
@@ -297,7 +297,7 @@ It will output an OTP into the shell:
 This can be pasted into the Modhex_Calculator page.
 
 Harder way
-==========
+----------
 This requires you to have the pam module enabled with 'debug' turned on. When
 prompted for the yubikey press the button. The pam module will print out debug
 information including the OTP and ID of your token to the shell - copy the ID
