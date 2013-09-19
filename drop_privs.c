@@ -135,8 +135,9 @@ int restore_privileges(pam_handle_t *pamh) {
 #ifdef HAVE_PAM_MODUTIL_DROP_PRIV
   int res;
   res = pam_modutil_regain_priv(pamh, _privs_location(0));
-  if (res)
-    D (("pam_modutil_drop_priv: %i", res));
+  if (res) {
+    D (("pam_modutil_regain_priv: %i", res));
+  }
   /* re-initialize privs in case we want to drop privs again (sic) */
   _privs_location(1);
   return res;
