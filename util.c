@@ -269,7 +269,7 @@ load_chalresp_state(FILE *f, CR_STATE *state, bool verbose)
             challenge_hex, response_hex, salt_hex, iterations, slot));
     }
 
-    yubikey_hex_decode(state->salt, salt_hex, sizeof(state->challenge));
+    yubikey_hex_decode(state->salt, salt_hex, sizeof(state->salt));
     state->salt_len = strlen(salt_hex) / 2;
   } else {
     rewind(f);
