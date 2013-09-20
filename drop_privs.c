@@ -30,6 +30,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef HAVE_PAM_MODUTIL_DROP_PRIV
+
 #include <unistd.h>
 #include <pwd.h>
 #include <grp.h>
@@ -47,68 +49,29 @@
 #include <security/pam_modules.h>
 #endif
 
-#ifdef HAVE_PAM_MODUTIL_DROP_PRIV
-#ifdef HAVE_SECURITY_PAM_MODUTIL_H
-#include <security/pam_modutil.h>
-#endif /* HAVE_SECURITY_PAM_MODUTIL_H */
-#else
-static uid_t saved_euid;
-static gid_t saved_egid;
 
-static gid_t *saved_groups = NULL;
-static int saved_groups_length;
-#endif /* HAVE_PAM_MODUTIL_DROP_PRIV */
+int pam_modutil_drop_priv(pam_handle_t *pamh, struct _ykpam_privs *privs, struct passwd *pw) {
+    privs->saved_euid = geteuid();
+    privs->saved_egid = getegid();
 
-#ifdef HAVE_PAM_MODUTIL_DROP_PRIV
-static struct pam_modutil_privs * _privs_location(int force_init) {
-  static int init = 0;
-  static struct pam_modutil_privs privs;
-  if (init == 0 || force_init) {
-    PAM_MODUTIL_DEF_PRIVS(def_privs);
-    if(privs.grplist) {
-      free(privs.grplist);
-    }
-    privs = def_privs;
-    /* since we want to save the information longer than the lifetime of dev_privs
-     * we need to allocate space for the grplist.. */
-    privs.grplist = malloc(def_privs.number_of_groups * sizeof(gid_t));
-    init = 1;
-  }
-  return &privs;
-}
-#endif /* HAVE_PAM_MODUTIL_DROP_PRIV */
-
-int drop_privileges(struct passwd *pw, pam_handle_t *pamh) {
-#ifdef HAVE_PAM_MODUTIL_DROP_PRIV
-  int res;
-  res = pam_modutil_drop_priv(pamh, _privs_location(0), pw);
-  if (res)
-    D (("pam_modutil_drop_priv: %i", res));
-  return res;
-#else
-    saved_euid = geteuid();
-    saved_egid = getegid();
-
-    if ((saved_euid == pw->pw_uid) && (saved_egid == pw->pw_gid)) {
+    if ((privs->saved_euid == pw->pw_uid) && (privs->saved_egid == pw->pw_gid)) {
         D (("Privilges already dropped, pretend it is all right"));
         return 0;
     }
- 
-    saved_groups_length = getgroups(0, NULL);
-    if (saved_groups_length < 0) {
+
+    privs->saved_groups_length = getgroups(0, NULL);
+    if (privs->saved_groups_length < 0) {
         D (("getgroups: %s", strerror(errno)));
         return -1;
     }
 
-    if (saved_groups_length > 0) {
-        if (saved_groups) free(saved_groups); /* size might have changed */
-        saved_groups = malloc(saved_groups_length * sizeof(gid_t));
-        if (saved_groups == NULL) {
-            D (("malloc: %s", strerror(errno)));
-            return -1;
-        }
+    if (privs->saved_groups_length > SAVED_GROUPS_MAX_LEN) {
+        D (("to many groups, limiting."));
+        privs->saved_groups_length = SAVED_GROUPS_MAX_LEN;
+    }
 
-        if (getgroups(saved_groups_length, saved_groups) < 0) {
+    if (privs->saved_groups_length > 0) {
+        if (getgroups(privs->saved_groups_length, privs->saved_groups) < 0) {
             D (("getgroups: %s", strerror(errno)));
             goto free_out;
         }
@@ -131,49 +94,31 @@ int drop_privileges(struct passwd *pw, pam_handle_t *pamh) {
 
     return 0;
 free_out:
-    free(saved_groups);
-    saved_groups = NULL;
     return -1;
-#endif /* HAVE_PAM_MODUTIL_DROP_PRIV */
 }
 
-int restore_privileges(pam_handle_t *pamh) {
-#ifdef HAVE_PAM_MODUTIL_DROP_PRIV
-  int res;
-  res = pam_modutil_regain_priv(pamh, _privs_location(0));
-  if (res) {
-    D (("pam_modutil_regain_priv: %i", res));
-  }
-  /* re-initialize privs in case we want to drop privs again (sic) */
-  _privs_location(1);
-  return res;
-#else
-    if ((saved_euid == geteuid()) && (saved_egid == getegid())) {
+int pam_modutil_regain_priv(pam_handle_t *pamh, struct _ykpam_privs *privs) {
+    if ((privs->saved_euid == geteuid()) && (privs->saved_egid == getegid())) {
         D (("Privilges already as requested, pretend it is all right"));
         return 0;
     }
 
-    if (seteuid(saved_euid) < 0) {
+    if (seteuid(privs->saved_euid) < 0) {
         D (("seteuid: %s", strerror(errno)));
         return -1;
     }
 
-    if (setegid(saved_egid) < 0) {
+    if (setegid(privs->saved_egid) < 0) {
         D (("setegid: %s", strerror(errno)));
         return -1;
     }
 
-    if (saved_groups == NULL) {
-        D (("saved groups are empty, looks like a program error!"));
-        return -1;
-    }
-    if (setgroups(saved_groups_length, saved_groups) < 0) {
+    if (setgroups(privs->saved_groups_length, privs->saved_groups) < 0) {
         D (("setgroups: %s", strerror(errno)));
         return -1;
     }
 
-    free(saved_groups);
-
     return 0;
-#endif /* HAVE_PAM_MODUTIL_DROP_PRIV */
 }
+
+#endif // HAVE_PAM_MODUTIL_DROP_PRIV

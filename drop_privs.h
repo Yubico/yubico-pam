@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2012 Yubico AB
+/* Copyright (c) 2011-2013 Yubico AB
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,10 @@
 #ifndef __PAM_YUBICO_DROP_PRIVS_H_INCLUDED__
 #define __PAM_YUBICO_DROP_PRIVS_H_INCLUDED__
 
+#ifdef HAVE_PAM_MODUTIL_DROP_PRIV
+#include <security/pam_modutil.h>
+#else
+
 #include <pwd.h>
 
 #ifdef HAVE_SECURITY_PAM_APPL_H
@@ -38,7 +42,21 @@
 #include <security/pam_modules.h>
 #endif
 
-int drop_privileges(struct passwd *, pam_handle_t *);
-int restore_privileges(pam_handle_t *);
+#define SAVED_GROUPS_MAX_LEN 64 /* as pam_modutil.. */
 
+struct _ykpam_privs {
+  uid_t saved_euid;
+  gid_t saved_egid;
+  gid_t *saved_groups;
+  int saved_groups_length;
+};
+
+#define PAM_MODUTIL_DEF_PRIVS(n) \
+  gid_t n##_saved_groups[SAVED_GROUPS_MAX_LEN]; \
+  struct _ykpam_privs n = {-1, -1, n##_saved_groups, SAVED_GROUPS_MAX_LEN}
+
+int pam_modutil_drop_priv(pam_handle_t *, struct _ykpam_privs *, struct passwd *);
+int pam_modutil_regain_priv(pam_handle_t *, struct _ykpam_privs *);
+
+#endif
 #endif

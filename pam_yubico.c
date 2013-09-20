@@ -40,6 +40,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <pwd.h>
 
 #include "util.h"
 #include "drop_privs.h"
@@ -222,6 +223,7 @@ authorize_user_token (struct cfg *cfg,
     {
       char *userfile = NULL;
       struct passwd *p;
+      PAM_MODUTIL_DEF_PRIVS(privs);
 
       p = getpwnam (username);
       if (p == NULL) {
@@ -238,21 +240,19 @@ authorize_user_token (struct cfg *cfg,
       }
 
       DBG (("Dropping privileges"));
-
-      if (drop_privileges(p, pamh) < 0) {
-	D (("could not drop privileges"));
+      if(pam_modutil_drop_priv(pamh, &privs, p)) {
+        DBG (("could not drop privileges"));
 	retval = 0;
 	goto free_out;
       }
 
       retval = check_user_token (cfg, userfile, username, otp_id);
 
-      if (restore_privileges(pamh) < 0)
-	{
-	  DBG (("could not restore privileges"));
-	  retval = 0;
-	  goto free_out;
-	}
+      if(pam_modutil_regain_priv(pamh, &privs)) {
+        DBG (("could not restore privileges"));
+        retval = 0;
+        goto free_out;
+      }
 
 free_out:
       free (userfile);
@@ -476,6 +476,8 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   struct passwd *p;
   struct stat st;
 
+  PAM_MODUTIL_DEF_PRIVS(privs);
+
   ret = PAM_AUTH_ERR;
 
   if (! init_yubikey(&yk)) {
@@ -503,8 +505,8 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   }
 
   /* Drop privileges before opening user file. */
-  if (drop_privileges(p, pamh) < 0) {
-      D (("could not drop privileges"));
+  if (pam_modutil_drop_priv(pamh, &privs, p)) {
+      DBG (("could not drop privileges"));
       goto out;
   }
 
@@ -542,7 +544,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   }
   f = NULL;
 
-  if (restore_privileges(pamh) < 0) {
+  if (pam_modutil_regain_priv(pamh, &privs)) {
       DBG (("could not restore privileges"));
       goto out;
   }
@@ -609,8 +611,8 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   state.response_len = response_len;
 
   /* Drop privileges before creating new challenge file. */
-  if (drop_privileges(p, pamh) < 0) {
-      D (("could not drop privileges"));
+  if (pam_modutil_drop_priv(pamh, &privs, p)) {
+      DBG (("could not drop privileges"));
       goto out;
   }
 
@@ -645,7 +647,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
     goto restpriv_out;
   }
 
-  if (restore_privileges(pamh) < 0) {
+  if (pam_modutil_regain_priv(pamh, &privs)) {
       DBG (("could not restore privileges"));
       goto out;
   }
@@ -656,7 +658,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   goto out;
 
 restpriv_out:
-  if (restore_privileges(pamh) < 0) {
+  if (pam_modutil_regain_priv(pamh, &privs)) {
       DBG (("could not restore privileges"));
   }
 
