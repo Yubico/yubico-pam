@@ -80,7 +80,7 @@ AC_ARG_WITH([cr],
   [],
   [with_cr=yes])
 if test "x$with_cr" != xno; then
-  PKG_CHECK_MODULES([YKPERS], [ykpers-1]);
+  PKG_CHECK_MODULES([YKPERS], [ykpers-1 >= 1.8.0]);
   # libyubikey required for HAVE_CR
   if test "$ac_cv_libyubikey" != yes; then
     AC_MSG_ERROR([Libyubikey v1.5+ not found, see http://opensource.yubico.com/yubico-c/ (required for challenge-response)])
