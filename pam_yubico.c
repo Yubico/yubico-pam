@@ -476,7 +476,9 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   struct passwd *p;
   struct stat st;
 
+  /* we must declare two sepparate privs structures as they can't be reused */
   PAM_MODUTIL_DEF_PRIVS(privs);
+  PAM_MODUTIL_DEF_PRIVS(privs2);
 
   ret = PAM_AUTH_ERR;
 
@@ -610,6 +612,8 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   memcpy (state.response, buf, response_len);
   state.response_len = response_len;
 
+  /* point to the fresh privs structure.. */
+  privs = privs2;
   /* Drop privileges before creating new challenge file. */
   if (pam_modutil_drop_priv(pamh, &privs, p)) {
       DBG (("could not drop privileges"));
