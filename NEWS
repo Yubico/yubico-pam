@@ -1,10 +1,16 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
-* Version 2.14 (unreleased)
+* Version 2.14 (released 2013-09-27)
 
 ** Don't install internal header files.
 
 ** Don't print debug info when the "debug" parameter is not given.
+
+** Use PBKDF2 to process expected reply for challenge-response mode.
+
+** Fixup memory leaks and leaks of privilege.
+
+** Let return values reflect whether the user wasn't found or other error.
 
 * Version 2.13 (released 2013-03-01)
 
