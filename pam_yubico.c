@@ -125,7 +125,7 @@ struct cfg
 
 /*
  * This function will look for users name with valid user token id. It
- * will returns 0 for failure and 1 for success.
+ * will returns -2 if the user is unknown, -1 if the token do not match the user line, 0 for internal failure and 1 for success.
  *
  * File format is as follows:
  * <user-name>:<token_id>:<token_id>
@@ -170,6 +170,7 @@ check_user_token (struct cfg *cfg,
       return retval;
   }
 
+  retval = -2;
   while (fgets (buf, 1024, opwfile))
     {
       if (buf[strlen (buf) - 1] == '\n')
@@ -179,6 +180,7 @@ check_user_token (struct cfg *cfg,
       if (s_user && strcmp (username, s_user) == 0)
 	{
 	  DBG (("Matched user: %s", s_user));
+      retval = -1; //We found at least one line for the user
 	  do
 	    {
 	      s_token = strtok (NULL, ":");
@@ -196,12 +198,12 @@ check_user_token (struct cfg *cfg,
 
   fclose (opwfile);
 
-  return 0;
+  return retval;
 }
 
 /*
  * Authorize authenticated OTP_ID for login as USERNAME using
- * AUTHFILE.  Return 0 on failures, otherwise success.
+ * AUTHFILE.  Return -2 if the user is unknown, -1 if the OTP_ID does not match,  0 on internal failures, otherwise success.
  */
 static int
 authorize_user_token (struct cfg *cfg,
@@ -374,9 +376,11 @@ authorize_user_token_ldap (struct cfg *cfg,
   if (e == NULL)
     {
       DBG (("No result from LDAP search"));
+      retval = -2;
     }
   else
     {
+      retval = -1;
       /* Iterate through each returned attribute. */
       for (a = ldap_first_attribute (ld, e, &ber);
 	   a != NULL; a = ldap_next_attribute (ld, e, ber))
@@ -1001,14 +1005,27 @@ pam_sm_authenticate (pam_handle_t * pamh,
   else
     valid_token = authorize_user_token (cfg, user, otp_id, pamh);
 
-  if (valid_token == 0)
+  switch(valid_token)
     {
-      DBG (("Yubikey not authorized to login as user"));
+    case 1:
+      retval = PAM_SUCCESS;
+      break;
+    case 0:
+      DBG (("Internal error while validating user"));
       retval = PAM_AUTHINFO_UNAVAIL;
-      goto done;
+      break;
+    case -1:
+      DBG (("Unauthorized token for this user"));
+      retval = PAM_AUTH_ERR;
+      break;
+    case -2:
+      DBG (("Unknown user"));
+      retval = PAM_USER_UNKNOWN;
+      break;
+    default:
+      DBG (("Unhandled value for token-user validation"))
+      retval = PAM_AUTHINFO_UNAVAIL;
     }
-
-  retval = PAM_SUCCESS;
 
 done:
   if (ykc)
