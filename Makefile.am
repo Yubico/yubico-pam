@@ -56,6 +56,8 @@ if YKPERS
 dist_man1_MANS = ykpamcfg.1
 endif
 
+dist_man8_MANS = pam_yubico.8
+
 # Self tests.
 
 AM_LDFLAGS = -no-install
