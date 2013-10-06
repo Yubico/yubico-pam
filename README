@@ -40,7 +40,7 @@ version.
 You may check out the sources using Git with the following command:
 
 ------
-   $ git clone git://github.com/Yubico/yubico-pam.git yubico-pam
+   $ git clone git@github.com:Yubico/yubico-pam.git yubico-pam
 ------
 
 This will create a directory 'yubico-pam'.
