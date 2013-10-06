@@ -269,16 +269,18 @@ This is much the same concept as the SSH authorized_keys file.
 
 Obtaining the Yubikey token ID (a.k.a. public ID)
 -------------------------------------------------
-You can obtain the Yubikey token ID in two places. One is by removing the
-last 32 characters of any OTP (One Time Password) generated with your Yubikey, the other
-is by using the modhex calculator located here :
 
-http://radius.yubico.com/demo/Modhex_Calculator.php
+You can obtain the Yubikey token ID in several ways.  One is by
+removing the last 32 characters of any OTP (One Time Password)
+generated with your Yubikey.  Another is by using the modhex
+calculator located here:
 
-Enter your Yubikey OTP and convert it, your Yubikey token ID is 12 characters and listed as:
+http://demo.yubico.com/php-yubico/Modhex_Calculator.php
+
+Enter your Yubikey OTP and convert it, your Yubikey token ID is 12
+characters and listed as:
 
    Modhex encoded: XXXXXXX
-
 
 Not sure what that last bit meant? Here is how to get a copy of your OTP.
 
