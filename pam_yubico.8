@@ -46,7 +46,7 @@ Turns on debugging to STDOUT
 Set the mode of operation, client for OTP validation and challenge-response for challenge-response validation, client is the default.
 .TP
 .B authfile=\fIfile\fR
-Set the location of the file that holds the mappings of Yubikey token IDs to user names.
+Set the location of the file that holds the mappings of Yubikey token IDs to user names.  The format is username:first_public_id:second_public_id:...  default location of the file is $HOME/.yubico/authorized_yubikeys.
 .TP
 .B id=\fIid\fR
 Set to your client identity.
