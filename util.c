@@ -220,6 +220,7 @@ get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *usern
       filename_malloced = 1;
       if (res < 0 || res > len) {
 	/* Not enough space, strangely enough. */
+	free(filename);
 	filename = NULL;
       }
     }
