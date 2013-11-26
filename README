@@ -90,6 +90,11 @@ Then build the code, run the self-test and install the binaries:
   make check install
 ------
 
+Fedora/EPEL
+----------
+There is already a package in Fedora/EPEL of yubico-pam that can be installed
+by using yum :
+  $ sudo yum install pam_yubico
 
 Ubuntu PPA
 ----------
