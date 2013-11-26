@@ -1,0 +1,7 @@
+Author: Yubico
+Basename: yubico-pam
+Homepage: http://opensource.yubico.com/yubico-pam/
+License: BSD-2-Clause
+Name: yubico-pam
+Project: yubico-pam
+Summary: Yubico Pluggable Authentication Module (PAM)
