@@ -109,6 +109,15 @@ Ubuntu platforms :
 
 See the file /usr/share/doc/libpam-yubico/README.Debian after installing.
 
+FreeBSD ports
+-------------
+yubico-pam and the supporting Yubico packages have corresponding FreeBSD ports. To install:
+
+  $ cd /usr/ports/security/pam_yubico
+  $ make install clean
+
+Advanced configuration notes are available at http://mjslabs.com/yubihow.html
+
 
 Configuration
 -------------
