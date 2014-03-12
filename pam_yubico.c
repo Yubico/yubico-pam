@@ -107,6 +107,7 @@ struct cfg
   char *auth_file;
   char *capath;
   char *url;
+  char *urllist;
   char *ldapserver;
   char *ldap_uri;
   char *ldapdn;
@@ -734,6 +735,8 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->capath = (char *) argv[i] + 7;
       if (strncmp (argv[i], "url=", 4) == 0)
 	cfg->url = (char *) argv[i] + 4;
+      if (stdcmp (argv[i], "urllist=", 8) == 0)
+	cfg->urllist = (char *) argv[i] + 8;
       if (strncmp (argv[i], "ldapserver=", 11) == 0)
 	cfg->ldapserver = (char *) argv[i] + 11;
       if (strncmp (argv[i], "ldap_uri=", 9) == 0)
@@ -777,6 +780,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
       D (("yubi_attr=%s", cfg->yubi_attr ? cfg->yubi_attr : "(null)"));
       D (("yubi_attr_prefix=%s", cfg->yubi_attr_prefix ? cfg->yubi_attr_prefix : "(null)"));
       D (("url=%s", cfg->url ? cfg->url : "(null)"));
+      D (("urllist=%s", cfg->urllist ? cfg->urllist : "(null)"));
       D (("capath=%s", cfg->capath ? cfg->capath : "(null)"));
       D (("token_id_length=%d", cfg->token_id_length));
       D (("mode=%s", cfg->mode == CLIENT ? "client" : "chresp" ));
@@ -875,7 +879,45 @@ pam_sm_authenticate (pam_handle_t * pamh,
     ykclient_set_ca_path (ykc, cfg->capath);
 
   if (cfg->url)
-    ykclient_set_url_template (ykc, cfg->url);
+    {
+      rc = ykclient_set_url_template (ykc, cfg->url);
+      if (rc != YKCLIENT_OK)
+	{
+	  DBG (("ykclient_set_url_template() failed (%d): %s",
+		rc, ykclient_strerror (rc)));
+	  retval = PAM_AUTHINFO_UNAVAIL;
+	  goto done;
+	}
+    }
+
+  if (cfg->urllist)
+    {
+      char *saveptr = NULL;
+      char *part = NULL;
+      size_t templates = 0;
+      size_t len = strlen(cfg->urllist);
+      char urls[10][strlen(cfg->urllist)];
+
+      while(part = strtok_r(cfg->urllist, ";", &saveptr))
+	{
+	  if(templates == 10)
+	    {
+	      DBG (("maximum 10 urls supported in list."));
+	      retval = PAM_AUTHINFO_UNAVAIL;
+	      goto done;
+	    }
+	  strcpy(urls[templates], part);
+	  templates++;
+	}
+      rc = ykclient_set_url_bases (ykc, templates, urls);
+      if (rc != YKCLIENT_OK)
+	{
+	  DBG (("ykclient_set_url_bases() failed (%d): %s",
+		rc, ykclient_strerror (rc)));
+	  retval = PAM_AUTHINFO_UNAVAIL;
+	  goto done;
+	}
+    }
 
   if (password == NULL)
     {
