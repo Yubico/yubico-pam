@@ -896,9 +896,11 @@ pam_sm_authenticate (pam_handle_t * pamh,
     {
       char *saveptr = NULL;
       char *part = NULL;
+      char *tmpurl = cfg->urllist;
 
-      while ((part = strtok_r(cfg->urllist, ";", &saveptr)))
+      while ((part = strtok_r(tmpurl, ";", &saveptr)))
 	{
+	  tmpurl = NULL;
 	  if(templates == 10)
 	    {
 	      DBG (("maximum 10 urls supported in list."));
