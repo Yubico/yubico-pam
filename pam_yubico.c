@@ -735,7 +735,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->capath = (char *) argv[i] + 7;
       if (strncmp (argv[i], "url=", 4) == 0)
 	cfg->url = (char *) argv[i] + 4;
-      if (stdcmp (argv[i], "urllist=", 8) == 0)
+      if (strncmp (argv[i], "urllist=", 8) == 0)
 	cfg->urllist = (char *) argv[i] + 8;
       if (strncmp (argv[i], "ldapserver=", 11) == 0)
 	cfg->ldapserver = (char *) argv[i] + 11;
