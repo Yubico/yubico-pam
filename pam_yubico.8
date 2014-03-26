@@ -64,10 +64,16 @@ Before prompting the user for their password, the module first tries the previou
 .B use_first_pass
 The argument use_first_pass forces the module to use a previous stacked modules password and will never prompt the user - if no password is available or the password is not appropriate, the user will be denied access.
 .TP
+.B urllist=\fIlist\fR
+List of URL templates to be used. This is set by calling ykclient_set_url_bases.
+The list should be in the format
+.URL https://api1.example.com/wsapi/2.0/verify;https://api2.example.com/wsapi/2.0/verify
+.TP
 .B url=\fIurl\fR
-Set the URL template to use, this is set by calling yubikey_client_set_url_template, which defaults to the default in the yubico-c-client package.
+This option should not be used, please use the urllist option instead.
+Set the URL template to use, this is set by calling ykclient_set_url_template.
 The URL should be set in the format
-.URL https://api.yubico.com/wsapi/2.0/verify?id=%d&otp=%s
+.URL https://api.example.com/wsapi/2.0/verify?id=%d&otp=%s
 .TP
 .B capath=\fIpath\fR
 Specify the path where X509 certificates are stored. This is required if 'https' or 'ldaps' are used in 'url' and 'ldap_uri' respectively.
