@@ -808,6 +808,8 @@ pam_sm_authenticate (pam_handle_t * pamh,
   ykclient_t *ykc = NULL;
   struct cfg cfg_st;
   struct cfg *cfg = &cfg_st; /* for DBG macro */
+  size_t templates = 0;
+  char *urls[10];
 
   parse_cfg (flags, argc, argv, cfg);
 
@@ -894,11 +896,8 @@ pam_sm_authenticate (pam_handle_t * pamh,
     {
       char *saveptr = NULL;
       char *part = NULL;
-      size_t templates = 0;
-      size_t len = strlen(cfg->urllist);
-      char urls[10][strlen(cfg->urllist)];
 
-      while(part = strtok_r(cfg->urllist, ";", &saveptr))
+      while ((part = strtok_r(cfg->urllist, ";", &saveptr)))
 	{
 	  if(templates == 10)
 	    {
@@ -906,10 +905,10 @@ pam_sm_authenticate (pam_handle_t * pamh,
 	      retval = PAM_AUTHINFO_UNAVAIL;
 	      goto done;
 	    }
-	  strcpy(urls[templates], part);
+	  urls[templates] = strdup(part);
 	  templates++;
 	}
-      rc = ykclient_set_url_bases (ykc, templates, urls);
+      rc = ykclient_set_url_bases (ykc, templates, (const char **)urls);
       if (rc != YKCLIENT_OK)
 	{
 	  DBG (("ykclient_set_url_bases() failed (%d): %s",
@@ -1070,6 +1069,14 @@ pam_sm_authenticate (pam_handle_t * pamh,
     }
 
 done:
+  if (templates > 0)
+    {
+      size_t i;
+      for(i = 0; i < templates; i++)
+        {
+	  free(urls[templates]);
+        }
+    }
   if (ykc)
     ykclient_done (&ykc);
   if (cfg->alwaysok && retval != PAM_SUCCESS)
