@@ -1,11 +1,10 @@
-Main files
+Maintainer
 ----------
 
 Simon Josefsson <simon@yubico.com>
-Fredrik Thulin <fredrik@yubico.com>
+Klas Lindfors <klas@yubico.com>
 
-
-Patches
+Contributors
 -------
 
 Tollef Fog Heen <tfheen@err.no>
@@ -40,3 +39,6 @@ Security fix (problem really in ykclient).
 
 Ricky Zhou <ricky@fedoraproject.org>
 Drop permissions before opening user files.
+
+Fredrik Thulin <fredrik@yubico.com>
+Maintainer alumni, helped on drop_privs.c, utils.c, and more.
