@@ -101,6 +101,6 @@ release:
 	gpg --detach-sign --default-key $(KEYID) $(PACKAGE)-$(VERSION).tar.gz
 	gpg --verify $(PACKAGE)-$(VERSION).tar.gz.sig
 	cd $(srcdir) && git push
-	cd $(srcdir) && git tag -u $(KEYID)! -m $(VERSION) $(VERSION)
+	cd $(srcdir) && git tag -u $(KEYID) -m $(VERSION) $(VERSION)
 	cd $(srcdir) && git push --tags
 	$(YUBICO_GITHUB_REPO)/publish $(PROJECT) $(VERSION) $(PACKAGE)-$(VERSION).tar.gz*
