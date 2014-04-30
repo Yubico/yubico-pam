@@ -1,0 +1,7 @@
+Starting with Fedora 17, SELinux prevents sshd to initiate connections to remote HTTP ports (80 and 443). In SELinux terms: sshd_t is not allowed to name_connect to http_port_t. This broke Yubikey authentication on a system with SELinux in enforcing mode, unless a custom SELinux policy was written and enabled.
+
+Based on a [bugreport](https://bugzilla.redhat.com/show_bug.cgi?id=841693) in Red Hat Bugzilla, a boolean was added to the SELinux policy for Fedora 18 and up, that can be toggled to allow sshd (and some other SELinux types) to connect to remote HTTP ports.
+
+To make a long story short, if you want to use a Yubikey on a system running Fedora 18 or higher (and probably RHEL7, eventually), you'll need to toggle the 'authlogin_yubikey' SELinux boolean, like so:
+
+    setsebool -P authlogin_yubikey 1

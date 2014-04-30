@@ -1,0 +1,193 @@
+Local Authentication Using Challenge Response
+---------------------------------------------
+
+The PAM module can utilize the HMAC-SHA1 Challenge-Response mode found
+in YubiKeys starting with version 2.2 for offline authentication.
+This mode is useful if you don't have a stable network connection to
+the YubiCloud.
+
+The ykpamcfg utility currently outputs the state information to a file
+in the current user's home directory ("$HOME/.yubico/challenge-123456"
+for a YubiKey with serial number API readout enabled, and
+"$HOME/.yubico/challenge" for one without).
+
+The PAM module supports a system wide directory for these state files
+(in case the user's home directories are encrypted), but in a system
+wide directory, the 'challenge' part should be replaced with the
+username.  Example: /var/yubico/challenges/alice-123456.
+
+To use the system-wide mode, you currently have to move the generated
+state files manually and configure the PAM module accordingly.
+
+The following process is tested on Ubuntu 12.04.
+
+First install the package:
+
+------
+$ sudo apt-get install libpam-yubico
+------
+
+You will get a question about the PAM configuration line.  Enter this
+line:
+
+------
+mode=challenge-response
+------
+
+The next question will be about which PAM modules to enable.  Don't
+enable anything just yet, because you need to program your YubiKey
+first.
+
+If you have already installed the package or want to reconfigure it,
+you may use this command:
+
+------
+$ sudo dpkg-reconfigure libpam-yubico
+------
+
+The next step is to add a challenge-response slot to your YubiKey.  If
+you have a normal YubiKey with OTP functionality on the first slot,
+you could add Challenge-Response on the second slot.  You could have
+CR on the first slot, if you want.
+
+First, program a YubiKey for challenge response on Slot 2:
+
+------
+$ ykpersonalize -2 -ochal-resp -ochal-hmac -ohmac-lt64 -oserial-api-visible
+...
+Commit? (y/n) [n]: y
+$
+------
+
+Now, set the current user to require this YubiKey for logon:
+
+------
+$ mkdir $HOME/.yubico
+$ ykpamcfg -2 -v
+...
+Stored initial challenge and expected response in '/home/alice/.yubico/challenge-123456'.
+$
+------
+If your /home/user folder is encrypted you should move the challenge file in a different path (i.e. /etc/yubico) and then set the right permission for the user to create the files. To do this do as follow:
+
+------
+$ mkdir /etc/yubico
+$ chmod +t /etc/yubico
+$ chmod 777 /etc/yubico
+$ mv /home/user/.yubico/challenge-####### /etc/yubico/username-#######
+...
+It is important that you name the file with the username of the user that is going to use the Yubikey
+------
+Finally we tell the pam module where to look for the challenge file
+------
+$ emacs /etc/pam.d/common-auth
+...
+and edit the following line as follow:
+
+auth	required	pam_yubico.so mode=challenge-response chalresp_path=/etc/yubico
+------
+
+Then back to the PAM configuration step, first make sure you have a
+root terminal available to be able to disable YubiKey login in case of
+issues.
+
+------
+$ sudo -s
+------
+
+Then run the "pam-auth-update" command and enable the Yubico PAM
+module.
+
+------
+$ sudo pam-auth-update
+------
+
+You should now be able to authenticate using YubiKey
+Challenge-Reseponse together with a password like this:
+
+-----
+jas@latte:~$ sudo -s
+[sudo] password for jas: 
+root@latte:~# 
+-----
+
+Now remove the YubiKey and try again (in a new terminal to avoid sudo
+caching), and you should not be able to login.
+
+For debugging, you can make the PAM configuration line:
+
+-----
+mode=challenge-response debug
+-----
+
+and then create a log file:
+
+------
+# touch /var/run/pam-debug.log
+# chmod go+w /var/run/pam-debug.log
+------
+
+and then tail the file.  For successful logins it should print
+something like this:
+
+------
+[pam_yubico.c:parse_cfg(721)] called.
+[pam_yubico.c:parse_cfg(722)] flags 32768 argc 2
+[pam_yubico.c:parse_cfg(724)] argv[0]=mode=challenge-response
+[pam_yubico.c:parse_cfg(724)] argv[1]=debug
+[pam_yubico.c:parse_cfg(725)] id=-1
+[pam_yubico.c:parse_cfg(726)] key=(null)
+[pam_yubico.c:parse_cfg(727)] debug=1
+[pam_yubico.c:parse_cfg(728)] alwaysok=0
+[pam_yubico.c:parse_cfg(729)] verbose_otp=0
+[pam_yubico.c:parse_cfg(730)] try_first_pass=0
+[pam_yubico.c:parse_cfg(731)] use_first_pass=0
+[pam_yubico.c:parse_cfg(732)] authfile=(null)
+[pam_yubico.c:parse_cfg(733)] ldapserver=(null)
+[pam_yubico.c:parse_cfg(734)] ldap_uri=(null)
+[pam_yubico.c:parse_cfg(735)] ldapdn=(null)
+[pam_yubico.c:parse_cfg(736)] user_attr=(null)
+[pam_yubico.c:parse_cfg(737)] yubi_attr=(null)
+[pam_yubico.c:parse_cfg(738)] yubi_attr_prefix=(null)
+[pam_yubico.c:parse_cfg(739)] url=(null)
+[pam_yubico.c:parse_cfg(740)] capath=(null)
+[pam_yubico.c:parse_cfg(741)] token_id_length=12
+[pam_yubico.c:parse_cfg(742)] mode=chresp
+[pam_yubico.c:parse_cfg(743)] chalresp_path=(null)
+[pam_yubico.c:pam_sm_authenticate(775)] get user returned: jas
+[pam_yubico.c:do_challenge_response(493)] Loading challenge from file /home/jas/.yubico/challenge-1077187
+[util.c:load_chalresp_state(269)] Challenge: 23001a190724abf46c8022b008ccb65673dd634ecb150613771ec87f37850284d80dd5f8c8e56affb6da2e952b16682160e7f3ac4f816b64126bd9556e5be1, response: 63d4a679ed15335ffd4253e7609963bcdb0834d4, slot: 2
+[pam_yubico.c:do_challenge_response(566)] Got the expected response, generating new challenge (63 bytes).
+[pam_yubico.c:do_challenge_response(629)] Challenge-response success!
+------
+
+and if there is no YubiKey in the machine it will look like this:
+
+------
+[pam_yubico.c:parse_cfg(721)] called.
+[pam_yubico.c:parse_cfg(722)] flags 32768 argc 2
+[pam_yubico.c:parse_cfg(724)] argv[0]=mode=challenge-response
+[pam_yubico.c:parse_cfg(724)] argv[1]=debug
+[pam_yubico.c:parse_cfg(725)] id=-1
+[pam_yubico.c:parse_cfg(726)] key=(null)
+[pam_yubico.c:parse_cfg(727)] debug=1
+[pam_yubico.c:parse_cfg(728)] alwaysok=0
+[pam_yubico.c:parse_cfg(729)] verbose_otp=0
+[pam_yubico.c:parse_cfg(730)] try_first_pass=0
+[pam_yubico.c:parse_cfg(731)] use_first_pass=0
+[pam_yubico.c:parse_cfg(732)] authfile=(null)
+[pam_yubico.c:parse_cfg(733)] ldapserver=(null)
+[pam_yubico.c:parse_cfg(734)] ldap_uri=(null)
+[pam_yubico.c:parse_cfg(735)] ldapdn=(null)
+[pam_yubico.c:parse_cfg(736)] user_attr=(null)
+[pam_yubico.c:parse_cfg(737)] yubi_attr=(null)
+[pam_yubico.c:parse_cfg(738)] yubi_attr_prefix=(null)
+[pam_yubico.c:parse_cfg(739)] url=(null)
+[pam_yubico.c:parse_cfg(740)] capath=(null)
+[pam_yubico.c:parse_cfg(741)] token_id_length=12
+[pam_yubico.c:parse_cfg(742)] mode=chresp
+[pam_yubico.c:parse_cfg(743)] chalresp_path=(null)
+[pam_yubico.c:pam_sm_authenticate(775)] get user returned: jas
+[pam_yubico.c:do_challenge_response(478)] Failed initializing YubiKey
+[pam_yubico.c:do_challenge_response(640)] Yubikey core error: no yubikey present
+------
