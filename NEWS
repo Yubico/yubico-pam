@@ -2,6 +2,14 @@ pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
 * Version 2.15 (unreleased)
 
+** Added new parameter 'urllist'
+
+** Added pam_yubico(8) man page.
+
+** Fix memory leak.
+
+** Bump yubico-c-client version requirement to 2.12.
+
 * Version 2.14 (released 2013-09-27)
 
 ** Don't install internal header files.
