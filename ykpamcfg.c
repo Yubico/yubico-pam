@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Yubico AB
+ * Copyright (c) 2011-2014 Yubico AB
  * All rights reserved.
  *
  * Author : Fredrik Thulin <fredrik@yubico.com>
