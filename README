@@ -13,7 +13,7 @@ Status and Roadmap
 The module is working for multi-user systems. The primary mode of
 operation is by doing online validation using a YubiKey validation
 service (such as the YubiCloud, or a private one configured using
-the 'url' parameter).
+the 'urllist' parameter).
 
 In version 2.6, offline validation was also made possible through
 the use of HMAC-SHA1 Challenge-Response found in YubiKey 2.2 and
@@ -171,7 +171,14 @@ Supported PAM module parameters are:
                 password is available or the password is not appropriate, the user
                 will be denied access.
 
-  "url":        specify the URL template to use, this is set by calling
+  "urllist":    List  of  URL  templates to be used. This is set by calling
+                ykclient_set_url_bases. The list should be in the format :
+
+		"https://server/wsapi/2.0/verify;https://server/wsapi/2.0/verify"
+
+  "url":        This option should not be used, please use the urllist
+		option instead.
+		Specify the URL template to use, this is set by calling
                 yubikey_client_set_url_template, which defaults to:
 
                 https://api.yubico.com/wsapi/verify?id=%d&otp=%s
