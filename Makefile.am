@@ -1,5 +1,5 @@
 # Written by Simon Josefsson <simon@yubico.com>.
-# Copyright (c) 2006-2013 Yubico AB
+# Copyright (c) 2006-2014 Yubico AB
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -66,8 +66,7 @@ LDADD = ./pam_yubico.la
 check_PROGRAMS = test
 TESTS = $(check_PROGRAMS)
 
-# Dist docs from wiki.
-EXTRA_DIST = doc/LocalAuthenticationUsingChallengeResponse.asciidoc doc/ReadMe.asciidoc doc/TwoFactorPAMConfiguration.asciidoc doc/UbuntuFreeRadiusYubiKey.asciidoc doc/YubiKeyAndFreeRADIUSviaPAM.asciidoc doc/YubiKeyAndFreeRADIUSwithsinglefactorauthenticationviaPAM.asciidoc doc/YubiKeyAndOpenVPNviaPAM.asciidoc doc/YubikeyAndRadiusViaPAM.asciidoc doc/YubikeyAndSSHViaPAM.asciidoc
+EXTRA_DIST = doc/LocalAuthenticationUsingChallengeResponse.txt doc/MacOSXChallengeResponse.txt doc/TwoFactorPAMConfiguration.txt doc/UbuntuFreeRadiusYubiKey.txt doc/YubiKeyAndFreeRADIUSviaPAM.txt doc/YubiKeyAndFreeRADIUSwithsinglefactorauthenticationviaPAM.txt doc/YubiKeyAndOpenVPNviaPAM.txt doc/YubikeyAndRadiusViaPAM.txt doc/Yubikey-and-SELinux-on-Fedora-18-and-up.txt doc/YubikeyAndSSHViaPAM.txt
 
 # Release
 
@@ -75,15 +74,10 @@ ChangeLog:
 	cd $(srcdir) && git2cl > ChangeLog
 
 check-doc-dist:
-	cd $(srcdir) && git submodule update
-	cd $(srcdir)/doc && git checkout master && git pull
-	perl -pe "s,^EXTRA_DIST = .*,EXTRA_DIST = `cd $(srcdir) && ls doc/*.asciidoc | grep -v Todo.ascii | xargs echo`," \
-		< $(srcdir)/Makefile.am > check-doc-dist.tmp
+	perl -pe "s,^EXTRA_DIST = .*,EXTRA_DIST = `cd $(srcdir) && ls doc/*.txt | xargs echo`," < $(srcdir)/Makefile.am > check-doc-dist.tmp
 	diff -ur $(srcdir)/Makefile.am check-doc-dist.tmp || \
 		(rm -f check-doc-dist.tmp; echo 'error: please update $(srcdir)/Makefile.am to include all docs'; exit 1)
 	rm -f check-doc-dist.tmp
-	diff -ur $(srcdir)/README $(srcdir)/doc/ReadMe.asciidoc || \
-		(echo 'error: README and doc/ReadMe.asciidoc does not match!'; exit 1)
 
 PROJECT = yubico-pam
 
