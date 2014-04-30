@@ -23,10 +23,10 @@ authentication requires following prerequisites:
 2)	Complier : GNU GCC complier (http://gcc.gnu.org/)
 
 3)      Yubico Client C library version 1.5 or later
-  (http://opensource.yubico.com/yubico-c-client/)
+  (https://developers.yubico.com/yubico-c-client/)
 
 4)	Yubico PAM Module: Yubico PAM Module Version 1.7 or later 
-  (http://opensource.yubico.com/yubico-pam/)
+  (https://developers.yubico.com/yubico-pam/)
 
 
 System Requirements
@@ -38,7 +38,7 @@ distributions.
 
 The Yubico PAM module for SSH can be downloaded from: 
 
-http://opensource.yubico.com/yubico-pam/releases.html
+https://developers.yubico.com/yubico-pam/releases.html
 
 The Yubico PAM module support two factor authentication for SSH.
 The two factor authentication module verifies the user name and password

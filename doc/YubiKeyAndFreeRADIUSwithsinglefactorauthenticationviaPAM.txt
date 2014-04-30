@@ -29,7 +29,7 @@ authentication for RADIUS requires following prerequisites:
 * FreeRADIUS: FreeRADIUS Version: 1.1.7 or *later*
   (http://freeradius.org/download.html)
 * Yubico PAM Module: Yubico PAM Module Version 1.8
-  (http://opensource.yubico.com/yubico-pam/)
+  (https://developers.yubico.com/yubico-pam/)
 
 
 Configuration
