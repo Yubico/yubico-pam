@@ -1076,7 +1076,7 @@ done:
       size_t i;
       for(i = 0; i < templates; i++)
         {
-	  free(urls[templates]);
+	  free(urls[i]);
         }
     }
   if (ykc)
