@@ -2,6 +2,8 @@ pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
 * Version 2.16 (unreleased)
 
+** Fix a crashbug with the new parameter 'urllist'
+
 * Version 2.15 (released 2014-04-30)
 
 ** Added new parameter 'urllist'
