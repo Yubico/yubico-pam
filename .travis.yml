@@ -3,6 +3,7 @@ compiler:
   - gcc
   - clang
 env:
+  - CONFIGURE_ARGS=""
   - CONFIGURE_ARGS="--without-ldap"
   - CONFIGURE_ARGS="--without-cr"
   - CONFIGURE_ARGS="--without-ldap --without-cr"
