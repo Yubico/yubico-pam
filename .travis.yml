@@ -1,0 +1,13 @@
+language: c
+compiler:
+  - gcc
+  - clang
+env:
+  - CONFIGURE_ARGS="--without-ldap"
+  - CONFIGURE_ARGS="--without-cr"
+  - CONFIGURE_ARGS="--without-ldap --without-cr"
+before_install:
+  - sudo add-apt-repository ppa:yubico/stable
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq -y libykclient-dev libpam0g-dev libldap2-dev libykpers-1-dev libyubikey-dev
+script: autoreconf -i && ./configure $CONFIGURE_ARGS && make check
