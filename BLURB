@@ -5,3 +5,4 @@ License: BSD-2-Clause
 Name: yubico-pam
 Project: yubico-pam
 Summary: Yubico Pluggable Authentication Module (PAM)
+Travis: https://travis-ci.org/Yubico/yubico-pam
