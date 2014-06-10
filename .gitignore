@@ -36,3 +36,6 @@ test.o
 ykpamcfg
 ykpamcfg-util.o
 ykpamcfg-ykpamcfg.o
+test-suite.log
+test.log
+test.trs
