@@ -45,8 +45,8 @@ You may check out the sources using Git with the following command:
 
 This will create a directory 'yubico-pam'.
 
-Autoconf, automake and libtool must be installed to create a compilable
-source tree.
+Autoconf, automake, asciidoc and libtool must be installed to create a
+compilable source tree.
 
 Generate the build system using:
 

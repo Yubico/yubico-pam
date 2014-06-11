@@ -10,5 +10,5 @@ env:
 before_install:
   - sudo add-apt-repository -y ppa:yubico/stable
   - sudo apt-get update -qq
-  - sudo apt-get install -qq -y libykclient-dev libpam0g-dev libldap2-dev libykpers-1-dev libyubikey-dev
+  - sudo apt-get install -qq -y libykclient-dev libpam0g-dev libldap2-dev libykpers-1-dev libyubikey-dev asciidoc
 script: autoreconf -i && ./configure $CONFIGURE_ARGS && make check
