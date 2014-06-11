@@ -1,0 +1,74 @@
+YKPAMCFG(1)
+=========
+:doctype:      manpage
+:man source:   yubico-pam
+:man manual:   Yubico PAM Module Manual
+
+== NAME
+ykpamcfg - Manage user settings for the Yubico PAM module
+
+== SYNOPSIS
+*ykmapcfg* [-1 | -2] [-A] [-p] [-i] [-v] [-h]
+
+== OPTIONS
+*-1*::
+use slot 1.  This is the default.
+
+*-2*::
+use slot 2.
+
+*-A* _action_::
+choose action to perform. See ACTIONS below.
+
+*-p* _path_::
+specify output file for, default is ~/.yubico/challenge
+
+*-i* _iterations_::
+number of iterations to use for pbkdf2 of expected response
+
+*-v*::
+enable verbose mode.
+
+== ACTIONS
+=== add_hmac_chalresp
+The PAM module can utilize the HMAC-SHA1 Challenge-Response mode found in YubiKeys starting with version 2.2 for *offline authentication*.  This action creates the initial state information with the C/R to be issued at the next logon.
+
+The utility currently outputs the state information to a file in the current user's home directory (_\~/.yubico/challenge-123456_ for a YubiKey with serial number API readout enabled, and _~/.yubico/challenge_ for one without).
+
+The PAM module supports a system wide directory for these state files (in case the user's home directories are encrypted), but in a system wide directory, the 'challenge' part should be replaced with the username. Example : _/var/yubico/challenges/alice-123456_.
+
+To use the system-wide mode, you currently have to move the generated state files manually and configure the PAM module accordingly.
+
+== EXAMPLES
+
+First, program a YubiKey for challenge response on Slot 2 :
+
+  $ ykpersonalize -2 -ochal-resp -ochal-hmac -ohmac-lt64 -oserial-api-visible
+  ...
+  Commit? (y/n) [n]: y
+
+Now, set the current user to require this YubiKey for logon :
+
+  $ ykpamcfg -2 -v
+  ...
+  Stored initial challenge and expected response in '/home/alice/.yubico/challenge-123456'.
+
+Then, configure authentication with PAM for example like this (_make a backup first_) :
+
+_/etc/pam.d/common-auth_ (from Ubuntu 10.10) :
+
+  auth	required	pam_unix.so nullok_secure try_first_pass
+  auth	[success=1 new_authtok_reqd=ok ignore=ignore default=die] pam_yubico.so mode=challenge-response
+  auth	requisite	pam_deny.so
+  auth	required	pam_permit.so
+  auth	optional	pam_ecryptfs.so unwrap
+
+== BUGS
+Report ykpamcfg bugs in the issue tracker: https://github.com/Yubico/yubico-pam/issues
+
+== SEE ALSO
+*pam_yubico*(8)
+
+The yubico-pam home page: https://developers.yubico.com/yubico-pam/
+
+YubiKeys can be obtained from Yubico: http://www.yubico.com/

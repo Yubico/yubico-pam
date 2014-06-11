@@ -1,0 +1,91 @@
+PAM_YUBICO(8)
+=============
+:doctype:      manpage
+:man source:   yubico-pam
+:man manual:   Yubico PAM Module Manual
+
+== NAME
+pam_yubico - Module for YubiKey authentication
+
+== SYNOPSIS
+*pam_yubico* [...]
+
+== DESCRIPTION
+The module is for authentication of YubiKeys, either with online validation of OTP, or offline validation with HMAC-SHA1 challenge-response.
+
+== OPTIONS
+*debug*::
+Turns on debugging to STDOUT
+
+*mode=*[_client_|_challenge-response_]
+Set the mode of operation, client for OTP validation and challenge-response for challenge-response validation, client is the default.
+
+*authfile*=_file_::
+Set the location of the file that holds the mappings of Yubikey token IDs to user names.  The format is username:first_public_id:second_public_id:...  default location of the file is $HOME/.yubico/authorized_yubikeys.
+
+*id*=_id_::
+Set to your client identity.
+
+*key*=_key_::
+Set to your client key in base64 format.  The client key is also known as API key, and provides integrity in the communication between the client (you) and the validation server.  If you want to get one for use with the default YubiCloud service, please go to https://upgrade.yubico.com/getapikey/
+
+*alwaysok*::
+Set to enable all authentication attempts to succeed (aka presentation mode).
+
+*try_first_pass*::
+Before prompting the user for their password, the module first tries the previous stacked module´s password in case that satisfies this module as well.
+
+*use_first_pass*::
+The argument use_first_pass forces the module to use a previous stacked modules password and will never prompt the user - if no password is available or the password is not appropriate, the user will be denied access.
+
+*urllist*=_list_::
+List of URL templates to be used. This is set by calling ykclient_set_url_bases.
+The list should be in the format:
+  https://api1.example.com/wsapi/2.0/verify;https://api2.example.com/wsapi/2.0/verify
+
+*url*=_url_::
+This option should not be used, please use the urllist option instead.  Set the URL template to use, this is set by calling ykclient_set_url_template.  The URL should be set in the format
+  https://api.example.com/wsapi/2.0/verify?id=%d&otp=%s
+
+*capath*=_path_::
+Specify the path where X509 certificates are stored. This is required if 'https' or 'ldaps' are used in 'url' and 'ldap_uri' respectively.
+
+*verbose_otp*::
+This argument is used to show the OTP (One Time Password) when it is entered, i.e. to enable terminal echo of entered characters.  You are advised to not use this, if you are using two factor authentication because that will display your password on the screen.  This requires the service using the PAM module to display custom fields.  For example, OpenSSH requires you to configure "ChallengeResponseAuthentication no".
+
+*ldap_uri*=_uri_::
+Specify the LDAP server URI (e.g. ldap://localhost).
+
+*ldap_server*=_server_::
+Specify the LDAP server host (default LDAP port is used). *Deprecated.  Use "ldap_uri" instead.*
+
+*ldapdn*=_dn_::
+The dn where the users are stored (eg: ou=users,dc=domain,dc=com).
+
+*user_attr*=_attr_::
+The LDAP attribute used to store user names (eg:cn).
+
+*yubi_attr*=_attr_::
+The LDAP attribute used to store the Yubikey id.
+
+*yubi_attr_prefix*=_prefix_::
+The prefix of the LDAP attribute's value, in case of a generic attribute, used to store several types of ids.
+
+*token_id_length*=_length_::
+Length of ID prefixing the OTP (this is 12 if using the YubiCloud).
+
+== EXAMPLES
+
+  auth sufficient pam_yubico.so id=16 debug
+
+  auth required pam_yubico.so mode=challenge-response
+
+== BUGS
+Report yubico-pam bugs in the issue tracker: https://github.com/Yubico/yubico-pam/issues
+
+== SEE ALSO
+*ykpamcfg*(1), *pam*(7)
+
+The yubico-pam home page: https://developers.yubico.com/yubico-pam/
+
+YubiKeys can be obtained from Yubico: http://www.yubico.com/

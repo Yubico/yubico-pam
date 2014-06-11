@@ -38,6 +38,7 @@ m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 AC_LIBTOOL_WIN32_DLL
 AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
+AM_MISSING_PROG([A2X], a2x, $missing_dir)
 
 AC_CHECK_HEADERS([security/pam_appl.h], [],
   [AC_MSG_ERROR([[PAM header files not found, install libpam-dev.]])])

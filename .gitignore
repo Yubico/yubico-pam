@@ -39,3 +39,5 @@ ykpamcfg-ykpamcfg.o
 test-suite.log
 test.log
 test.trs
+pam_yubico.8
+ykpamcfg.1

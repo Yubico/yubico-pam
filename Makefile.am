@@ -57,6 +57,7 @@ dist_man1_MANS = ykpamcfg.1
 endif
 
 dist_man8_MANS = pam_yubico.8
+DISTCLEANFILES = $(dist_man1_MANS) $(dist_man8_MANS)
 
 # Self tests.
 
@@ -66,7 +67,15 @@ LDADD = ./pam_yubico.la
 check_PROGRAMS = test
 TESTS = $(check_PROGRAMS)
 
-EXTRA_DIST = doc/LocalAuthenticationUsingChallengeResponse.txt doc/MacOSXChallengeResponse.txt doc/TwoFactorPAMConfiguration.txt doc/UbuntuFreeRadiusYubiKey.txt doc/YubiKeyAndFreeRADIUSviaPAM.txt doc/YubiKeyAndFreeRADIUSwithsinglefactorauthenticationviaPAM.txt doc/YubiKeyAndOpenVPNviaPAM.txt doc/YubikeyAndRadiusViaPAM.txt doc/Yubikey-and-SELinux-on-Fedora-18-and-up.txt doc/YubikeyAndSSHViaPAM.txt
+MANSOURCES = pam_yubico.8.txt ykpamcfg.1.txt
+EXTRA_DIST = doc/LocalAuthenticationUsingChallengeResponse.txt doc/MacOSXChallengeResponse.txt doc/TwoFactorPAMConfiguration.txt doc/UbuntuFreeRadiusYubiKey.txt doc/YubiKeyAndFreeRADIUSviaPAM.txt doc/YubiKeyAndFreeRADIUSwithsinglefactorauthenticationviaPAM.txt doc/YubiKeyAndOpenVPNviaPAM.txt doc/YubikeyAndRadiusViaPAM.txt doc/Yubikey-and-SELinux-on-Fedora-18-and-up.txt doc/YubikeyAndSSHViaPAM.txt $(MANSOURCES)
+
+SUFFIXES = .1.txt .1 .8.txt .8
+.1.txt.1:
+	$(A2X) --format=manpage -a revdate="Version $(VERSION)" $<
+
+.8.txt.8:
+	$(A2X) --format=manpage -a revdate="Version $(VERSION)" $<
 
 # Release
 
@@ -103,4 +112,5 @@ release:
 	cd $(srcdir) && git push
 	cd $(srcdir) && git tag -u $(KEYID) -m $(VERSION) $(VERSION)
 	cd $(srcdir) && git push --tags
+	$(YUBICO_GITHUB_REPO)/save-mans $(PROJECT) $(MANSOURCES)
 	$(YUBICO_GITHUB_REPO)/publish $(PROJECT) $(VERSION) $(PACKAGE)-$(VERSION).tar.gz*
