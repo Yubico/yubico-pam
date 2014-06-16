@@ -114,6 +114,9 @@ struct cfg
   char *user_attr;
   char *yubi_attr;
   char *yubi_attr_prefix;
+  char *binddn;
+  char *bindpw;
+  char *ldap_cacertfile;
   int token_id_length;
   enum key_mode mode;
   char *chalresp_path;
@@ -268,8 +271,10 @@ free_out:
  * This function will look in ldap id the token correspond to the
  * requested user. It will returns 0 for failure and 1 for success.
  *
- * For the moment ldaps is not supported. ldap serve can be on a
- * remote host.
+ * ldaps is only supported for ldap_uri based connections.
+ * ldap_cacertfile usually needs to be set for this to work.
+ *
+ * ldap serve can be on a remote host.
  *
  * You need the following parameters in you pam config:
  * ldapserver=  OR ldap_uri=
@@ -277,6 +282,9 @@ free_out:
  * user_attr=
  * yubi_attr=
  *
+ * If using ldap_uri, you can specify multiple failover hosts
+ * eg.
+ * ldap_uri=ldaps://host1.fqdn.example.com,ldaps://host2.fqdn.example.com
  */
 static int
 authorize_user_token_ldap (struct cfg *cfg,
@@ -296,7 +304,7 @@ authorize_user_token_ldap (struct cfg *cfg,
   struct berval **vals;
   int i, rc;
 
-  char *find = NULL;
+  char *filter = NULL;
 #endif
   DBG(("called"));
 #ifdef HAVE_LIBLDAP
@@ -320,7 +328,7 @@ authorize_user_token_ldap (struct cfg *cfg,
       rc = ldap_initialize (&ld, cfg->ldap_uri);
       if (rc != LDAP_SUCCESS)
 	{
-	  DBG (("ldap_init: %s", ldap_err2string (rc)));
+	  DBG (("ldap_initialize: %s", ldap_err2string (rc)));
 	  retval = 0;
 	  goto done;
 	}
@@ -338,9 +346,20 @@ authorize_user_token_ldap (struct cfg *cfg,
   /* LDAPv2 is historical -- RFC3494. */
   protocol = LDAP_VERSION3;
   ldap_set_option (ld, LDAP_OPT_PROTOCOL_VERSION, &protocol);
+  
+  if (cfg->ldap_uri && cfg->ldap_cacertfile){
+    /* Set CA CERTFILE.  This makes ldaps work when using ldap_uri */
+    ldap_set_option (0, LDAP_OPT_X_TLS_CACERTFILE, cfg->ldap_cacertfile);
+  }
 
-  /* Bind anonymously to the LDAP server. */
-  rc = ldap_simple_bind_s (ld, NULL, NULL);
+  if (cfg->binddn && cfg->bindpw) {
+    /* Bind using the binddn and password given. */
+    rc = ldap_simple_bind_s (ld, cfg->binddn, cfg->bindpw);
+  }
+  else{
+    /* Bind anonymously to the LDAP server. */
+    rc = ldap_simple_bind_s (ld, NULL, NULL);
+  }
   if (rc != LDAP_SUCCESS)
     {
       DBG (("ldap_simple_bind_s: %s", ldap_err2string (rc)));
@@ -348,23 +367,22 @@ authorize_user_token_ldap (struct cfg *cfg,
       goto done;
     }
 
+  attrs[0] = (char *) cfg->yubi_attr;
+
   /* Allocation of memory for search strings depending on input size */
-  i = (strlen(cfg->user_attr) + strlen(cfg->ldapdn) + strlen(user) + 3) * sizeof(char);
-  if ((find = malloc(i)) == NULL) {
+  i = ( strlen(user) + strlen(cfg->user_attr) + 4 ) * sizeof(char);
+  if ((filter = malloc(i)) == NULL) {
     DBG (("Failed allocating %i bytes", i));
     retval = 0;
     goto done;
   }
 
-  sprintf (find, "%s=%s,%s", cfg->user_attr, user, cfg->ldapdn);
-
-  attrs[0] = (char *) cfg->yubi_attr;
-
-  DBG(("LDAP : look up object '%s', ask for attribute '%s'", find, cfg->yubi_attr));
+  sprintf (filter, "(%s=%s)", cfg->user_attr, user);
+  DBG(("LDAP : lookup %s from %s using filter '%s'",attrs[0],cfg->ldapdn, filter));
 
   /* Search for the entry. */
-  if ((rc = ldap_search_ext_s (ld, find, LDAP_SCOPE_BASE,
-			       NULL, attrs, 0, NULL, NULL, LDAP_NO_LIMIT,
+  if ((rc = ldap_search_ext_s (ld, cfg->ldapdn, LDAP_SCOPE_SUBTREE,
+			       filter, attrs, 0, NULL, NULL, LDAP_NO_LIMIT,
 			       LDAP_NO_LIMIT, &result)) != LDAP_SUCCESS)
     {
       DBG (("ldap_search_ext_s: %s", ldap_err2string (rc)));
@@ -423,8 +441,8 @@ authorize_user_token_ldap (struct cfg *cfg,
     ldap_unbind (ld);
 
   /* free memory allocated for search strings */
-  if (find != NULL)
-    free(find);
+  if (filter != NULL)
+    free(filter);
 
 #else
   DBG (("Trying to use LDAP, but this function is not compiled in pam_yubico!!"));
@@ -749,6 +767,12 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->yubi_attr = (char *) argv[i] + 10;
       if (strncmp (argv[i], "yubi_attr_prefix=", 17) == 0)
 	cfg->yubi_attr_prefix = (char *) argv[i] + 17;
+      if (strncmp (argv[i], "binddn=", 7) == 0)
+	cfg->binddn = (char *) argv[i] + 7;
+      if (strncmp (argv[i], "bindpw=", 7) == 0)
+	cfg->bindpw = (char *) argv[i] + 7;
+      if (strncmp (argv[i], "ldap_cacertfile=", 16) == 0)
+	cfg->ldap_cacertfile = (char *) argv[i] + 16;
       if (strncmp (argv[i], "token_id_length=", 16) == 0)
 	sscanf (argv[i], "token_id_length=%d", &cfg->token_id_length);
       if (strcmp (argv[i], "mode=challenge-response") == 0)
@@ -779,6 +803,9 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
       D (("user_attr=%s", cfg->user_attr ? cfg->user_attr : "(null)"));
       D (("yubi_attr=%s", cfg->yubi_attr ? cfg->yubi_attr : "(null)"));
       D (("yubi_attr_prefix=%s", cfg->yubi_attr_prefix ? cfg->yubi_attr_prefix : "(null)"));
+      D (("binddn=%s", cfg->binddn ? cfg->binddn : "(null)"));
+      D (("bindpw=%s", cfg->bindpw ? cfg->bindpw : "(null)"));
+      D (("ldap_cacertfile=%s", cfg->ldap_cacertfile ? cfg->ldap_cacertfile : "(null)"));
       D (("url=%s", cfg->url ? cfg->url : "(null)"));
       D (("urllist=%s", cfg->urllist ? cfg->urllist : "(null)"));
       D (("capath=%s", cfg->capath ? cfg->capath : "(null)"));
