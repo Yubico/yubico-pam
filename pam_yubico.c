@@ -810,6 +810,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
   struct cfg *cfg = &cfg_st; /* for DBG macro */
   size_t templates = 0;
   char *urls[10];
+  char *tmpurl = NULL;
 
   parse_cfg (flags, argc, argv, cfg);
 
@@ -896,11 +897,10 @@ pam_sm_authenticate (pam_handle_t * pamh,
     {
       char *saveptr = NULL;
       char *part = NULL;
-      char *tmpurl = cfg->urllist;
+      tmpurl = strdup(cfg->urllist);
 
-      while ((part = strtok_r(tmpurl, ";", &saveptr)))
+      while ((part = strtok_r(templates == 0 ? tmpurl : NULL, ";", &saveptr)))
 	{
-	  tmpurl = NULL;
 	  if(templates == 10)
 	    {
 	      DBG (("maximum 10 urls supported in list."));
@@ -1079,6 +1079,8 @@ done:
 	  free(urls[i]);
         }
     }
+  if (tmpurl)
+    free(tmpurl);
   if (ykc)
     ykclient_done (&ykc);
   if (cfg->alwaysok && retval != PAM_SUCCESS)
