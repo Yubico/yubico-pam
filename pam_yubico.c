@@ -98,25 +98,25 @@ enum key_mode {
 struct cfg
 {
   int client_id;
-  char *client_key;
+  const char *client_key;
   int debug;
   int alwaysok;
   int verbose_otp;
   int try_first_pass;
   int use_first_pass;
-  char *auth_file;
-  char *capath;
-  char *url;
-  char *urllist;
-  char *ldapserver;
-  char *ldap_uri;
-  char *ldapdn;
-  char *user_attr;
-  char *yubi_attr;
-  char *yubi_attr_prefix;
+  const char *auth_file;
+  const char *capath;
+  const char *url;
+  const char *urllist;
+  const char *ldapserver;
+  const char *ldap_uri;
+  const char *ldapdn;
+  const char *user_attr;
+  const char *yubi_attr;
+  const char *yubi_attr_prefix;
   int token_id_length;
   enum key_mode mode;
-  char *chalresp_path;
+  const char *chalresp_path;
 };
 
 #ifdef DBG
@@ -718,7 +718,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
       if (strncmp (argv[i], "id=", 3) == 0)
 	sscanf (argv[i], "id=%d", &cfg->client_id);
       if (strncmp (argv[i], "key=", 4) == 0)
-	cfg->client_key = (char *) argv[i] + 4;
+	cfg->client_key = argv[i] + 4;
       if (strcmp (argv[i], "debug") == 0)
 	cfg->debug = 1;
       if (strcmp (argv[i], "alwaysok") == 0)
@@ -730,25 +730,25 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
       if (strcmp (argv[i], "use_first_pass") == 0)
 	cfg->use_first_pass = 1;
       if (strncmp (argv[i], "authfile=", 9) == 0)
-	cfg->auth_file = (char *) argv[i] + 9;
+	cfg->auth_file = argv[i] + 9;
       if (strncmp (argv[i], "capath=", 7) == 0)
-	cfg->capath = (char *) argv[i] + 7;
+	cfg->capath = argv[i] + 7;
       if (strncmp (argv[i], "url=", 4) == 0)
-	cfg->url = (char *) argv[i] + 4;
+	cfg->url = argv[i] + 4;
       if (strncmp (argv[i], "urllist=", 8) == 0)
-	cfg->urllist = (char *) argv[i] + 8;
+	cfg->urllist = argv[i] + 8;
       if (strncmp (argv[i], "ldapserver=", 11) == 0)
-	cfg->ldapserver = (char *) argv[i] + 11;
+	cfg->ldapserver = argv[i] + 11;
       if (strncmp (argv[i], "ldap_uri=", 9) == 0)
-	cfg->ldap_uri = (char *) argv[i] + 9;
+	cfg->ldap_uri = argv[i] + 9;
       if (strncmp (argv[i], "ldapdn=", 7) == 0)
-	cfg->ldapdn = (char *) argv[i] + 7;
+	cfg->ldapdn = argv[i] + 7;
       if (strncmp (argv[i], "user_attr=", 10) == 0)
-	cfg->user_attr = (char *) argv[i] + 10;
+	cfg->user_attr = argv[i] + 10;
       if (strncmp (argv[i], "yubi_attr=", 10) == 0)
-	cfg->yubi_attr = (char *) argv[i] + 10;
+	cfg->yubi_attr = argv[i] + 10;
       if (strncmp (argv[i], "yubi_attr_prefix=", 17) == 0)
-	cfg->yubi_attr_prefix = (char *) argv[i] + 17;
+	cfg->yubi_attr_prefix = argv[i] + 17;
       if (strncmp (argv[i], "token_id_length=", 16) == 0)
 	sscanf (argv[i], "token_id_length=%d", &cfg->token_id_length);
       if (strcmp (argv[i], "mode=challenge-response") == 0)
@@ -756,7 +756,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
       if (strcmp (argv[i], "mode=client") == 0)
 	cfg->mode = CLIENT;
       if (strncmp (argv[i], "chalresp_path=", 14) == 0)
-	cfg->chalresp_path = (char *) argv[i] + 14;
+	cfg->chalresp_path = argv[i] + 14;
     }
 
   if (cfg->debug)
