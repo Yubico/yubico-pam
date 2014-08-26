@@ -1,6 +1,10 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
-* Version 2.17 (unreleased)
+* Version 2.17 (released 2014-08-26)
+
+** Fix a bug with the 'urllist' parameter where urls would be forgotten.
+
+** Manpages converted to asciidoc.
 
 * Version 2.16 (released 2014-06-10)
 
