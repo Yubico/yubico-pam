@@ -31,16 +31,21 @@ SUBDIRS = . tests
 ACLOCAL_AMFLAGS = -I m4
 
 AM_CFLAGS = $(WARN_CFLAGS)
+AM_CPPFLAGS = @YKPERS_CFLAGS@
 
 libdir = $(PAMDIR)
 
 lib_LTLIBRARIES = pam_yubico.la
 
-pam_yubico_la_SOURCES = pam_yubico.c util.h util.c drop_privs.h drop_privs.c
+pam_yubico_la_SOURCES = pam_yubico.c drop_privs.h drop_privs.c
 # XXX add -Wl,-x too?  PAM documentation suggests it.
-pam_yubico_la_LIBADD = @LTLIBYKCLIENT@ @LIBLDAP@ @YKPERS_LIBS@ @LTLIBYUBIKEY@ -lpam
+pam_yubico_la_LIBADD = @LTLIBYKCLIENT@ @LIBLDAP@ @YKPERS_LIBS@ -lpam
+pam_yubico_la_LIBADD += libpam_util.la
 pam_yubico_la_LDFLAGS = -module -avoid-version
-pam_yubico_la_CPPFLAGS = @YKPERS_CFLAGS@
+
+noinst_LTLIBRARIES = libpam_util.la
+libpam_util_la_SOURCES = util.c util.h
+libpam_util_la_LIBADD = @LTLIBYUBIKEY@
 
 DEFS = -DDEBUG_PAM -DPAM_DEBUG @DEFS@
 
@@ -50,9 +55,9 @@ if YKPERS
 bin_PROGRAMS = ykpamcfg
 endif
 
-ykpamcfg_SOURCES = ykpamcfg.c util.c
-ykpamcfg_LDADD = @LTLIBYKCLIENT@ @YKPERS_LIBS@ @LTLIBYUBIKEY@
-ykpamcfg_CPPFLAGS = @YKPERS_CFLAGS@
+ykpamcfg_SOURCES = ykpamcfg.c
+ykpamcfg_LDADD = @YKPERS_LIBS@
+ykpamcfg_LDADD += libpam_util.la
 
 if YKPERS
 dist_man1_MANS = ykpamcfg.1

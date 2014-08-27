@@ -46,8 +46,7 @@
 #include "drop_privs.h"
 
 #if HAVE_CR
-/* for yubikey_hex_decode and yubikey_hex_p */
-#include <yubikey.h>
+/* for yubikey pbkdf2*/
 #include <ykpbkdf2.h>
 #endif /* HAVE_CR */
 
