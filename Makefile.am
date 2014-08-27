@@ -26,6 +26,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+SUBDIRS = . tests
+
 ACLOCAL_AMFLAGS = -I m4
 
 AM_CFLAGS = $(WARN_CFLAGS)
@@ -58,14 +60,6 @@ endif
 
 dist_man8_MANS = pam_yubico.8
 DISTCLEANFILES = $(dist_man1_MANS) $(dist_man8_MANS)
-
-# Self tests.
-
-AM_LDFLAGS = -no-install
-LDADD = ./pam_yubico.la
-
-check_PROGRAMS = test
-TESTS = $(check_PROGRAMS)
 
 MANSOURCES = pam_yubico.8.txt ykpamcfg.1.txt
 EXTRA_DIST = doc/LocalAuthenticationUsingChallengeResponse.txt doc/MacOSXChallengeResponse.txt doc/TwoFactorPAMConfiguration.txt doc/UbuntuFreeRadiusYubiKey.txt doc/YubiKeyAndFreeRADIUSviaPAM.txt doc/YubiKeyAndFreeRADIUSwithsinglefactorauthenticationviaPAM.txt doc/YubiKeyAndOpenVPNviaPAM.txt doc/YubikeyAndRadiusViaPAM.txt doc/Yubikey-and-SELinux-on-Fedora-18-and-up.txt doc/YubikeyAndSSHViaPAM.txt

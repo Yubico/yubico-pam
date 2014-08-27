@@ -136,6 +136,7 @@ fi
 
 
 AC_CONFIG_FILES(Makefile)
+AC_CONFIG_FILES(tests/Makefile)
 AC_OUTPUT
 
 AC_MSG_NOTICE([Summary of build options:
