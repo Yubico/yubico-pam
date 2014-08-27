@@ -35,9 +35,7 @@
 #define __PAM_YUBICO_UTIL_H_INCLUDED__
 
 #include <stdio.h>
-
-#include <ykclient.h>
-
+#include <stdint.h>
 
 #if defined(DEBUG_PAM)
 # if defined(HAVE_SECURITY__PAM_MACROS_H)
@@ -57,10 +55,7 @@
 int get_user_cfgfile_path(const char *common_path, const char *filename, const char *username, char **fn);
 
 #if HAVE_CR
-
 #include <ykcore.h>
-#include <ykstatus.h>
-#include <ykdef.h>
 
 /* Challenges can be 0..63 or 64 bytes long, depending on YubiKey configuration.
  * We settle for 63 bytes to have something that works with all configurations.

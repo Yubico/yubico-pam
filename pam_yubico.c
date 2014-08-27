@@ -45,6 +45,8 @@
 #include "util.h"
 #include "drop_privs.h"
 
+#include <ykclient.h>
+
 #if HAVE_CR
 /* for yubikey pbkdf2*/
 #include <ykpbkdf2.h>

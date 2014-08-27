@@ -44,6 +44,9 @@
 /* for yubikey_hex_decode and yubikey_hex_p */
 #include <yubikey.h>
 #include <ykpbkdf2.h>
+
+#include <ykstatus.h>
+#include <ykdef.h>
 #endif /* HAVE_CR */
 
 int
