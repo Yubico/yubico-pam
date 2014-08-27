@@ -86,6 +86,93 @@ get_user_cfgfile_path(const char *common_path, const char *filename, const char 
   return 1;
 }
 
+
+/*
+ * This function will look for users name with valid user token id. It
+ * will returns -2 if the user is unknown, -1 if the token do not match the user line, 0 for internal failure and 1 for success.
+ *
+ * File format is as follows:
+ * <user-name>:<token_id>:<token_id>
+ * <user-name>:<token_id>
+ *
+ */
+int
+check_user_token (const char *authfile,
+		  const char *username,
+		  const char *otp_id,
+		  int verbose)
+{
+  char buf[1024];
+  char *s_user, *s_token;
+  int retval = 0;
+  int fd;
+  struct stat st;
+  FILE *opwfile;
+
+  fd = open(authfile, O_RDONLY, 0);
+  if (fd < 0) {
+      if(verbose)
+	  D (("Cannot open file: %s (%s)", authfile, strerror(errno)));
+      return retval;
+  }
+
+  if (fstat(fd, &st) < 0) {
+      if(verbose)
+	  D (("Cannot stat file: %s (%s)", authfile, strerror(errno)));
+      close(fd);
+      return retval;
+  }
+
+  if (!S_ISREG(st.st_mode)) {
+      if(verbose)
+	  D (("%s is not a regular file", authfile));
+      close(fd);
+      return retval;
+  }
+
+  opwfile = fdopen(fd, "r");
+  if (opwfile == NULL) {
+      if(verbose)
+	  D (("fdopen: %s", strerror(errno)));
+      close(fd);
+      return retval;
+  }
+
+  retval = -2;
+  while (fgets (buf, 1024, opwfile))
+    {
+      if (buf[strlen (buf) - 1] == '\n')
+	buf[strlen (buf) - 1] = '\0';
+      if(verbose)
+	  D (("Authorization line: %s", buf));
+      s_user = strtok (buf, ":");
+      if (s_user && strcmp (username, s_user) == 0)
+	{
+	  if(verbose)
+	      D (("Matched user: %s", s_user));
+      retval = -1; //We found at least one line for the user
+	  do
+	    {
+	      s_token = strtok (NULL, ":");
+	      if(verbose)
+		  D (("Authorization token: %s", s_token));
+	      if (s_token && strcmp (otp_id, s_token) == 0)
+		{
+		  if(verbose)
+		      D (("Match user/token as %s/%s", username, otp_id));
+		  fclose (opwfile);
+		  return 1;
+		}
+	    }
+	  while (s_token != NULL);
+	}
+    }
+
+  fclose (opwfile);
+
+  return retval;
+}
+
 #if HAVE_CR
 /* Fill buf with len bytes of random data */
 int generate_random(void *buf, int len)

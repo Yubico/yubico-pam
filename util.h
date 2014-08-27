@@ -53,6 +53,7 @@
 #endif /* DEBUG_PAM */
 
 int get_user_cfgfile_path(const char *common_path, const char *filename, const char *username, char **fn);
+int check_user_token(const char *authfile, const char *username, const char *otp_id, int verbose);
 
 #if HAVE_CR
 #include <ykcore.h>
