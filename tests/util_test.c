@@ -66,9 +66,9 @@ static void test_load_chalresp_state(void) {
   assert(ret == 1);
   assert(state.iterations == 1000);
   assert(state.slot == 2);
-  assert(state.challenge_len == 63);
-  assert(state.response_len == 20);
-  assert(state.salt_len == 32);
+  assert(state.challenge_len == CR_CHALLENGE_SIZE);
+  assert(state.response_len == CR_RESPONSE_SIZE);
+  assert(state.salt_len == CR_SALT_SIZE);
   rewind(file);
 
   memset(&state, 0, sizeof(state));
@@ -76,9 +76,10 @@ static void test_load_chalresp_state(void) {
   rewind(file);
   ret = load_chalresp_state(file, &state, true);
   assert(ret == 1);
+  assert(state.iterations == CR_DEFAULT_ITERATIONS);
   assert(state.slot == 1);
-  assert(state.challenge_len == 63);
-  assert(state.response_len == 20);
+  assert(state.challenge_len == CR_CHALLENGE_SIZE);
+  assert(state.response_len == CR_RESPONSE_SIZE);
   assert(state.salt_len == 0);
   rewind(file);
 
