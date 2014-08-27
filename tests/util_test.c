@@ -34,8 +34,8 @@
 
 #include "util.h"
 
-void test_get_user_cfgfile_path(void) {
-  char *file = NULL;
+static void test_get_user_cfgfile_path(void) {
+  char *file;
   int ret = get_user_cfgfile_path("/foo/bar", "test", "root", &file);
   assert(ret == 1);
   assert(strcmp(file, "/foo/bar/test") == 0);
@@ -54,11 +54,12 @@ void test_get_user_cfgfile_path(void) {
 #define CHALLENGE2 "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
 #define RESPONSE2 "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
 
-void test_load_chalresp_state(void) {
+static void test_load_chalresp_state(void) {
   int ret;
   FILE *file = tmpfile();
-  CR_STATE state = {0};
+  CR_STATE state;
 
+  memset(&state, 0, sizeof(state));
   fprintf(file, "v2:%s:%s:%s:%d:%d\n", CHALLENGE1, RESPONSE1, SALT1, 1000, 2);
   rewind(file);
   ret = load_chalresp_state(file, &state, true);
@@ -90,9 +91,7 @@ void test_load_chalresp_state(void) {
 
 #endif /* HAVE_CR */
 
-int
-main (int argc, char **argv)
-{
+int main (void) {
   test_get_user_cfgfile_path();
 #if HAVE_CR
   test_load_chalresp_state();
