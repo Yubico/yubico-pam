@@ -87,6 +87,7 @@ static void test_load_chalresp_state(void) {
   rewind(file);
   ret = load_chalresp_state(file, &state, true);
   assert(ret == 0);
+  fclose(file);
 }
 
 #endif /* HAVE_CR */
