@@ -29,12 +29,12 @@
 
 #include <stdio.h>
 #include <assert.h>
+#include <string.h>
 
 #include "util.h"
 
-#if HAVE_CR
-void test_get_user_cfgfile_path() {
-  char *file;
+void test_get_user_cfgfile_path(void) {
+  char *file = NULL;
   int ret = get_user_cfgfile_path("/foo/bar", "test", "root", &file);
   assert(ret == 1);
   assert(strcmp(file, "/foo/bar/test") == 0);
@@ -45,16 +45,56 @@ void test_get_user_cfgfile_path() {
   free(file);
 }
 
+#if HAVE_CR
+
+#define CHALLENGE1 "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+#define RESPONSE1 "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+#define SALT1 "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+#define CHALLENGE2 "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+#define RESPONSE2 "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+
+void test_load_chalresp_state(void) {
+  int ret;
+  FILE *file = tmpfile();
+  CR_STATE state = {0};
+
+  fprintf(file, "v2:%s:%s:%s:%d:%d\n", CHALLENGE1, RESPONSE1, SALT1, 1000, 2);
+  rewind(file);
+  ret = load_chalresp_state(file, &state, true);
+  assert(ret == 1);
+  assert(state.iterations == 1000);
+  assert(state.slot == 2);
+  assert(state.challenge_len == 63);
+  assert(state.response_len == 20);
+  assert(state.salt_len == 32);
+  rewind(file);
+
+  memset(&state, 0, sizeof(state));
+  fprintf(file, "v1:%s:%s:%d\n", CHALLENGE2, RESPONSE2, 1);
+  rewind(file);
+  ret = load_chalresp_state(file, &state, true);
+  assert(ret == 1);
+  assert(state.slot == 1);
+  assert(state.challenge_len == 63);
+  assert(state.response_len == 20);
+  assert(state.salt_len == 0);
+  rewind(file);
+
+  /* slot 3 should fail.. */
+  fprintf(file, "v2:%s:%s:%s:%d:%d\n", CHALLENGE1, RESPONSE1, SALT1, 1000, 3);
+  rewind(file);
+  ret = load_chalresp_state(file, &state, true);
+  assert(ret == 0);
+}
+
 #endif /* HAVE_CR */
 
 int
 main (int argc, char **argv)
 {
-#if HAVE_CR
   test_get_user_cfgfile_path();
-  return 0;
-#else
-  printf("skipping util tests since we're compiling without CR\n");
-  return 0;
+#if HAVE_CR
+  test_load_chalresp_state();
 #endif /* HAVE_CR */
+  return 0;
 }
