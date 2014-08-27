@@ -29,8 +29,9 @@
 
 AM_LDFLAGS = -no-install
 AM_CFLAGS=-I$(srcdir)/.. $(WARN_CFLAGS)
-LDADD = ../pam_yubico.la
-test_SOURCES = test.c
+test_LDADD = ../pam_yubico.la
+util_test_LDADD = ../libpam_util.la
+util_test_CPPFLAGS = @YKPERS_CFLAGS@
 
-check_PROGRAMS = test
+check_PROGRAMS = test util_test
 TESTS = $(check_PROGRAMS)
