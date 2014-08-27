@@ -36,8 +36,13 @@
 void test_get_user_cfgfile_path() {
   char *file;
   int ret = get_user_cfgfile_path("/foo/bar", "test", "root", &file);
-  fprintf(stderr, "foo: %s\n", file);
+  assert(ret == 1);
   assert(strcmp(file, "/foo/bar/test") == 0);
+  free(file);
+  ret = get_user_cfgfile_path(NULL, "test", "root", &file);
+  assert(ret == 1);
+  assert(strcmp(file, "/root/.yubico/test") == 0);
+  free(file);
 }
 
 #endif /* HAVE_CR */
