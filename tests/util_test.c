@@ -28,11 +28,28 @@
  */
 
 #include <stdio.h>
+#include <assert.h>
 
 #include "util.h"
+
+#if HAVE_CR
+void test_get_user_cfgfile_path() {
+  char *file;
+  int ret = get_user_cfgfile_path("/foo/bar", "test", "root", &file);
+  fprintf(stderr, "foo: %s\n", file);
+  assert(strcmp(file, "/foo/bar/test") == 0);
+}
+
+#endif /* HAVE_CR */
 
 int
 main (int argc, char **argv)
 {
+#if HAVE_CR
+  test_get_user_cfgfile_path();
   return 0;
+#else
+  printf("skipping util tests since we're compiling without CR\n");
+  return 0;
+#endif /* HAVE_CR */
 }

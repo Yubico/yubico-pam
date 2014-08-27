@@ -39,13 +39,13 @@ lib_LTLIBRARIES = pam_yubico.la
 
 pam_yubico_la_SOURCES = pam_yubico.c drop_privs.h drop_privs.c
 # XXX add -Wl,-x too?  PAM documentation suggests it.
-pam_yubico_la_LIBADD = @LTLIBYKCLIENT@ @LIBLDAP@ @YKPERS_LIBS@ -lpam
+pam_yubico_la_LIBADD = @LTLIBYKCLIENT@ @LIBLDAP@ -lpam
 pam_yubico_la_LIBADD += libpam_util.la
 pam_yubico_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = libpam_util.la
 libpam_util_la_SOURCES = util.c util.h
-libpam_util_la_LIBADD = @LTLIBYUBIKEY@
+libpam_util_la_LIBADD = @LTLIBYUBIKEY@ @YKPERS_LIBS@
 
 DEFS = -DDEBUG_PAM -DPAM_DEBUG @DEFS@
 
@@ -56,8 +56,7 @@ bin_PROGRAMS = ykpamcfg
 endif
 
 ykpamcfg_SOURCES = ykpamcfg.c
-ykpamcfg_LDADD = @YKPERS_LIBS@
-ykpamcfg_LDADD += libpam_util.la
+ykpamcfg_LDADD = libpam_util.la
 
 if YKPERS
 dist_man1_MANS = ykpamcfg.1
