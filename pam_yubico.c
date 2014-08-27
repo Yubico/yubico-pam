@@ -48,6 +48,8 @@
 #include <ykclient.h>
 
 #if HAVE_CR
+/* for yubikey_hex_encode */
+#include <yubikey.h>
 /* for yubikey pbkdf2*/
 #include <ykpbkdf2.h>
 #endif /* HAVE_CR */
