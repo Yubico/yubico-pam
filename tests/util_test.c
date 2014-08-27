@@ -32,6 +32,10 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #include "util.h"
 
 static void test_get_user_cfgfile_path(void) {
@@ -44,6 +48,34 @@ static void test_get_user_cfgfile_path(void) {
   assert(ret == 1);
   assert(strcmp(file, "/root/.yubico/test") == 0);
   free(file);
+}
+
+static void test_check_user_token(void) {
+  char file[] = "/tmp/pamtest.XXXXXX";
+  int fd = mkstemp(file);
+  FILE *handle;
+  int ret;
+
+  assert(fd != -1);
+  handle = fdopen(fd, "w");
+  fprintf(handle, "foobar:hhhvhvhdhbid:hnhbhnhbhnhb:\n");
+  fprintf(handle, "kaka:hdhrhbhjhvhu:hihbhdhrhbhj\n");
+  fprintf(handle, "bar:hnhbhnhbhnhb\n");
+  fclose(handle);
+
+  ret = check_user_token(file, "foobar", "hhhvhvhdhbid", 1);
+  assert(ret == 1);
+  ret = check_user_token(file, "foobar", "hnhbhnhbhnhb", 1);
+  assert(ret == 1);
+  ret = check_user_token(file, "foobar", "hnhbhnhbhnhc", 1);
+  assert(ret == -1);
+  ret = check_user_token(file, "kaka", "hihbhdhrhbhj", 1);
+  assert(ret == 1);
+  ret = check_user_token(file, "bar", "hnhbhnhbhnhb", 1);
+  assert(ret == 1);
+  ret = check_user_token(file, "foo", "hdhrhbhjhvhu", 1);
+  assert(ret == -2);
+  remove(file);
 }
 
 #if HAVE_CR
@@ -95,6 +127,7 @@ static void test_load_chalresp_state(void) {
 
 int main (void) {
   test_get_user_cfgfile_path();
+  test_check_user_token();
 #if HAVE_CR
   test_load_chalresp_state();
 #endif /* HAVE_CR */
