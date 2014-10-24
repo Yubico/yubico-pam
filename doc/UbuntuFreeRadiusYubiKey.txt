@@ -84,7 +84,7 @@ Create a file /etc/yubikey_mapping (ccccccccltnc is Alice's YubiKey's public ID)
    alice:ccccccccltnc
 ------
 
-Create a Unix account 'alice':   XXX should not be necessary??
+Create a Unix account 'alice':   XXX should not be necessary?
 
 ------
    adduser --disabled-password alice
