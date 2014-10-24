@@ -180,15 +180,15 @@ We have tested the pam_yubico configuration on following Linux sever platforms:
 
 i) Fedora 8:
 
-Operating system: Fedora release 8 (Werewolf),
-OpenVPN Server : OpenVPN Version 2.0.9,
-Yubico PAM: pam_yubico  Version 1.8
+ Operating system: Fedora release 8 (Werewolf),
+ OpenVPN Server : OpenVPN Version 2.0.9,
+ Yubico PAM: pam_yubico  Version 1.8
 
 ii) Fedora 6:
 
-Operating system: Fedora Core release 6 (Zod),
-OpenVPN Server: OpenVPN Version 2.0.9,
-Yubico PAM: pam_yubico version 1.8
+ Operating system: Fedora Core release 6 (Zod),
+ OpenVPN Server: OpenVPN Version 2.0.9,
+ Yubico PAM: pam_yubico version 1.8
 
 To test the configuration, first create a couple of test users on the
 system where OpenVPN server is running and configure their YubiKey IDs
@@ -281,7 +281,7 @@ i) Operating System: Fedora release 8 (Werewolf)
 ii) FreeRADIUS Server : FreeRADIUS Version 1.1.7
 iii) Pam_Radius: pam_radius_auth 1.3.17
 iv) Yubico PAM: pam_yubico  Version 1.8
-iv) "/etc/pam.d/openvpn" file:
+v) "/etc/pam.d/openvpn" file:
 
 ------
    account         required        pam_radius_auth.so
