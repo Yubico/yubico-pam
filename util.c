@@ -35,6 +35,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <pwd.h>
 #include <unistd.h>
 
@@ -460,3 +463,46 @@ write_chalresp_state(FILE *f, CR_STATE *state)
   return 0;
 }
 #endif /* HAVE_CR */
+
+
+int filter_result_len(const char *filter, const char *user, char *output) {
+  int user_len = strlen(user);
+  int filter_len = strlen(filter);
+  const char *result;
+  int result_len = 0;
+  const char *percent_sign;
+  for (result = filter ; (percent_sign = strchr(result, '%')) ; result = percent_sign) {
+    if ((percent_sign + 1 - filter) > filter_len) {
+      break;
+    }
+    if (output) {
+      memcpy(output, result, percent_sign - result);
+      output += percent_sign - result;
+    }
+    if (*(percent_sign+1) == 'u') {
+      if (output) {
+        memcpy(output, user, user_len);
+        output += user_len;
+      }
+      result_len += (percent_sign - result) + user_len;
+      ++percent_sign; // skip u
+    } else {
+      if (output) {
+        *output++ = '%';
+      }
+      result_len += percent_sign + 1 - result;
+    }
+    ++percent_sign;
+  }
+  if (output) {
+    memcpy(output, result, ((filter+filter_len)-result) + 1);
+  }
+  return result_len + (filter+filter_len-result);
+}
+
+const char *filter_printf(const char *filter, const char *user) {
+  char *result = malloc(filter_result_len(filter, user, NULL) + 1);
+  filter_result_len(filter, user, result);
+  return result;
+}
+

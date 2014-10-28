@@ -113,6 +113,10 @@ struct cfg
   const char *urllist;
   const char *ldapserver;
   const char *ldap_uri;
+  int ldap_bind_no_anonymous;
+  const char *ldap_bind_user;
+  const char *ldap_bind_password;
+  const char *ldap_filter;
   const char *ldapdn;
   const char *user_attr;
   const char *yubi_attr;
@@ -206,6 +210,7 @@ free_out:
 static int
 authorize_user_token_ldap (struct cfg *cfg,
 			   const char *user,
+                     const char *password,
 			   const char *token_id)
 {
   int retval = 0;
@@ -221,15 +226,12 @@ authorize_user_token_ldap (struct cfg *cfg,
   struct berval **vals;
   int i, rc;
 
+  const char *filter = NULL;
   char *find = NULL;
+  int scope = LDAP_SCOPE_BASE;
 #endif
   DBG(("called"));
 #ifdef HAVE_LIBLDAP
-
-  if (cfg->user_attr == NULL) {
-    DBG (("Trying to look up user to YubiKey mapping in LDAP, but user_attr not set!"));
-    return 0;
-  }
   if (cfg->yubi_attr == NULL) {
     DBG (("Trying to look up user to YubiKey mapping in LDAP, but yubi_attr not set!"));
     return 0;
@@ -265,7 +267,16 @@ authorize_user_token_ldap (struct cfg *cfg,
   ldap_set_option (ld, LDAP_OPT_PROTOCOL_VERSION, &protocol);
 
   /* Bind anonymously to the LDAP server. */
-  rc = ldap_simple_bind_s (ld, NULL, NULL);
+  if (cfg->ldap_bind_user && cfg->ldap_bind_password) {
+    DBG (("try bind with: %s:%s", cfg->ldap_bind_user, cfg->ldap_bind_password)); 
+    rc = ldap_simple_bind_s (ld, cfg->ldap_bind_user, cfg->ldap_bind_password);
+  } else if (cfg->ldap_bind_no_anonymous) {
+    DBG (("try bind with: %s:%s", user, password)); 
+    rc = ldap_simple_bind_s (ld, user, password);
+  } else {
+    DBG (("try bind anonymous"));
+    rc = ldap_simple_bind_s (ld, NULL, NULL);
+  }
   if (rc != LDAP_SUCCESS)
     {
       DBG (("ldap_simple_bind_s: %s", ldap_err2string (rc)));
@@ -274,22 +285,29 @@ authorize_user_token_ldap (struct cfg *cfg,
     }
 
   /* Allocation of memory for search strings depending on input size */
-  i = (strlen(cfg->user_attr) + strlen(cfg->ldapdn) + strlen(user) + 3) * sizeof(char);
-  if ((find = malloc(i)) == NULL) {
-    DBG (("Failed allocating %i bytes", i));
-    retval = 0;
-    goto done;
+  find = strdup(cfg->ldapdn); // allow free later-:)
+  if (cfg->user_attr && cfg->yubi_attr) {
+    i = (strlen(cfg->user_attr) + strlen(cfg->ldapdn) + strlen(user) + 3) * sizeof(char);
+    if ((find = malloc(i)) == NULL) {
+      DBG (("Failed allocating %i bytes", i));
+      retval = 0;
+      goto done;
+    }
+    sprintf (find, "%s=%s,%s", cfg->user_attr, user, cfg->ldapdn);
+    filter = NULL;
+  } 
+  if (cfg->ldap_filter) {
+    filter = filter_printf(cfg->ldap_filter, user);
+    scope = LDAP_SCOPE_SUBTREE;
   }
-
-  sprintf (find, "%s=%s,%s", cfg->user_attr, user, cfg->ldapdn);
-
   attrs[0] = (char *) cfg->yubi_attr;
 
-  DBG(("LDAP : look up object '%s', ask for attribute '%s'", find, cfg->yubi_attr));
+  DBG(("LDAP : look up object base='%s' filter='%s', ask for attribute '%s'", find, 
+      filter ? filter:"(null)", cfg->yubi_attr));
 
   /* Search for the entry. */
-  if ((rc = ldap_search_ext_s (ld, find, LDAP_SCOPE_BASE,
-			       NULL, attrs, 0, NULL, NULL, LDAP_NO_LIMIT,
+  if ((rc = ldap_search_ext_s (ld, find, scope,
+			       filter, attrs, 0, NULL, NULL, LDAP_NO_LIMIT,
 			       LDAP_NO_LIMIT, &result)) != LDAP_SUCCESS)
     {
       DBG (("ldap_search_ext_s: %s", ldap_err2string (rc)));
@@ -313,10 +331,10 @@ authorize_user_token_ldap (struct cfg *cfg,
 	{
 	  if ((vals = ldap_get_values_len (ld, e, a)) != NULL)
 	    {
-	      DBG(("LDAP : Found %i values - checking if any of them match '%s%s'",
-		   ldap_count_values_len(vals),
-		   cfg->yubi_attr_prefix ? cfg->yubi_attr_prefix : "",
-		   token_id));
+	      DBG(("LDAP : Found %i values - checking if any of them match '%s:%s:%s'",
+		   ldap_count_values_len(vals), 
+               vals[i]->bv_val,
+               cfg->yubi_attr_prefix ? cfg->yubi_attr_prefix : "", token_id));
 
 	      yubi_attr_prefix_len = cfg->yubi_attr_prefix ? strlen(cfg->yubi_attr_prefix) : 0;
 
@@ -350,6 +368,8 @@ authorize_user_token_ldap (struct cfg *cfg,
   /* free memory allocated for search strings */
   if (find != NULL)
     free(find);
+  if (filter != NULL)
+    free(filter);
 
 #else
   DBG (("Trying to use LDAP, but this function is not compiled in pam_yubico!!"));
@@ -666,6 +686,14 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->ldapserver = argv[i] + 11;
       if (strncmp (argv[i], "ldap_uri=", 9) == 0)
 	cfg->ldap_uri = argv[i] + 9;
+      if (strncmp (argv[i], "ldap_bind_no_anonymous", sizeof("ldap_bind_no_anonymous")-1) == 0)
+	cfg->ldap_bind_no_anonymous = 1;
+      if (strncmp (argv[i], "ldap_bind_user=", sizeof("ldap_bind_user=")-1) == 0)
+	cfg->ldap_bind_user = argv[i] + sizeof("ldap_bind_user=")-1;
+      if (strncmp (argv[i], "ldap_bind_password=", sizeof("ldap_bind_password=")-1) == 0)
+	cfg->ldap_bind_password = argv[i] + sizeof("ldap_bind_password=")-1;
+      if (strncmp (argv[i], "ldap_filter=", sizeof("ldap_filter=")-1) == 0)
+	cfg->ldap_filter = argv[i] + sizeof("ldap_filter=")-1;
       if (strncmp (argv[i], "ldapdn=", 7) == 0)
 	cfg->ldapdn = argv[i] + 7;
       if (strncmp (argv[i], "user_attr=", 10) == 0)
@@ -700,6 +728,10 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
       D (("authfile=%s", cfg->auth_file ? cfg->auth_file : "(null)"));
       D (("ldapserver=%s", cfg->ldapserver ? cfg->ldapserver : "(null)"));
       D (("ldap_uri=%s", cfg->ldap_uri ? cfg->ldap_uri : "(null)"));
+      D (("ldap_bind_no_anonymous=%d", cfg->ldap_bind_no_anonymous));
+      D (("ldap_bind_user=%s", cfg->ldap_bind_user ? cfg->ldap_bind_user : "(null)"));
+      D (("ldap_bind_password=%s", cfg->ldap_bind_password ? cfg->ldap_bind_password : "(null)"));
+      D (("ldap_filter=%s", cfg->ldap_filter ? cfg->ldap_filter : "(null)"));
       D (("ldapdn=%s", cfg->ldapdn ? cfg->ldapdn : "(null)"));
       D (("user_attr=%s", cfg->user_attr ? cfg->user_attr : "(null)"));
       D (("yubi_attr=%s", cfg->yubi_attr ? cfg->yubi_attr : "(null)"));
@@ -922,9 +954,10 @@ pam_sm_authenticate (pam_handle_t * pamh,
   DBG (("OTP: %s ID: %s ", otp, otp_id));
 
   /* user entered their system password followed by generated OTP? */
+  char *onlypasswd = NULL;
   if (password_len > TOKEN_OTP_LEN + cfg->token_id_length)
     {
-      char *onlypasswd = strdup (password);
+      onlypasswd = strdup (password);
 
       if (! onlypasswd) {
 	retval = PAM_BUF_ERR;
@@ -969,7 +1002,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
   /* authorize the user with supplied token id */
   if (cfg->ldapserver != NULL || cfg->ldap_uri != NULL)
-    valid_token = authorize_user_token_ldap (cfg, user, otp_id);
+    valid_token = authorize_user_token_ldap (cfg, user, onlypasswd, otp_id);
   else
     valid_token = authorize_user_token (cfg, user, otp_id, pamh);
 
