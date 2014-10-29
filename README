@@ -171,18 +171,14 @@ ykclient_set_url_bases. The list should be in the format :
 `https://server/wsapi/2.0/verify;https://server/wsapi/2.0/verify`
 
 url::
-   This option should not be used, please use the urllist
-   option instead.
-   Specify the URL template to use, this is set by calling
-   yubikey_client_set_url_template, which defaults to:
-
-   `https://api.yubico.com/wsapi/verify?id=%d&otp=%s`
-   
-   or
-   
-   `https://api.yubico.com/wsapi/2.0/verify?id=%d&otp=%s`
-
-   depending on your version of yubico-c-client.
+This option should not be used, please use the urllist
+option instead.
+Specify the URL template to use, this is set by calling
+yubikey_client_set_url_template, which defaults to:
+`https://api.yubico.com/wsapi/verify?id=%d&otp=%s`
+or
+`https://api.yubico.com/wsapi/2.0/verify?id=%d&otp=%s`
+depending on your version of yubico-c-client.
 
 capath::
 specify the path where X509 certificates are stored. This is
@@ -195,7 +191,6 @@ verbose_otp::
    You are advised to not use this, if you are using two factor
    authentication because that will display your password on the
    screen.
-   
    This requires the service using the PAM module to
    display custom fields.  For example, OpenSSH requires
    you to configure `ChallengeResponseAuthentication no`.
