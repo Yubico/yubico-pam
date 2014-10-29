@@ -4,23 +4,23 @@ Ubuntu FreeRadius YubiKey
 Create and login to a fresh Ubuntu 10.04 LTS machine:
 
 ------
-   vmbuilder kvm ubuntu \
-	  --dest /var/lib/libvirt/images/freeradius \
-	  --proxy http://192.168.1.2/ubuntu \
-	  --rootsize 10000 \
-	  --mem 600 \
-	  --suite lucid \
-	  --flavour virtual \
-	  --addpkg unattended-upgrades \
-	  --addpkg openssh-server \
-	  --addpkg avahi-daemon \
-	  --addpkg acpid \
-	  --ssh-key /root/.ssh/authorized_keys \
-	  --libvirt qemu:///system \
-	  --hostname freeradius \
-	  --bridge br0 \
-	  --debug
-   ssh -l root freeradius.local
+vmbuilder kvm ubuntu \
+  --dest /var/lib/libvirt/images/freeradius \
+  --proxy http://192.168.1.2/ubuntu \
+  --rootsize 10000 \
+  --mem 600 \
+  --suite lucid \
+  --flavour virtual \
+  --addpkg unattended-upgrades \
+  --addpkg openssh-server \
+  --addpkg avahi-daemon \
+  --addpkg acpid \
+  --ssh-key /root/.ssh/authorized_keys \
+  --libvirt qemu:///system \
+  --hostname freeradius \
+  --bridge br0 \
+  --debug
+ssh -l root freeradius.local
 ------
 
 Install and configure software :
