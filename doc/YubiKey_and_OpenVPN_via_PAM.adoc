@@ -35,11 +35,9 @@ We assume that OpenVPN server is already installed on the server.
   to add the following three lines to enable PAM modules for username
   and password authentication:
 
-------
-plugin <Absolute path of  “openvpn-auth-pam.so” file> <PAM configuration file name for OpenVPN
-client-cert-not-required
-username-as-common-name
-------
+  plugin <Absolute path of  “openvpn-auth-pam.so” file> <PAM configuration file name for OpenVPN
+  client-cert-not-required
+  username-as-common-name
 
 (for example: `plugin /usr/lib/openvpn/plugin/lib/openvpn-auth-pam.so openvpn`)
 
@@ -56,8 +54,6 @@ username-as-common-name
 Build instructions for pam_yubico are available in its README.
 
 ==== Configuration of pam_yubico module:
-
-*) Configuration for user and YubiKey PublicID mapping
 
 There are two ways of user and YubiKey PublicID (token ID) mapping.
 It can be either done at administrative level or at individual user level.
@@ -138,22 +134,21 @@ and list all the PAM modules in this files accordingly.
 
 Our test environment is as follows:
 
-i) Operating System: Fedora release 8 (Werewolf)
+Operating System:: Fedora release 8 (Werewolf)
 
-ii) OpenVPN Server : OpenVPN Version 2.0.9
+OpenVPN Server:: OpenVPN Version 2.0.9
 
-iii) Yubico PAM: pam_yubico  Version 1.8
+Yubico PAM:: pam_yubico Version 1.8
 
-iv) `/etc/pam.d/openvpn` file:
-
-------
+/etc/pam.d/openvpn file::
+----
 auth      	 required     pam_yubico.so authfile=/etc/yubikeyid id=16 debug
 auth       	 include     	system-auth
 account   	 required  	pam_nologin.so
 account    	 include      	system-auth
 password  	 include     	system-auth
 session    	 include     	system-auth
-------
+----
 
 ==== Testing the configuration
 
@@ -248,7 +243,7 @@ freeradius.example.com Admin456
 ------
 
 We can configure failover support for RADIUS server by creating additional
-RADIUS server entries per line of “/etc/raddb/server” file.
+RADIUS server entries per line of ´/etc/raddb/server´ file.
 
 ==== Test Setup
 
@@ -270,19 +265,19 @@ auth            required        pam_radius_auth.so no_warn try_first_pass
 
 We have tested the pam_yubico configuration on following Linux sever platforms:
 
-i) Fedora 8:
-Operating system: Fedora release 8 (Werewolf),
-OpenVPN Server : OpenVPN Version 2.0.9,
-Yubico PAM: pam_yubico  Version 1.8,
-FreeRADIUS Server: FreeRADIUS Server Version 1.1.7,
-Pam_radius: pam_radius_auth Version 1.3.17
+===== Fedora 8
+Operating system:: Fedora release 8 (Werewolf)
+OpenVPN Server:: OpenVPN Version 2.0.9
+Yubico PAM:: pam_yubico  Version 1.8
+FreeRADIUS Server:: FreeRADIUS Server Version 1.1.7
+Pam_radius:: pam_radius_auth Version 1.3.17
 
-ii) Fedora 6 :
-Operating system: Fedora Core release 6 (Zod),
-OpenVPN Server: OpenVPN Version 2.0.9,
-Yubico PAM: pam_yubico version 1.8,
-FreeRADIUS Server: FreeRADIUS Server Version 1.1.7,
-Pam_radius: pam_radius_auth Version 1.3.17
+===== Fedora 6
+Operating system:: Fedora Core release 6 (Zod)
+OpenVPN Server:: OpenVPN Version 2.0.9
+Yubico PAM:: pam_yubico version 1.8
+FreeRADIUS Server:: FreeRADIUS Server Version 1.1.7
+Pam_radius:: pam_radius_auth Version 1.3.17
 
 To test the configuration, first create a couple of test users
 on the system where FreeRADIUS server is running and configure
