@@ -17,7 +17,7 @@ the 'urllist' parameter).
 In version 2.6, offline validation was also made possible through
 the use of HMAC-SHA1 Challenge-Response found in YubiKey 2.2 and
 later. This has introduced a dependency of libykpers-1 from the
-ykpersonalize package. Pass `--without-cr' to `configure' to avoid
+ykpersonalize package. Pass `--without-cr` to `configure` to avoid
 this dependency.
 
 The development community is co-ordinated via 
@@ -38,7 +38,7 @@ version.
 You may check out the sources using Git with the following command:
 
 ------
-   $ git clone git@github.com:Yubico/yubico-pam.git yubico-pam
+$ git clone git@github.com:Yubico/yubico-pam.git yubico-pam
 ------
 
 This will create the directory `yubico-pam`.
@@ -49,8 +49,8 @@ compilable source tree.
 Generate the build system using:
 
 ------
-   $ cd yubico-pam
-   $ autoreconf --install
+$ cd yubico-pam
+$ autoreconf --install
 ------
 
 
