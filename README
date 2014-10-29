@@ -1,10 +1,9 @@
-Yubico PAM module
------------------
+== Yubico PAM module ==
 
 The Yubico PAM module provides an easy way to integrate the Yubikey
 into your existing user authentication infrastructure.  PAM is used by
 GNU/Linux, Solaris and Mac OS X for user authentication, and by other
-specialized applications such as NCSA !MyProxy.
+specialized applications such as NCSA MyProxy.
 
 
 Status and Roadmap
@@ -21,9 +20,8 @@ later. This has introduced a dependency of libykpers-1 from the
 ykpersonalize package. Pass `--without-cr' to `configure' to avoid
 this dependency.
 
-The development community is co-ordinated via GitHub :
-
-https://github.com/Yubico/yubico-pam/
+The development community is co-ordinated via 
+https://github.com/Yubico/yubico-pam[the GitHub project page].
 
 The project is licensed under a BSD license.  See the file COPYING for
 exact wording.  For any copyright year range specified as YYYY-ZZZZ in
@@ -43,7 +41,7 @@ You may check out the sources using Git with the following command:
    $ git clone git@github.com:Yubico/yubico-pam.git yubico-pam
 ------
 
-This will create a directory 'yubico-pam'.
+This will create the directory `yubico-pam`.
 
 Autoconf, automake, asciidoc and libtool must be installed to create a
 compilable source tree.
@@ -66,15 +64,11 @@ ykclient library from:
   https://developers.yubico.com/yubico-c-client/
 
 It in turn requires Curl, which you need to have installed, and
-libyubikey. Get libyubikey from
-
-  https://developers.yubico.com/yubico-c/
+https://developers.yubico.com/yubico-c[libyubikey].
 
 The new Challenge-Response offline authentication requires libykpers-1
-from the yubikey-personalization project :
-
-  https://developers.yubico.com/yubikey-personalization/
-
+from the 
+https://developers.yubico.com/yubikey-personalization[yubikey-personalization] project :
 
 The build system uses Autoconf, to set up the build system run:
 
@@ -123,7 +117,7 @@ Configuration
 -------------
 
 Install it in your PAM setup by adding a line to an appropriate file
-in /etc/pam.d/:
+in `/etc/pam.d/`:
 
 ------
   auth sufficient pam_yubico.so id=16 debug
