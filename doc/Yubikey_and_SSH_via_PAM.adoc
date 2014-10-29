@@ -1,5 +1,5 @@
 === Introduction ===
-------------
+
 The purpose of this document is to guide readers through the configuration
 steps to use two factor authentication for SSH using Yubikey. This document
 assumes that the reader has advanced knowledge and experience in Linux
