@@ -45,7 +45,7 @@ client-cert-not-required
 username-as-common-name
 ------
 
-(For e.g.: plugin /usr/lib/openvpn/plugin/lib/openvpn-auth-pam.so openvpn)
+(for example: `plugin /usr/lib/openvpn/plugin/lib/openvpn-auth-pam.so openvpn`)
 
 
 * Edit the OpenVPN client configuration file `/etc/openvpn/client.conf` to
@@ -228,9 +228,7 @@ To configure OpenVPN with FreeRADIUS support, please follow the steps below:
 
 * Follow all the steps mentioned in the section “OpenVPN Configuration without FreeRADIUS support” to configure OpenVPN server to support PAM authentication.
 
-* Install and configure FreeRADIUS server for two factor authentication using following wiki link:
-
-https://github.com/Yubico/yubico-pam/wiki/YubiKeyAndFreeRADIUSviaPAM
+* https://github.com/Yubico/yubico-pam/blob/master/doc/YubiKey_and_FreeRADIUS_via_PAM.adoc[Install and configure FreeRADIUS server for two factor authentication].
 
 * Install and configure pam_radius_auth.so and copy it to /lib/security directory
 
@@ -245,7 +243,7 @@ auth            required        pam_radius_auth.so no_warn try_first_pass
 ------
 
 * Create a file `/etc/raddb/server` to configure FreeRADIUS server that is
-used by pam_radius_auth PAM module. The content for the file is as follows:
+used by `pam_radius_auth` PAM module. The content for the file is as follows:
 
 ------
 <RADIUS server fully qualified domain name/IP Address> <Shared Secret>
@@ -274,7 +272,7 @@ i) Operating System: Fedora release 8 (Werewolf)
 ii) FreeRADIUS Server : FreeRADIUS Version 1.1.7
 iii) Pam_Radius: pam_radius_auth 1.3.17
 iv) Yubico PAM: pam_yubico  Version 1.8
-v) "/etc/pam.d/openvpn" file:
+v) `/etc/pam.d/openvpn` file:
 
 ------
 account         required        pam_radius_auth.so
