@@ -110,7 +110,7 @@ yubico-pam and the supporting Yubico packages have corresponding FreeBSD ports. 
   $ cd /usr/ports/security/pam_yubico
   $ make install clean
 
-Advanced configuration notes are available at http://mjslabs.com/yubihow.html
+Advanced configuration notes are available http://mjslabs.com/yubihow.html[here].
 
 
 Configuration
@@ -230,8 +230,8 @@ If you are using "debug" you may find it useful to create a
 world-writable log file:
 
 ------
-  touch /var/run/pam-debug.log
-  chmod go+w /var/run/pam-debug.log
+touch /var/run/pam-debug.log
+chmod go+w /var/run/pam-debug.log
 ------
 
 
@@ -263,7 +263,7 @@ Now add authfile=/etc/yubikey_mappings to your PAM configuration line, so it
 looks like:
 
 ------
-   auth sufficient pam_yubico.so id=16 authfile=/etc/yubikey_mappings
+auth sufficient pam_yubico.so id=16 authfile=/etc/yubikey_mappings
 ------
 
 
@@ -317,10 +317,10 @@ information including the OTP and ID of your token to the shell - copy the ID
 into your config file and you should be up and going.
 
 ------
-   Yubikey for `youruser': 
-   [pam_yubico.c:pam_sm_authenticate(867)] conv returned 44 bytes
-   [pam_yubico.c:pam_sm_authenticate(885)] Skipping first 0 bytes. Length is 44, token_id set to 12 and token OTP always 32.
-   [pam_yubico.c:pam_sm_authenticate(892)] OTP: ccccccclabcabkhbdncicglfltnukadfoifadfhhhhfe ID: cccccclabcab 
+Yubikey for `youruser': 
+[pam_yubico.c:pam_sm_authenticate(867)] conv returned 44 bytes
+[pam_yubico.c:pam_sm_authenticate(885)] Skipping first 0 bytes. Length is 44, token_id set to 12 and token OTP always 32.
+[pam_yubico.c:pam_sm_authenticate(892)] OTP: ccccccclabcabkhbdncicglfltnukadfoifadfhhhhfe ID: cccccclabcab 
 ------
 
 
