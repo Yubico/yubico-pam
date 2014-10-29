@@ -171,18 +171,18 @@ ykclient_set_url_bases. The list should be in the format :
 `https://server/wsapi/2.0/verify;https://server/wsapi/2.0/verify`
 
 url::
-This option should not be used, please use the urllist
-option instead.
-Specify the URL template to use, this is set by calling
-yubikey_client_set_url_template, which defaults to:
+   This option should not be used, please use the urllist
+   option instead.
+   Specify the URL template to use, this is set by calling
+   yubikey_client_set_url_template, which defaults to:
 
- https://api.yubico.com/wsapi/verify?id=%d&otp=%s
+   `https://api.yubico.com/wsapi/verify?id=%d&otp=%s`
+   
+   or
+   
+   `https://api.yubico.com/wsapi/2.0/verify?id=%d&otp=%s`
 
-or
-
- https://api.yubico.com/wsapi/2.0/verify?id=%d&otp=%s
-
-depending on your version of yubico-c-client.
+   depending on your version of yubico-c-client.
 
 capath::
 specify the path where X509 certificates are stored. This is
@@ -190,15 +190,15 @@ required if 'https' or 'ldaps' are used in 'url' and 'ldap_uri'
 respectively.
 
 verbose_otp::
-This argument is used to show the OTP (One Time Password) when it
-is entered, i.e. to enable terminal echo of entered characters.
-You are advised to not use this, if you are using two factor
-authentication because that will display your password on the
-screen.
-
-This requires the service using the PAM module to
-display custom fields.  For example, OpenSSH requires
-you to configure `ChallengeResponseAuthentication no`.
+   This argument is used to show the OTP (One Time Password) when it
+   is entered, i.e. to enable terminal echo of entered characters.
+   You are advised to not use this, if you are using two factor
+   authentication because that will display your password on the
+   screen.
+   
+   This requires the service using the PAM module to
+   display custom fields.  For example, OpenSSH requires
+   you to configure `ChallengeResponseAuthentication no`.
 
 ldap_uri:: specify the LDAP server URI (e.g. ldap://localhost).
 
@@ -230,8 +230,6 @@ a YubiKey validation service such as the YubiCloud, or use
 with HMAC-SHA-1 Challenge-Response configurations. See the
 man-page ykpamcfg(1) for further details on how to configure
 offline Challenge-Response validation.
-
-------
 
 If you are using "debug" you may find it useful to create a
 world-writable log file:
@@ -280,9 +278,9 @@ Each user creates a ~/.yubico/authorized_yubikeys file inside of their home
 directory and places the mapping in that file, the file must have only one
 line:
 
-------
-   <user name>:<Yubikey token ID1>:<Yubikey token ID2>
-------
+
+ <user name>:<Yubikey token ID1>:<Yubikey token ID2>
+
 
 This is much the same concept as the SSH authorized_keys file.
 
