@@ -156,7 +156,7 @@ The _pam_unix.so_ module used for authentication is generally located into
 `/etc/pam.d/common-auth` for Debian based Linux systems.
 
 ==== SSH configuration ====
----------------------
+
 Edit the sshd configuration file `/etc/ssh/sshd_config`_ to disable challenge-
 response passwords. Change `challenge-response passwords yes` to
 `challenge-response passwords no`.
