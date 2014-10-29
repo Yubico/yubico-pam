@@ -28,14 +28,15 @@ Prerequisites
 Successful configuration of the Yubico PAM module to support two factor
 authentication for RADIUS requires following prerequisites:
 
-* Operating System: Any Unix operating system which supports PAM
-  (Pluggable Authentication Module)
-  (http://www.kernel.org/pub/linux/libs/pam/)
-* Complier : GNU GCC complier (http://gcc.gnu.org/)
-* FreeRADIUS: FreeRADIUS Version: 1.1.7 *or later*
-  (http://freeradius.org/download.html)
-* Yubico PAM Module: Yubico PAM Module Version 1.8
-  (https://developers.yubico.com/yubico-pam/)
+Operating System::
+Any Unix operating system which supports http://www.kernel.org/pub/linux/libs/pam[PAM]
+(Pluggable Authentication Module)
+
+Complier:: http://gcc.gnu.org[GNU GCC complier]
+
+http://freeradius.org/download.html[FreeRADIUS]:: Version: 1.1.7 or later
+
+https://developers.yubico.com/yubico-pam[Yubico PAM Module]:: Version 1.8
 
 Configuration
 -------------
@@ -44,50 +45,48 @@ We assume that FreeRADIUS is already installed on the server.
 Configuration of FreeRADIUS server to support PAM authentication :
 ------------------------------------------------------------------
 
-* Edit the radiusd configuration file “/etc/raddb/radiusd.conf” to make
+* Edit the radiusd configuration file `/etc/raddb/radiusd.conf` to make
   following changes:
-------
-  * Change user and group to “root” to provide the root privileges to
+
+  - Change user and group to “root” to provide the root privileges to
     radiusd daemon so that it can call and use pam modules for authentication.
-    NOTE: Generally, it is not a good security practice to assign root
-    privileges to a user for a daemon. However, since use of PAM requires root
-    privileges, this is a mandatory step here.
-  * In “authenticate” section uncomment pam to direct radiusd daemon to use PAM
+    
+  - In “authenticate” section uncomment pam to direct radiusd daemon to use PAM
     module for authentication
-------
-* Edit the client configuration file “/etc/raddb/clients.conf”
-------
-  Add sample client for testing
-------
-* Edit the user configuration file “/etc/raddb/users” to make following change:
-------
-  Change "DEFAULT Auth-Type = System" to "DEFAULT Auth-Type = pam" for using
-  PAM modules for user authentication
-------
+    
+NOTE: Generally, it is not a good security practice to assign root
+privileges to a user for a daemon. However, since use of PAM requires root
+privileges, this is a mandatory step here.
+    
+* Add sample client for testing in the client configuration
+  file `/etc/raddb/clients.conf`.
+  
+
+* Edit the user configuration file `/etc/raddb/users`, changing
+  `DEFAULT Auth-Type = System` to `DEFAULT Auth-Type = pam` for using
+  PAM modules for user authentication.
 
 
-Installation of pam_yubico module :
+Installation of pam_yubico module
 -----------------------------------
 Build instructions for pam_yubico are available in the README.
 (https://github.com/Yubico/yubico-pam/wiki/ReadMe)
 
-Configuration of pam_yubico module :
+Configuration of pam_yubico module 
 ------------------------------------
 Configuration instructions for pam_yubico are also available in the README.
 (https://github.com/Yubico/yubico-pam/wiki/ReadMe)
 
-_Make sure you set your system up for either central authorization mapping,
+NOTE: Make sure you set your system up for either central authorization mapping,
 or user level mapping, as this will control which users can connect to the
-system using RADIUS._
+system using RADIUS.
 
-Configuration of modified pam_yubico.so module at administrative level :
+Configuration of modified pam_yubico.so module at administrative level
 ------------------------------------------------------------------------
 
 Append the following line to the beginning of /etc/pam.d/radiusd file:
 
-------
-   auth required pam_yubico.so id=16 debug authfile=/etc/yubikey_mappings
-------
+ auth required pam_yubico.so id=16 debug authfile=/etc/yubikey_mappings
 
 After the above configuration changes, whenever a user connects to the
 server using any RADIUS client, the PAM authentication interface will pass
@@ -105,14 +104,14 @@ module reports failure. After successful verification of OTP Yubico PAM module
 from the Yubico authentication server, a success code is returned.
 
 
-User Level :
+User Level
 ------------
 
 Although, user level configuration of pam_yubico is possible, this might not
 be a desired configuration option in case of radisud daemon in most enterprise.
 
 
-Configuration of selinux policy to create exception for radiusd daemon :
+Configuration of selinux policy to create exception for radiusd daemon
 -----------------------------------------------------------------------
 Local effective selinux policy must be updated to provide sufficient
 privileges to radiusd daemon on system resources. Please follow the steps below
@@ -130,38 +129,38 @@ to configure effective selinux policy for radiusd daemon:
   using following sequence of commands:
 
 ------
-  [root@testsrv ~]# audit2allow -m local -l -i /var/log/messages > local.te
+[root@testsrv ~]# audit2allow -m local -l -i /var/log/messages > local.te
 
-  [root@testsrv ~]# checkmodule -M -m -o local.mod local.te
+[root@testsrv ~]# checkmodule -M -m -o local.mod local.te
 
-  [root@testsrv ~]# semodule_package -o local.pp -m local.mod
+[root@testsrv ~]# semodule_package -o local.pp -m local.mod
 
-  [root@testsrv ~]# semodule -i local.pp
+[root@testsrv ~]# semodule -i local.pp
 ------
 
 For more selinux policy updating information and explanation of above commands
 please visit the following website:
 
-  http://fedora.redhat.com/docs/selinux-faq-fc5/#id2961385
+ http://fedora.redhat.com/docs/selinux-faq-fc5/#id2961385
 
 
-Test Setup :
-------------
+Test Setup
+----------
 
 Our test environment is as follows:
 
-* Operating System: Fedora release 8 (Werewolf)
-* FreeRADIUS Server : FreeRADIUS Version 1.1.7
-* Yubico PAM: pam_yubico  Version 1.8
-* "/etc/pam.d/radiusd" file:
+Operating System:: Fedora release 8 (Werewolf)
+FreeRADIUS Server:: FreeRADIUS Version 1.1.7
+Yubico PAM:: pam_yubico Version 1.8
+/etc/pam.d/radiusd file::
 
 ------
-    auth      	 required     	pam_yubico.so authfile=/etc/yubikeyid id=16 debug
-    auth       	 include     	system-auth
-    account   	 required  	pam_nologin.so
-    account    	 include      	system-auth
-    password  	 include     	system-auth
-    session    	 include     	system-auth
+auth      	 required     	pam_yubico.so authfile=/etc/yubikeyid id=16 debug
+auth       	 include     	system-auth
+account   	 required  	pam_nologin.so
+account    	 include      	system-auth
+password  	 include     	system-auth
+session    	 include     	system-auth
 ------
 
 Testing the configuration :
