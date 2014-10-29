@@ -11,18 +11,16 @@ configured on a Linux platform.
 Successful configuration of the Yubico PAM module to support two factor
 authentication requires following prerequisites:
 
-1)	Operating System: Any Unix operating system which supports PAM
-	(Pluggable Authentication Module)
-	(http://www.kernel.org/pub/linux/libs/pam/)
+Operating System::
+Any Unix operating system which supports PAM
+(http://www.kernel.org/pub/linux/libs/pam[Pluggable Authentication Module])
 
-2)	Complier : GNU GCC complier (http://gcc.gnu.org/)
+Complier:: http://gcc.gnu.org[GNU GCC complier]
 
-3)      Yubico Client C library version 1.5 or later
-  (https://developers.yubico.com/yubico-c-client/)
+https://developers.yubico.com/yubico-c-client[Yubico Client C library]::
+Version 1.5 or later
 
-4)	Yubico PAM Module: Yubico PAM Module Version 1.7 or later 
-  (https://developers.yubico.com/yubico-pam/)
-
+https://developers.yubico.com/yubico-pam[Yubico PAM Module]:: Version 1.7 or later
 
 === System Requirements ===
 
