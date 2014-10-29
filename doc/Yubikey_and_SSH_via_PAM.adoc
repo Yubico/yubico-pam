@@ -6,10 +6,6 @@ assumes that the reader has advanced knowledge and experience in Linux
 system administration, particularly for how PAM authentication mechanism is
 configured on a Linux platform.
 
-Details
--------
-
-
 Prerequisites
 -------------
 
@@ -86,16 +82,16 @@ record are separated by “:” character similar to /etc/passwd.
 
 The contents of this file are as follows:
 
-<user name>:<yubikey token ID>:<yubikey token ID>: ….
+ <user name>:<yubikey token ID>:<yubikey token ID>: ….
 
-<user name>:<yubikey token ID>:<yubikey token ID>:…..
+ <user name>:<yubikey token ID>:<yubikey token ID>:…..
 
 e.g.
 
 --------
-   paul:indvnvlcbdre:ldvglinuddek
-   simon:uturrufnjder:hjturefjtehv
-   kurt:ertbhunjimko
+paul:indvnvlcbdre:ldvglinuddek
+simon:uturrufnjder:hjturefjtehv
+kurt:ertbhunjimko
 --------
 
 The mapping file must be created/updated manually before configuration of
@@ -106,9 +102,7 @@ Configuration of modified pam_yubico.so module at administrative level:
 
 Append the following line to the beginning of /etc/pam.d/sshd file:
 
---------
-   auth required pam_yubico.so id=16 debug authfile=/path/to/mapping/file
---------
+ auth required pam_yubico.so id=16 debug authfile=/path/to/mapping/file
 
 Make sure you set id=16 to the correct API-id for the yubico validation server.
 
@@ -137,15 +131,13 @@ supported by this file.
 This file must contain only one record. The parameters in the record are
 separated by “:” character similar to /etc/passwd. The contents of this file
 are as shown below:
-
  
-<user name>:<yubikey token ID>:<yubikey token ID>: ….
+ <user name>:<yubikey token ID>:<yubikey token ID>: ….
 
 e.g.
 
-------
-   paul:indvnvlcbdre:ldvglinuddek
-------
+ paul:indvnvlcbdre:ldvglinuddek
+
 
 The .yubico/authorized_yubikeys file must be created/updated manually and must
 be placed inside user's home directory before configuration of Yubico PAM
@@ -157,10 +149,7 @@ Configuration of modified pam_yubico.so module at user level:
 
 Append the following line to the beginning of /etc/pam.d/sshd file:
 
--------
-   auth required pam_yubico.so id=16 debug
--------
-
+ auth required pam_yubico.so id=16 debug
 
 After the above configuration changes, whenever a user connects to the server
 using any SSH client, the PAM authentication interface will pass the control
@@ -179,14 +168,14 @@ Append _try_first_pass_ parameter to the _pam_unix.so_ module to authenticate
 the user with password passed from the preceding auth module. 
 
 The _pam_unix.so_ module used for authentication is generally located into
-_"/etc/pam.d/system-auth"_ for RedHat based Linux system and into
-_"/etc/pam.d/common-auth"_ for Debian based Linux systems.
+`/etc/pam.d/system-auth` for RedHat based Linux system and into
+`/etc/pam.d/common-auth` for Debian based Linux systems.
 
 4) SSH configuration:
 ---------------------
-Edit the sshd configuration file _“/etc/ssh/sshd_config”_ to disable challenge-
-response passwords. Change _“challenge-response passwords yes”_ to
-_“challenge-response passwords no”_.
+Edit the sshd configuration file `/etc/ssh/sshd_config`_ to disable challenge-
+response passwords. Change `challenge-response passwords yes` to
+`challenge-response passwords no`.
 
 
 Test Setup:
@@ -197,20 +186,20 @@ A) Fedora 8:
 
 Test setup for fedora 8 environment is as follows:
 
-• OS Version: Fedora release 8 (Werewolf)
-• Kernel Version: Kernel version 2.6.23.1-42.fc8
-• OpenSSH Version : openssh-4.7p1-2.fc8
-• Yubico PAM Version: pam_yubico-1.7
+* OS Version: Fedora release 8 (Werewolf)
+* Kernel Version: Kernel version 2.6.23.1-42.fc8
+* OpenSSH Version : openssh-4.7p1-2.fc8
+* Yubico PAM Version: pam_yubico-1.7
 
 B) Fedora 6:
 ------------
 
 Test setup for fedora 6 environment is as follows:
 
-• OS Version: Fedora Core release 6 (Zod)
-• Kernel Version: Kernel version 2.6.18-1.2798.fc6
-• OpenSSH Version : openssh-4.3p2-10
-• Yubico PAM Version: pam_yubico-1.7
+* OS Version: Fedora Core release 6 (Zod)
+* Kernel Version: Kernel version 2.6.18-1.2798.fc6
+* OpenSSH Version : openssh-4.3p2-10
+* Yubico PAM Version: pam_yubico-1.7
 
 
 PAM configuration:
@@ -260,16 +249,16 @@ Use any standard SSH client for testing (We used SSH command line utility).
 Try to login to server with SSH client as configured user:
 
 ------
-  $ ssh -l test localhost 
-  Password: (enter 'pencil' and touch the ldvglinuddek yubikey)
+$ ssh -l test localhost 
+Password: (enter 'pencil' and touch the ldvglinuddek yubikey)
 ------
 
 ------
-  $ ssh -l root localhost
-  Password: (enter 'secret' and touch the ldvglinuddek yubikey)
+$ ssh -l root localhost
+Password: (enter 'secret' and touch the ldvglinuddek yubikey)
 ------
 
 ------
-  $ ssh -l root localhost
-  Password: (enter 'secret' and touch the indvnvlcbdre yubikey)
+$ ssh -l root localhost
+Password: (enter 'secret' and touch the indvnvlcbdre yubikey)
 ------
