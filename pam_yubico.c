@@ -114,6 +114,7 @@ struct cfg
   const char *ldapserver;
   const char *ldap_uri;
   int ldap_bind_no_anonymous;
+  const char *ldap_bind_user_filter;
   const char *ldap_bind_user;
   const char *ldap_bind_password;
   const char *ldap_filter;
@@ -226,7 +227,7 @@ authorize_user_token_ldap (struct cfg *cfg,
   struct berval **vals;
   int i, rc;
 
-  const char *filter = NULL;
+  char *filter = NULL;
   char *find = NULL;
   int scope = LDAP_SCOPE_BASE;
 #endif
@@ -263,16 +264,24 @@ authorize_user_token_ldap (struct cfg *cfg,
     }
 
   /* LDAPv2 is historical -- RFC3494. */
+  ldap_set_option(ld, LDAP_OPT_REFERRALS, LDAP_OPT_OFF);
   protocol = LDAP_VERSION3;
   ldap_set_option (ld, LDAP_OPT_PROTOCOL_VERSION, &protocol);
 
   /* Bind anonymously to the LDAP server. */
   if (cfg->ldap_bind_user && cfg->ldap_bind_password) {
-    DBG (("try bind with: %s:%s", cfg->ldap_bind_user, cfg->ldap_bind_password)); 
+    DBG (("try bind with: %s:[%s]", cfg->ldap_bind_user, cfg->ldap_bind_password)); 
     rc = ldap_simple_bind_s (ld, cfg->ldap_bind_user, cfg->ldap_bind_password);
   } else if (cfg->ldap_bind_no_anonymous) {
-    DBG (("try bind with: %s:%s", user, password)); 
-    rc = ldap_simple_bind_s (ld, user, password);
+    char *tmp_user;
+    if (cfg->ldap_bind_user_filter) {
+	tmp_user = filter_printf(cfg->ldap_bind_user_filter, user);
+    } else {
+    	tmp_user = strdup(user);
+    }
+    DBG (("try bind with: %s:[XXXXX]", tmp_user, password)); 
+    rc = ldap_simple_bind_s (ld, tmp_user, password);
+    free(tmp_user);
   } else {
     DBG (("try bind anonymous"));
     rc = ldap_simple_bind_s (ld, NULL, NULL);
@@ -331,16 +340,16 @@ authorize_user_token_ldap (struct cfg *cfg,
 	{
 	  if ((vals = ldap_get_values_len (ld, e, a)) != NULL)
 	    {
-	      DBG(("LDAP : Found %i values - checking if any of them match '%s:%s:%s'",
-		   ldap_count_values_len(vals), 
-               vals[i]->bv_val,
-               cfg->yubi_attr_prefix ? cfg->yubi_attr_prefix : "", token_id));
-
 	      yubi_attr_prefix_len = cfg->yubi_attr_prefix ? strlen(cfg->yubi_attr_prefix) : 0;
 
 	      /* Compare each value for the attribute against the token id. */
 	      for (i = 0; vals[i] != NULL; i++)
 		{
+	          DBG(("LDAP : Found %i values - checking if any of them match '%s:%s:%s'",
+		       ldap_count_values_len(vals), 
+		       vals[i]->bv_val,
+		       cfg->yubi_attr_prefix ? cfg->yubi_attr_prefix : "", token_id));
+
 		  /* Only values containing this prefix are considered. */
 		  if ((!cfg->yubi_attr_prefix || !strncmp (cfg->yubi_attr_prefix, vals[i]->bv_val, yubi_attr_prefix_len)))
 		    {
@@ -690,6 +699,8 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->ldap_bind_no_anonymous = 1;
       if (strncmp (argv[i], "ldap_bind_user=", sizeof("ldap_bind_user=")-1) == 0)
 	cfg->ldap_bind_user = argv[i] + sizeof("ldap_bind_user=")-1;
+      if (strncmp (argv[i], "ldap_bind_user_filter=", sizeof("ldap_bind_user_filter=")-1) == 0)
+	cfg->ldap_bind_user_filter = argv[i] + sizeof("ldap_bind_user_filter=")-1;
       if (strncmp (argv[i], "ldap_bind_password=", sizeof("ldap_bind_password=")-1) == 0)
 	cfg->ldap_bind_password = argv[i] + sizeof("ldap_bind_password=")-1;
       if (strncmp (argv[i], "ldap_filter=", sizeof("ldap_filter=")-1) == 0)
@@ -768,6 +779,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
   size_t templates = 0;
   char *urls[10];
   char *tmpurl = NULL;
+  char *onlypasswd = NULL;
 
   parse_cfg (flags, argc, argv, cfg);
 
@@ -954,7 +966,6 @@ pam_sm_authenticate (pam_handle_t * pamh,
   DBG (("OTP: %s ID: %s ", otp, otp_id));
 
   /* user entered their system password followed by generated OTP? */
-  char *onlypasswd = NULL;
   if (password_len > TOKEN_OTP_LEN + cfg->token_id_length)
     {
       onlypasswd = strdup (password);
@@ -970,7 +981,6 @@ pam_sm_authenticate (pam_handle_t * pamh,
 	    "setting item PAM_AUTHTOK"));
 
       retval = pam_set_item (pamh, PAM_AUTHTOK, onlypasswd);
-      free (onlypasswd);
       if (retval != PAM_SUCCESS)
 	{
 	  DBG (("set_item returned error: %s", pam_strerror (pamh, retval)));
@@ -1029,6 +1039,8 @@ pam_sm_authenticate (pam_handle_t * pamh,
     }
 
 done:
+  if (onlypasswd)
+    free(onlypasswd);
   if (templates > 0)
     {
       size_t i;
@@ -1047,7 +1059,8 @@ done:
       retval = PAM_SUCCESS;
     }
   DBG (("done. [%s]", pam_strerror (pamh, retval)));
-  pam_set_data (pamh, "yubico_setcred_return", (void*) (intptr_t) retval, NULL);
+  pam_set_data (pamh, "yubico_setcred_return", (void*)(intptr_t)retval, NULL); 
+  pam_set_data (pamh, "yubico_used_ldap", (void*)(intptr_t)cfg->ldap_bind_no_anonymous, NULL);
 
   return retval;
 }
@@ -1058,16 +1071,59 @@ pam_sm_setcred (pam_handle_t * pamh, int flags, int argc, const char **argv)
   return PAM_SUCCESS;
 }
 
+PAM_EXTERN int
+pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv) 
+{
+  int use_ldap = -1;
+  int rc = pam_get_data(pamh, "yubico_used_ldap", (const void**)&use_ldap);
+  if (rc == PAM_SUCCESS && use_ldap) {
+	  int retval;
+	  rc = pam_get_data(pamh, "yubico_setcred_return", (const void**)&retval);
+	  if (rc == PAM_SUCCESS && retval == PAM_SUCCESS) {
+	      D (("pam_sm_acct_mgmt returing PAM_SUCCESS"));
+	      return PAM_SUCCESS;
+	  } 
+  }
+  D (("pam_sm_acct_mgmt returing PAM_AUTH_ERR:%d", use_ldap));
+  return PAM_AUTH_ERR;
+}
+
+PAM_EXTERN int
+pam_sm_open_session(pam_handle_t *pamh, int flags,
+	int argc, const char *argv[])
+{
+
+  D(("pam_sm_open_session"));
+  return (PAM_SUCCESS);
+}
+
+PAM_EXTERN int
+pam_sm_close_session(pam_handle_t *pamh, int flags,
+	int argc, const char *argv[])
+{
+  D(("pam_sm_close_session"));
+  return (PAM_SUCCESS);
+}
+
+PAM_EXTERN int
+pam_sm_chauthtok(pam_handle_t *pamh, int flags,
+	int argc, const char *argv[])
+{
+  D(("pam_sm_chauthtok"));
+  return (PAM_SERVICE_ERR);
+}
+
+
 #ifdef PAM_STATIC
 
 struct pam_module _pam_yubico_modstruct = {
   "pam_yubico",
   pam_sm_authenticate,
   pam_sm_setcred,
-  NULL,
-  NULL,
-  NULL,
-  NULL
+  pam_sm_acct_mgmt,
+  pam_sm_open_session,
+  pam_sm_close_session,
+  pam_sm_chauthtok
 };
 
 #endif

@@ -500,7 +500,7 @@ int filter_result_len(const char *filter, const char *user, char *output) {
   return result_len + (filter+filter_len-result);
 }
 
-const char *filter_printf(const char *filter, const char *user) {
+char *filter_printf(const char *filter, const char *user) {
   char *result = malloc(filter_result_len(filter, user, NULL) + 1);
   filter_result_len(filter, user, result);
   return result;
