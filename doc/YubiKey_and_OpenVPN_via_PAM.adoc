@@ -123,7 +123,7 @@ Although, user level configuration of pam_yubico is possible, this might
 not be a desired configuration option in case of OpenVPN daemon in most
 enterprise.
 
-ii) Configuration of PAM modules for OpenVPN:
+====== Configuration of PAM modules for OpenVPN:
 
 To configure PAM modules for OpenVPN, create a file named 
 `/etc/pam.d/openvpn` (file name must be one which is specified
