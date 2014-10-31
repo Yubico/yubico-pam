@@ -72,23 +72,25 @@ https://developers.yubico.com/yubikey-personalization[yubikey-personalization] p
 
 The build system uses Autoconf, to set up the build system run:
 
-------
-  ./configure
-------
+----
+./configure
+----
 
 Use --without-ldap to disable ldap support.
 
 Then build the code, run the self-test and install the binaries:
 
-------
-  make check install
-------
+----
+make check install
+----
 
 Fedora/EPEL
 ----------
+
 There is already a package in Fedora/EPEL of yubico-pam that can be installed
 by using yum :
   $ sudo yum install pam_yubico
+
 
 Ubuntu PPA
 ----------
@@ -119,16 +121,16 @@ Configuration
 Install it in your PAM setup by adding a line to an appropriate file
 in `/etc/pam.d/`:
 
-------
-  auth sufficient pam_yubico.so id=16 debug
-------
+----
+auth sufficient pam_yubico.so id=16 debug
+----
 
 and move pam_yubico.so into /lib/security/ (or wherever PAM modules
 live in your system) :
 
-------
-  mv /usr/local/lib/security/pam_yubico.so /lib/security/
-------
+----
+mv /usr/local/lib/security/pam_yubico.so /lib/security/
+----
 
 For more information, see the project Wiki page.
 
@@ -298,7 +300,7 @@ Not sure what that last bit meant? Here is how to get a copy of your OTP.
 Fast way
 --------
 * Open a terminal
-* Press yubikey button
+* Press the YubiKey's button
 
 It will output an OTP into the shell:
 
@@ -335,7 +337,7 @@ including a work around for ssh (Equivalent files could be created for
 other services). Systems in 'permissive' mode will generate AVC warnings but
 authentication will succeed.
 
-To determine if you have SELinux enforcing or not run the 'sestatus' command.
+To determine if you have SELinux enforcing or not run the `sestatus` command.
 
 Examples
 --------
