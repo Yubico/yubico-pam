@@ -13,7 +13,7 @@ file called `~/.yubico/authorized_yubikeys`, or a system wide file called
 in as specific users. See https://developers.yubico.com/yubico-pam[the README]
 for more information.
 
-The "use_first_pass" on the next line says that the password the pam_unix
+The 'use_first_pass' on the next line says that the password the pam_unix
 module should check should be received from the earlier PAM modules
 and that the module should not query for passwords.
 
