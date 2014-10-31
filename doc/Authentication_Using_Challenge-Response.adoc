@@ -7,7 +7,7 @@ This mode is useful if you don't have a stable network connection to
 the YubiCloud.
 
 The ykpamcfg utility currently outputs the state information to a file
-in the current user's home directory ("$HOME/.yubico/challenge-123456"
+in the current user's home directory (`$HOME/.yubico/challenge-123456`
 for a YubiKey with serial number API readout enabled, and
 `$HOME/.yubico/challenge` for one without).
 
@@ -70,67 +70,60 @@ $
 ------
 If your /home/user folder is encrypted you should move the challenge file in a different path (i.e. /etc/yubico) and then set the right permission for the user to create the files. To do this do as follow:
 
-------
+----
 $ mkdir /etc/yubico
 $ chmod +t /etc/yubico
 $ chmod 777 /etc/yubico
 $ mv /home/user/.yubico/challenge-####### /etc/yubico/username-#######
 ...
 It is important that you name the file with the username of the user that is going to use the Yubikey
-------
+----
 Finally we tell the pam module where to look for the challenge file
-------
-$ emacs /etc/pam.d/common-auth
-...
+
+ $ emacs /etc/pam.d/common-auth
+
 and edit the following line as follow:
 
-auth	required	pam_yubico.so mode=challenge-response chalresp_path=/etc/yubico
-------
+ auth	required	pam_yubico.so mode=challenge-response chalresp_path=/etc/yubico
 
 Then back to the PAM configuration step, first make sure you have a
 root terminal available to be able to disable YubiKey login in case of
 issues.
 
-------
-$ sudo -s
-------
+ $ sudo -s
 
 Then run the "pam-auth-update" command and enable the Yubico PAM
 module.
 
-------
-$ sudo pam-auth-update
-------
+ $ sudo pam-auth-update
 
 You should now be able to authenticate using YubiKey
 Challenge-Reseponse together with a password like this:
 
------
+----
 jas@latte:~$ sudo -s
 [sudo] password for jas: 
 root@latte:~# 
------
+----
 
 Now remove the YubiKey and try again (in a new terminal to avoid sudo
 caching), and you should not be able to login.
 
 For debugging, you can make the PAM configuration line:
 
------
-mode=challenge-response debug
------
+ mode=challenge-response debug
 
 and then create a log file:
 
-------
+----
 # touch /var/run/pam-debug.log
 # chmod go+w /var/run/pam-debug.log
-------
+----
 
 and then tail the file.  For successful logins it should print
 something like this:
 
-------
+----
 [pam_yubico.c:parse_cfg(721)] called.
 [pam_yubico.c:parse_cfg(722)] flags 32768 argc 2
 [pam_yubico.c:parse_cfg(724)] argv[0]=mode=challenge-response
@@ -159,11 +152,11 @@ something like this:
 [util.c:load_chalresp_state(269)] Challenge: 23001a190724abf46c8022b008ccb65673dd634ecb150613771ec87f37850284d80dd5f8c8e56affb6da2e952b16682160e7f3ac4f816b64126bd9556e5be1, response: 63d4a679ed15335ffd4253e7609963bcdb0834d4, slot: 2
 [pam_yubico.c:do_challenge_response(566)] Got the expected response, generating new challenge (63 bytes).
 [pam_yubico.c:do_challenge_response(629)] Challenge-response success!
-------
+----
 
 and if there is no YubiKey in the machine it will look like this:
 
-------
+----
 [pam_yubico.c:parse_cfg(721)] called.
 [pam_yubico.c:parse_cfg(722)] flags 32768 argc 2
 [pam_yubico.c:parse_cfg(724)] argv[0]=mode=challenge-response
@@ -190,4 +183,4 @@ and if there is no YubiKey in the machine it will look like this:
 [pam_yubico.c:pam_sm_authenticate(775)] get user returned: jas
 [pam_yubico.c:do_challenge_response(478)] Failed initializing YubiKey
 [pam_yubico.c:do_challenge_response(640)] Yubikey core error: no yubikey present
-------
+----
