@@ -29,20 +29,19 @@ Personalization Tool" is a more comfortable way to do this.
 1. Plug in your YubiKey and start the YubiKey Personalization Tool
 +
 NOTE: YubiKey Personalization Tool shows whether your YubiKey supports challenge-response in the lower right.
-2. Click Challenge-Response
-3. Select HMAC-SHA1 mode  
-Apparently Yubico-OTP mode doesn't work with yubico-pam at the moment.
+2. Click 'Challenge-Response'
+3. Select HMAC-SHA1 mode. Apparently Yubico-OTP mode doesn't work with yubico-pam at the moment.
 4. Select the configuration slot you want to use  
 (this text assumes slot two, but it should be easy enough to adapt the instructions if you prefer slot 1)
 5. Select whether you want to require pressing the button for authentication  
 +
 NOTE: If you enable this, you will have to press the button twice for each authentication with yubico-pam. This is because the PAM module does not only send the challenge on file and checks whether the response matches, but also generates a new challenge-response pair on success.
-6. Use "Variable input" as HMAC-SHA1 mode  
+6. Use 'Variable input' as HMAC-SHA1 mode  
 +
 WARNING: Using "Fixed 64 byte input" for this value made my YubiKey always return the same response regardless of what the challenge was. Since this defies the purpose of challenge-response think twice and test before you use this!
 7. Generate a secret key  
 You won't need this key again, it's sufficient to have it on your YubiKey. Note that the YubiKey Personalization Tool by default logs the key to configuration_log.csv in your home directory. Consider turning this off in the settings before writing or shredding the file after writing.
-8. Click "Write Configuration"
+8. Click 'Write Configuration'
 
 === Configuring your user account to accept the YubiKey ===
 
@@ -64,8 +63,6 @@ stored the initial challenge somewhere inside your home directory:
 ----
 Stored initial challenge and expected response in '/path/to/your/home/.yubico/challenge-KEYID'.
 ----
-
-A footnote footnote:[An example footnote.]
 
 This step will create a file with a challenge and the expected
 response (that can only be generated with the secret
