@@ -46,6 +46,7 @@
 #include "util.h"
 
 #define ACTION_ADD_HMAC_CHALRESP	"add_hmac_chalresp"
+#define ACTION_MAX_LEN			1024
 
 const char *usage =
   "Usage: ykpamcfg [options]\n"
@@ -104,7 +105,7 @@ parse_args(int argc, char **argv,
       *slot = 2;
       break;
     case 'A':
-      *action = optarg;
+      strncpy(*action, optarg, ACTION_MAX_LEN);
       break;
     case 'p':
       *output_dir = optarg;
@@ -257,7 +258,8 @@ main(int argc, char **argv)
 
   /* Options */
   bool verbose = false;
-  char *action = ACTION_ADD_HMAC_CHALRESP;
+  char action[ACTION_MAX_LEN];
+  char *ptr = action;
   char *output_dir = NULL;
   int slot = 1;
   unsigned int iterations = CR_DEFAULT_ITERATIONS;
@@ -265,15 +267,17 @@ main(int argc, char **argv)
   ykp_errno = 0;
   yk_errno = 0;
 
+  strcpy (action, ACTION_ADD_HMAC_CHALRESP);
+
   if (! parse_args(argc, argv,
 		   &slot, &verbose,
-		   &action, &output_dir,
+		   &ptr, &output_dir,
        &iterations, &exit_code))
     goto err;
 
   exit_code = 1;
 
-  if (! strcmp(action, ACTION_ADD_HMAC_CHALRESP)) {
+  if (! strncmp(action, ACTION_ADD_HMAC_CHALRESP, ACTION_MAX_LEN)) {
     /*
      * Set up challenge-response login authentication
      */
