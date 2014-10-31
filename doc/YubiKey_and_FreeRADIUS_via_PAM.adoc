@@ -137,11 +137,12 @@ please visit the following website:
 
 Our test environment is as follows:
 
-Operating System:: Fedora release 8 (Werewolf)
-FreeRADIUS Server:: FreeRADIUS Version 1.1.7
-Yubico PAM:: pam_yubico Version 1.8
-/etc/pam.d/radiusd file::
-
+[horizontal]
+*Operating System*:: Fedora release 8 (Werewolf)
+*FreeRADIUS Server*:: Version 1.1.7
+*Yubico PAM*:: Version 1.8
+*/etc/pam.d/radiusd file*::
++
 ----
 auth      	 required     	pam_yubico.so authfile=/etc/yubikeyid id=16 debug
 auth       	 include     	system-auth
