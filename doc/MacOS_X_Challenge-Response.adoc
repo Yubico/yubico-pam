@@ -1,4 +1,8 @@
-== Setting up your YubiKey for challenge response authentication on Max OS X ==
+= Setting up your YubiKey for challenge response authentication on Max OS X =
+:toc:
+:toc-placement!:
+
+toc::[]
 
 This article explains the process to get the challenge-response
 authentication possible with newer YubiKeys working on Mac OS X. Since
@@ -38,7 +42,7 @@ NOTE: YubiKey Personalization Tool shows whether your YubiKey supports challenge
 NOTE: If you enable this, you will have to press the button twice for each authentication with yubico-pam. This is because the PAM module does not only send the challenge on file and checks whether the response matches, but also generates a new challenge-response pair on success.
 6. Use 'Variable input' as HMAC-SHA1 mode  
 +
-WARNING: Using "Fixed 64 byte input" for this value made my YubiKey always return the same response regardless of what the challenge was. Since this defies the purpose of challenge-response think twice and test before you use this!
+WARNING: Using 'Fixed 64 byte input' for this value made my YubiKey always return the same response regardless of what the challenge was. Since this defies the purpose of challenge-response think twice and test before you use this!
 7. Generate a secret key  
 You won't need this key again, it's sufficient to have it on your YubiKey. Note that the YubiKey Personalization Tool by default logs the key to configuration_log.csv in your home directory. Consider turning this off in the settings before writing or shredding the file after writing.
 8. Click 'Write Configuration'
@@ -102,12 +106,13 @@ looks like this:
 
 where
 
-* `function-class` is one of `auth`, `account`, `session`, and
+[horizontal]
+*function-class*:: is one of `auth`, `account`, `session`, and
   `password`. Since we only care about authentication with the YubiKey
   and yubico-pam only handles authentication, we will always be using
   `auth` here.
 
-* `control-flag` is one of `required`, `sufficient`, `optional` and
+*control-flag*:: is one of `required`, `sufficient`, `optional` and
   some other values depending on your PAM implementation. If we want
   to make YubiKey challenge-response mandatory but combined with other
   methods (e.g. password), we can use `required`, if we want
@@ -115,19 +120,20 @@ where
   we can use `sufficient`. `optional` is not of any use for us
   in this case.
 
-* `module-path` selects the module to be used for this authentication
+*module-path*:: selects the module to be used for this authentication
   step. This is used as filename in a directory where pam libraries
   are expected, on OS X e.g. `/usr/lib/pam`, `/usr/lib/security` on
   some other systems. We want `pam_yubico.so` in this case, which will
   load `/usr/lib/pam/pam_yubico.so`.
 
-* `arguments` are passed to the pam module and can be used to
+*arguments*:: are passed to the pam module and can be used to
   configure its behavior. See 'Supported PAM module parameters' in
   https://github.com/Yubico/yubico-pam/blob/master/README[README]
   for a list of possible values. Since we want to use
   challenge-response, we add `mode=challenge-response` and to debug
   the setup initially also `debug`, separated by spaces. `debug` can
   safely be removed later.
+
 
 WARNING: If you misconfigure your PAM modules here you might lose
   your ability to sudo! Always keep a root shell open to be able to
