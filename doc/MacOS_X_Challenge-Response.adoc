@@ -123,7 +123,7 @@ where
 
 * `arguments` are passed to the pam module and can be used to
   configure its behavior. See 'Supported PAM module parameters' in
-  [README](https://github.com/Yubico/yubico-pam/blob/master/README)
+  https://github.com/Yubico/yubico-pam/blob/master/README[README]
   for a list of possible values. Since we want to use
   challenge-response, we add `mode=challenge-response` and to debug
   the setup initially also `debug`, separated by spaces. `debug` can
@@ -141,7 +141,7 @@ auth       sufficient     pam_yubico.so mode=challenge-response debug
 ----
 
 To get this working on the loginwindow for local interactive login add
-the pam_yubico.so to the pam.d file authorization as the first
+the `pam_yubico.so` to the `pam.d` file authorization as the first
 line. The whole file might look something like this (example taken
 from OS X):
 
