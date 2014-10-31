@@ -1,8 +1,4 @@
-= Setting up your YubiKey for challenge response authentication on Max OS X =
-:toc:
-:toc-placement!:
-
-toc::[]
+== Setting up your YubiKey for challenge response authentication on Max OS X ==
 
 This article explains the process to get the challenge-response
 authentication possible with newer YubiKeys working on Mac OS X. Since
