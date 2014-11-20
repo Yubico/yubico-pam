@@ -118,6 +118,7 @@ struct cfg
   const char *ldap_bind_user;
   const char *ldap_bind_password;
   const char *ldap_filter;
+  const char *ldap_cacertfile;
   const char *ldapdn;
   const char *user_attr;
   const char *yubi_attr;
@@ -198,8 +199,10 @@ free_out:
  * This function will look in ldap id the token correspond to the
  * requested user. It will returns 0 for failure and 1 for success.
  *
- * For the moment ldaps is not supported. ldap serve can be on a
- * remote host.
+ * ldaps is only supported for ldap_uri based connections.
+ * ldap_cacertfile usually needs to be set for this to work.
+ *
+ * ldap serve can be on a remote host.
  *
  * You need the following parameters in you pam config:
  * ldapserver=  OR ldap_uri=
@@ -207,6 +210,9 @@ free_out:
  * user_attr=
  * yubi_attr=
  *
+ * If using ldap_uri, you can specify multiple failover hosts
+ * eg.
+ * ldap_uri=ldaps://host1.fqdn.example.com,ldaps://host2.fqdn.example.com
  */
 static int
 authorize_user_token_ldap (struct cfg *cfg,
@@ -248,7 +254,7 @@ authorize_user_token_ldap (struct cfg *cfg,
       rc = ldap_initialize (&ld, cfg->ldap_uri);
       if (rc != LDAP_SUCCESS)
 	{
-	  DBG (("ldap_init: %s", ldap_err2string (rc)));
+	  DBG (("ldap_initialize: %s", ldap_err2string (rc)));
 	  retval = 0;
 	  goto done;
 	}
@@ -268,18 +274,22 @@ authorize_user_token_ldap (struct cfg *cfg,
   protocol = LDAP_VERSION3;
   ldap_set_option (ld, LDAP_OPT_PROTOCOL_VERSION, &protocol);
 
+  if (cfg->ldap_uri && cfg->ldap_cacertfile) {
+    /* Set CA CERTFILE.  This makes ldaps work when using ldap_uri */
+    ldap_set_option (0, LDAP_OPT_X_TLS_CACERTFILE, cfg->ldap_cacertfile);
+  }
   /* Bind anonymously to the LDAP server. */
   if (cfg->ldap_bind_user && cfg->ldap_bind_password) {
-    DBG (("try bind with: %s:[%s]", cfg->ldap_bind_user, cfg->ldap_bind_password)); 
+    DBG (("try bind with: %s:[%s]", cfg->ldap_bind_user, cfg->ldap_bind_password));
     rc = ldap_simple_bind_s (ld, cfg->ldap_bind_user, cfg->ldap_bind_password);
   } else if (cfg->ldap_bind_no_anonymous) {
     char *tmp_user;
     if (cfg->ldap_bind_user_filter) {
 	tmp_user = filter_printf(cfg->ldap_bind_user_filter, user);
     } else {
-    	tmp_user = strdup(user);
+	tmp_user = strdup(user);
     }
-    DBG (("try bind with: %s:[XXXXX]", tmp_user, password)); 
+    DBG (("try bind with: %s:[XXXXX]", tmp_user, password));
     rc = ldap_simple_bind_s (ld, tmp_user, password);
     free(tmp_user);
   } else {
@@ -294,7 +304,6 @@ authorize_user_token_ldap (struct cfg *cfg,
     }
 
   /* Allocation of memory for search strings depending on input size */
-  find = strdup(cfg->ldapdn); // allow free later-:)
   if (cfg->user_attr && cfg->yubi_attr) {
     i = (strlen(cfg->user_attr) + strlen(cfg->ldapdn) + strlen(user) + 3) * sizeof(char);
     if ((find = malloc(i)) == NULL) {
@@ -304,14 +313,16 @@ authorize_user_token_ldap (struct cfg *cfg,
     }
     sprintf (find, "%s=%s,%s", cfg->user_attr, user, cfg->ldapdn);
     filter = NULL;
-  } 
+  } else {
+    find = strdup(cfg->ldapdn); // allow free later-:)
+  }
   if (cfg->ldap_filter) {
     filter = filter_printf(cfg->ldap_filter, user);
     scope = LDAP_SCOPE_SUBTREE;
   }
   attrs[0] = (char *) cfg->yubi_attr;
 
-  DBG(("LDAP : look up object base='%s' filter='%s', ask for attribute '%s'", find, 
+  DBG(("LDAP : look up object base='%s' filter='%s', ask for attribute '%s'", find,
       filter ? filter:"(null)", cfg->yubi_attr));
 
   /* Search for the entry. */
@@ -346,7 +357,7 @@ authorize_user_token_ldap (struct cfg *cfg,
 	      for (i = 0; vals[i] != NULL; i++)
 		{
 	          DBG(("LDAP : Found %i values - checking if any of them match '%s:%s:%s'",
-		       ldap_count_values_len(vals), 
+		       ldap_count_values_len(vals),
 		       vals[i]->bv_val,
 		       cfg->yubi_attr_prefix ? cfg->yubi_attr_prefix : "", token_id));
 
@@ -705,6 +716,14 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->ldap_bind_password = argv[i] + sizeof("ldap_bind_password=")-1;
       if (strncmp (argv[i], "ldap_filter=", sizeof("ldap_filter=")-1) == 0)
 	cfg->ldap_filter = argv[i] + sizeof("ldap_filter=")-1;
+      if (strncmp (argv[i], "ldap_cacertfile=", sizeof("ldap_cacertfile=")-1) == 0)
+      cfg->ldap_cacertfile = (char *) argv[i] + sizeof("ldap_cacertfile=")-1;
+      /* compatible with https://github.com/Yubico/yubico-pam/pull/39/files */
+      if (strncmp (argv[i], "binddn=", sizeof("binddn=")-1) == 0)
+      cfg->ldap_bind_user = (char *) argv[i] + sizeof("binddn=")-1;
+      if (strncmp (argv[i], "bindpw=", sizeof("bindpw=")-1) == 0)
+      cfg->ldap_bind_password = (char *) argv[i] + sizeof("bindpw=")-1;
+      /* compatible with https://github.com/Yubico/yubico-pam/pull/39/files */
       if (strncmp (argv[i], "ldapdn=", 7) == 0)
 	cfg->ldapdn = argv[i] + 7;
       if (strncmp (argv[i], "user_attr=", 10) == 0)
@@ -743,6 +762,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
       D (("ldap_bind_user=%s", cfg->ldap_bind_user ? cfg->ldap_bind_user : "(null)"));
       D (("ldap_bind_password=%s", cfg->ldap_bind_password ? cfg->ldap_bind_password : "(null)"));
       D (("ldap_filter=%s", cfg->ldap_filter ? cfg->ldap_filter : "(null)"));
+      D (("ldap_cacertfile=%s", cfg->ldap_cacertfile ? cfg->ldap_cacertfile : "(null)"));
       D (("ldapdn=%s", cfg->ldapdn ? cfg->ldapdn : "(null)"));
       D (("user_attr=%s", cfg->user_attr ? cfg->user_attr : "(null)"));
       D (("yubi_attr=%s", cfg->yubi_attr ? cfg->yubi_attr : "(null)"));
@@ -1059,7 +1079,7 @@ done:
       retval = PAM_SUCCESS;
     }
   DBG (("done. [%s]", pam_strerror (pamh, retval)));
-  pam_set_data (pamh, "yubico_setcred_return", (void*)(intptr_t)retval, NULL); 
+  pam_set_data (pamh, "yubico_setcred_return", (void*)(intptr_t)retval, NULL);
   pam_set_data (pamh, "yubico_used_ldap", (void*)(intptr_t)cfg->ldap_bind_no_anonymous, NULL);
 
   return retval;
@@ -1072,7 +1092,7 @@ pam_sm_setcred (pam_handle_t * pamh, int flags, int argc, const char **argv)
 }
 
 PAM_EXTERN int
-pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv) 
+pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
   int use_ldap = -1;
   int rc = pam_get_data(pamh, "yubico_used_ldap", (const void**)&use_ldap);
@@ -1082,7 +1102,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	  if (rc == PAM_SUCCESS && retval == PAM_SUCCESS) {
 	      D (("pam_sm_acct_mgmt returing PAM_SUCCESS"));
 	      return PAM_SUCCESS;
-	  } 
+	  }
   }
   D (("pam_sm_acct_mgmt returing PAM_AUTH_ERR:%d", use_ldap));
   return PAM_AUTH_ERR;

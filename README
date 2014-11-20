@@ -20,7 +20,7 @@ later. This has introduced a dependency of libykpers-1 from the
 ykpersonalize package. Pass `--without-cr` to `configure` to avoid
 this dependency.
 
-The development community is co-ordinated via 
+The development community is co-ordinated via
 https://github.com/Yubico/yubico-pam[the GitHub project page].
 
 The project is licensed under a BSD license.  See the file COPYING for
@@ -67,7 +67,7 @@ It in turn requires Curl, which you need to have installed, and
 https://developers.yubico.com/yubico-c[libyubikey].
 
 The new Challenge-Response offline authentication requires libykpers-1
-from the 
+from the
 https://developers.yubico.com/yubikey-personalization[yubikey-personalization] project :
 
 The build system uses Autoconf, to set up the build system run:
@@ -152,7 +152,7 @@ service, go https://upgrade.yubico.com/getapikey[here].
 
 debug:: to enable debug output to stdout.
 
-alwaysok:: 
+alwaysok::
 to enable all authentication attempts to succeed
 (aka presentation mode).
 
@@ -319,10 +319,10 @@ information including the OTP and ID of your token to the shell - copy the ID
 into your config file and you should be up and going.
 
 ------
-Yubikey for `youruser': 
+Yubikey for `youruser':
 [pam_yubico.c:pam_sm_authenticate(867)] conv returned 44 bytes
 [pam_yubico.c:pam_sm_authenticate(885)] Skipping first 0 bytes. Length is 44, token_id set to 12 and token OTP always 32.
-[pam_yubico.c:pam_sm_authenticate(892)] OTP: ccccccclabcabkhbdncicglfltnukadfoifadfhhhhfe ID: cccccclabcab 
+[pam_yubico.c:pam_sm_authenticate(892)] OTP: ccccccclabcabkhbdncicglfltnukadfoifadfhhhhfe ID: cccccclabcab
 ------
 
 
@@ -348,11 +348,12 @@ logins, add the following to the top of `/etc/pam.d/login`:
    auth sufficient pam_yubico.so id=16 debug
 
 OpenVPN and ActiveDirectory
+---------------------------
 
 create file '/etc/pam.d/openvpn':
-auth  required  pam_yubico.so ldap_uri=ldap://ldap-srv debug id=19 yubi_attr=pager 
-   ldapdn=dc=ad,dc=next-audience,dc=net 
-   ldap_filter=(&(sAMAccountName=%u)(memberOf=CN=mygroup,OU=DefaultUser,DC=adivser,DC=net)) 
+auth  required  pam_yubico.so ldap_uri=ldap://ldap-srv debug id=19 yubi_attr=pager
+   ldapdn=dc=ad,dc=next-audience,dc=net
+   ldap_filter=(&(sAMAccountName=%u)(memberOf=CN=mygroup,OU=DefaultUser,DC=adivser,DC=net))
    ldap_bind_no_anonymous ldap_bind_user_filter=%u@adviser.com try_first_pass
 account required  pam_yubico.so
 
