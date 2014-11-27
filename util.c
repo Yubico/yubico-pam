@@ -144,11 +144,12 @@ check_user_token (const char *authfile,
   retval = -2;
   while (fgets (buf, 1024, opwfile))
     {
+      char *saveptr = NULL;
       if (buf[strlen (buf) - 1] == '\n')
 	buf[strlen (buf) - 1] = '\0';
       if(verbose)
 	  D (("Authorization line: %s", buf));
-      s_user = strtok (buf, ":");
+      s_user = strtok_r (buf, ":", &saveptr);
       if (s_user && strcmp (username, s_user) == 0)
 	{
 	  if(verbose)
@@ -156,7 +157,7 @@ check_user_token (const char *authfile,
       retval = -1; //We found at least one line for the user
 	  do
 	    {
-	      s_token = strtok (NULL, ":");
+	      s_token = strtok_r (NULL, ":", &saveptr);
 	      if(verbose)
 		  D (("Authorization token: %s", s_token));
 	      if (s_token && strcmp (otp_id, s_token) == 0)
