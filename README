@@ -1,4 +1,4 @@
-== Yubico PAM module ==
+== Yubico PAM module
 
 The Yubico PAM module provides an easy way to integrate the Yubikey
 into your existing user authentication infrastructure.  PAM is used by
@@ -54,46 +54,40 @@ $ autoreconf --install
 ------
 
 
-Building
---------
+=== Building
 
-You will need to have libykclient (ykclient.h, libykclient.so) and
-libpam-dev (security/pam_appl.h, libpam.so) installed.  Get the
-ykclient library from:
-
-  https://developers.yubico.com/yubico-c-client/
-
-It in turn requires Curl, which you need to have installed, and
+You will need to have https://developers.yubico.com/yubico-c-client[libykclient]
+(ykclient.h, libykclient.so) andlibpam-dev (security/pam_appl.h, libpam.so)
+installed. It in turn requires cURL, which you need to have installed, and
 https://developers.yubico.com/yubico-c[libyubikey].
 
 The new Challenge-Response offline authentication requires libykpers-1
-from the
-https://developers.yubico.com/yubikey-personalization[yubikey-personalization] project :
+from the 
+https://developers.yubico.com/yubikey-personalization[yubikey-personalization]
+project:
 
 The build system uses Autoconf, to set up the build system run:
 
-----
-./configure
-----
+ ./configure
 
 Use --without-ldap to disable ldap support.
 
 Then build the code, run the self-test and install the binaries:
 
-----
-make check install
-----
+ make check install
 
-Fedora/EPEL
-----------
+ 
+== Installation
+
+=== Fedora/EPEL
 
 There is already a package in Fedora/EPEL of yubico-pam that can be installed
-by using yum :
-  $ sudo yum install pam_yubico
+by using yum:
+
+ $ sudo yum install pam_yubico
 
 
-Ubuntu PPA
-----------
+=== Ubuntu PPA
 
 There is an Ubuntu PPA (Personal Package Archive) for yubico-pam that
 can be installed using the following commands on reasonably modern
@@ -103,10 +97,11 @@ Ubuntu platforms :
   $ sudo apt-get update
   $ sudo apt-get install libpam-yubico
 
-See the file /usr/share/doc/libpam-yubico/README.Debian after installing.
+See the file `/usr/share/doc/libpam-yubico/README.Debian` after installing.
 
-FreeBSD ports
--------------
+
+=== FreeBSD ports
+
 yubico-pam and the supporting Yubico packages have corresponding FreeBSD ports. To install:
 
   $ cd /usr/ports/security/pam_yubico
@@ -136,6 +131,7 @@ For more information, see the project Wiki page.
 
 Supported PAM module parameters are:
 
+[horizontal]
 authfile::
 To indicate the location of the file that holds the
 mappings of Yubikey token IDs to user names.
@@ -188,7 +184,7 @@ required if 'https' or 'ldaps' are used in 'url' and 'ldap_uri'
 respectively.
 
 verbose_otp::
-   This argument is used to show the OTP (One Time Password) when it
+   This argument is used to show the OTP (One-Time Password) when it
    is entered, i.e. to enable terminal echo of entered characters.
    You are advised to not use this, if you are using two factor
    authentication because that will display your password on the
@@ -231,15 +227,16 @@ offline Challenge-Response validation.
 If you are using "debug" you may find it useful to create a
 world-writable log file:
 
-------
+[source, sh]
+----
 touch /var/run/pam-debug.log
 chmod go+w /var/run/pam-debug.log
-------
+----
 
 
 Authorization Mapping Files
 ---------------------------
-A mapping must be made between the Yubikey token ID and the user ID it is
+A mapping must be made between the YubiKey token ID and the user ID it is
 attached to. There are two ways to do this, either centrally in one file, or
 individually, where users can create the mapping in their home directories.
 If the central authorization mapping file is being used, user home directory
@@ -247,31 +244,25 @@ mappings will not be used and the opposite applies if user home directory
 mappings are being used, the central authorization mappings file will not
 be used.
 
-Central authorization mapping
------------------------------
 
+=== Central authorization mapping
 Create a `/etc/yubikey_mappings`, the file must contain a user name and the
 Yubikey token ID separated by colons (same format as the passwd file) for
 each user you want to allow onto the system using a Yubikey.
 
 The mappings should look like this, one per line:
 
-------
-<first user name>:<Yubikey token ID1>:<Yubikey token ID2>:….
-<second user name>:<Yubikey token ID3>:<Yubikey token ID4>:….
-------
+ <first user name>:<Yubikey token ID1>:<Yubikey token ID2>:….
+ <second user name>:<Yubikey token ID3>:<Yubikey token ID4>:….
 
-Now add authfile=/etc/yubikey_mappings to your PAM configuration line, so it
+Now add `authfile=/etc/yubikey_mappings` to your PAM configuration line, so it
 looks like:
 
-------
-auth sufficient pam_yubico.so id=16 authfile=/etc/yubikey_mappings
-------
+ auth sufficient pam_yubico.so id=16 authfile=/etc/yubikey_mappings
 
-
-Individual authorization mapping by user
-----------------------------------------
-Each user creates a ~/.yubico/authorized_yubikeys file inside of their home
+ 
+=== Individual authorization mapping by user
+Each user creates a `~/.yubico/authorized_yubikeys` file inside of their home
 directory and places the mapping in that file, the file must have only one
 line:
 
@@ -297,25 +288,23 @@ characters and listed as:
 
 Not sure what that last bit meant? Here is how to get a copy of your OTP.
 
-Fast way
---------
-* Open a terminal
-* Press the YubiKey's button
-
-It will output an OTP into the shell:
-
+=== Fast way
+. Open a terminal
+. Press the YubiKey's button
+  It will output an OTP into the shell:
++
+[source, sh]
 ------
 $ cccccccgklgcvnkcvnnegrnhgrjkhlkfhdkclfncvlgj
 bash: cccccccgklgcvnkcvnnegrnhgrjkhlkfhdkclfncvlgj: command not found
 ------
-
++
 This can be pasted into the Modhex_Calculator page.
 
-Harder way
-----------
+=== Harder way
 This requires you to have the pam module enabled with 'debug' turned on. When
-prompted for the yubikey press the button. The pam module will print out debug
-information including the OTP and ID of your token to the shell - copy the ID
+prompted for the YubiKey press the button. The pam module will print out debug
+information including the OTP and ID of your token to the shell -- copy the ID
 into your config file and you should be up and going.
 
 ------
@@ -342,7 +331,7 @@ To determine if you have SELinux enforcing or not run the `sestatus` command.
 Examples
 --------
 
-If you want to use the Yubikey to authenticate you on linux console
+If you want to use the YubiKey to authenticate you on Linux console
 logins, add the following to the top of `/etc/pam.d/login`:
 
    auth sufficient pam_yubico.so id=16 debug
