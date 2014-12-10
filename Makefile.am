@@ -99,9 +99,9 @@ release:
 	fi
 	@head -3 $(srcdir)/NEWS | grep -q "Version $(VERSION) .released `date -I`" || \
 		(echo 'error: Update date/version in $(srcdir)/NEWS.'; exit 1)
-	@if test ! -d "$(YUBICO_GITHUB_REPO)"; then \
-		echo "yubico.github.com repo not found!"; \
-		echo "Make sure that YUBICO_GITHUB_REPO is set"; \
+	@if test ! -d "$(YUBICO_WWW_REPO)"; then \
+		echo "WWW repo not found!"; \
+		echo "Make sure that YUBICO_WWW_REPO is set"; \
 		exit 1; \
 		fi
 	rm -f ChangeLog
@@ -111,5 +111,5 @@ release:
 	cd $(srcdir) && git push
 	cd $(srcdir) && git tag -u $(KEYID) -m $(VERSION) $(VERSION)
 	cd $(srcdir) && git push --tags
-	$(YUBICO_GITHUB_REPO)/save-mans $(PROJECT) $(MANSOURCES)
-	$(YUBICO_GITHUB_REPO)/publish $(PROJECT) $(VERSION) $(PACKAGE)-$(VERSION).tar.gz*
+	$(YUBICO_WWW_REPO)/save-mans $(PROJECT) $(MANSOURCES)
+	$(YUBICO_WWW_REPO)/publish $(PROJECT) $(VERSION) $(PACKAGE)-$(VERSION).tar.gz*
