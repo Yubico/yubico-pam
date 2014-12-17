@@ -66,7 +66,7 @@ dist_man8_MANS = pam_yubico.8
 DISTCLEANFILES = $(dist_man1_MANS) $(dist_man8_MANS)
 
 MANSOURCES = pam_yubico.8.txt ykpamcfg.1.txt
-EXTRA_DIST = doc/LocalAuthenticationUsingChallengeResponse.txt doc/MacOSXChallengeResponse.txt doc/TwoFactorPAMConfiguration.txt doc/UbuntuFreeRadiusYubiKey.txt doc/YubiKeyAndFreeRADIUSviaPAM.txt doc/YubiKeyAndFreeRADIUSwithsinglefactorauthenticationviaPAM.txt doc/YubiKeyAndOpenVPNviaPAM.txt doc/YubikeyAndRadiusViaPAM.txt doc/Yubikey-and-SELinux-on-Fedora-18-and-up.txt doc/YubikeyAndSSHViaPAM.txt
+EXTRA_DIST = doc/Authentication_Using_Challenge-Response.adoc doc/MacOS_X_Challenge-Response.adoc doc/Two_Factor_PAM_Configuration.adoc doc/Ubuntu_FreeRadius_YubiKey.adoc doc/YubiKey_and_FreeRADIUS_1FA_via_PAM.adoc doc/YubiKey_and_FreeRADIUS_via_PAM.adoc doc/YubiKey_and_OpenVPN_via_PAM.adoc doc/Yubikey_and_Radius_via_PAM.adoc doc/Yubikey_and_SELinux_on_Fedora_18_and_up.adoc doc/Yubikey_and_SSH_via_PAM.adoc
 EXTRA_DIST += $(MANSOURCES)
 
 SUFFIXES = .1.txt .1 .8.txt .8
@@ -82,7 +82,7 @@ ChangeLog:
 	cd $(srcdir) && git2cl > ChangeLog
 
 check-doc-dist:
-	perl -pe "s,^EXTRA_DIST = .*,EXTRA_DIST = `cd $(srcdir) && ls doc/*.txt | xargs echo`," < $(srcdir)/Makefile.am > check-doc-dist.tmp
+	perl -pe "s,^EXTRA_DIST = .*,EXTRA_DIST = `cd $(srcdir) && ls doc/*.adoc | xargs echo`," < $(srcdir)/Makefile.am > check-doc-dist.tmp
 	diff -ur $(srcdir)/Makefile.am check-doc-dist.tmp || \
 		(rm -f check-doc-dist.tmp; echo 'error: please update $(srcdir)/Makefile.am to include all docs'; exit 1)
 	rm -f check-doc-dist.tmp
