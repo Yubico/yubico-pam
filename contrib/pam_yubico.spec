@@ -15,7 +15,7 @@ URL:		https://developers.yubico.com/yubico-pam/
 Source0:	https://github.com/Yubico/yubico-pam/archive/%{version}.tar.gz
 Packager:       Ulrich Habel <rhaen@pkgbox.de>
 
-BuildRequires:	pam-devel, ykclient-devel, libyubikey-devel, ykpers-devel, openldap-devel
+BuildRequires:	pam-devel, ykclient-devel >= 2.12, libyubikey-devel, ykpers-devel, openldap-devel
 BuildRequires:  asciidoc, autoconf, automake, libtool
 
 %description
