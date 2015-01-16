@@ -193,6 +193,18 @@ verbose_otp::
    display custom fields.  For example, OpenSSH requires
    you to configure `ChallengeResponseAuthentication no`.
 
+ldap_bind_no_anonymous:: a flag that controls if your ldap needs a prebind like a active directory.
+
+ldap_bind_user:: the username of the prebinded user, only used if ldap_bind_no_anonymous is on.
+
+ldap_bind_password:: the password of the prebinded user, only used if ldap_bind_no_anonymous is on.
+
+ldap_bind_user_filter:: This filter substitudes only the %u which is the just entered userrname. The ldap_bind_user_filter parameter is used to add the default domain like "%u@foo.com"
+
+ldap_filter:: This filter substitudes only the %u which is the just entered userrname. if you query ldap you want to restrict to specific groups e.g. than you need a filter like this: (&(sAMAccountName=%u)(memberOf=CN=mygroup,OU=DefaultUser,DC=adivser,DC=net)). 
+
+ldap_cacertfile:: the filename of the cacertfile used to authenticat to the ldap server.
+
 ldap_uri:: specify the LDAP server URI (e.g. ldap://localhost).
 
 
