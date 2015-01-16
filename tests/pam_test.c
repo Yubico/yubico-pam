@@ -42,14 +42,24 @@ static const char *err = "error";
 static const char *foo = "foo";
 static const char *otp = "vvincredibletrerdegkkrkkneieultcjdghrejjbckh";
 
-void test_authenticate1(void) {
+int test_authenticate1(void) {
   char *cfg[] = {
     "id=1",
     "url=http://localhost:8888/wsapi/2/verify?id=%d&otp=%s",
     "authfile=aux/authfile",
     "debug",
   };
-  assert(pam_sm_authenticate(0, 0, 4, cfg) == PAM_SUCCESS);
+  return pam_sm_authenticate(1, 0, 4, cfg);
+}
+
+int test_authenticate2(void) {
+  char *cfg[] = {
+    "id=1",
+    "urllist=http://localhost:8888/wsapi/2/verify",
+    "authfile=aux/authfile",
+    "debug",
+  };
+  return pam_sm_authenticate(2, 0, 4, cfg);
 }
 
 const char * pam_strerror(pam_handle_t *pamh, int errnum) {
@@ -111,22 +121,31 @@ int pam_set_item(pam_handle_t *pamh, int item_type, const void *item) {
   return PAM_SUCCESS;
 }
 
-pid_t run_mock(void) {
+pid_t run_mock(const char *port) {
   pid_t pid = fork();
   if(pid == 0) {
-    execvp("aux/ykval.sh", NULL);
-    exit(0);
+    execlp("aux/ykval.pl", port, NULL);
   }
+  /* Give the "server" time to settle */
   sleep(1);
   return pid;
 }
 
 int main () {
-  pid_t child = run_mock();
+  int ret = 0;
+  pid_t child = run_mock("8888");
 
-  test_authenticate1();
+  if(test_authenticate1() != 0) {
+    ret = 1;
+    goto out;
+  }
+  if(test_authenticate2() != 0) {
+    ret = 2;
+    goto out;
+  }
 
+out:
   kill(child, 9);
   printf("killed %d\n", child);
-  return 0;
+  return ret;
 }
