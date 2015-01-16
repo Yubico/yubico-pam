@@ -46,3 +46,10 @@ tests/util_test.trs
 tests/test-suite.log
 tests/test.log
 tests/test.trs
+core
+libpam_real.la
+tests/core
+tests/pam_test
+tests/pam_test.log
+tests/pam_test.o
+tests/pam_test.trs
