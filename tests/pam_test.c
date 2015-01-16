@@ -30,6 +30,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <sys/types.h>
+#include <signal.h>
+
+#include <assert.h>
+
 #include <security/pam_appl.h>
 #include <security/pam_modutil.h>
 
@@ -40,10 +45,11 @@ static const char *otp = "vvincredibletrerdegkkrkkneieultcjdghrejjbckh";
 void test_authenticate1(void) {
   char *cfg[] = {
     "id=1",
-  //  "url=http://localhost:8888/wsapi/2/verify",
-    "debug"
+    "url=http://localhost:8888/wsapi/2/verify?id=%d&otp=%s",
+    "authfile=aux/authfile",
+    "debug",
   };
-  pam_sm_authenticate(0, 0, 2, cfg);
+  assert(pam_sm_authenticate(0, 0, 4, cfg) == PAM_SUCCESS);
 }
 
 const char * pam_strerror(pam_handle_t *pamh, int errnum) {
@@ -105,8 +111,22 @@ int pam_set_item(pam_handle_t *pamh, int item_type, const void *item) {
   return PAM_SUCCESS;
 }
 
+pid_t run_mock(void) {
+  pid_t pid = fork();
+  if(pid == 0) {
+    execvp("aux/ykval.sh", NULL);
+    exit(0);
+  }
+  sleep(1);
+  return pid;
+}
 
-int main (void) {
+int main () {
+  pid_t child = run_mock();
+
   test_authenticate1();
+
+  kill(child, 9);
+  printf("killed %d\n", child);
   return 0;
 }
