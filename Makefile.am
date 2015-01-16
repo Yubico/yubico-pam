@@ -37,15 +37,17 @@ libdir = $(PAMDIR)
 
 lib_LTLIBRARIES = pam_yubico.la
 
-pam_yubico_la_SOURCES = pam_yubico.c drop_privs.h drop_privs.c
+pam_yubico_la_SOURCES = drop_privs.h drop_privs.c
 # XXX add -Wl,-x too?  PAM documentation suggests it.
-pam_yubico_la_LIBADD = @LTLIBYUBIKEY@ @LTLIBYKCLIENT@ @LIBLDAP@ -lpam
-pam_yubico_la_LIBADD += libpam_util.la
+pam_yubico_la_LIBADD = @LTLIBYUBIKEY@ @LTLIBYKCLIENT@ @LIBLDAP@ @LIBPAM@
+pam_yubico_la_LIBADD += libpam_util.la libpam_real.la
 pam_yubico_la_LDFLAGS = -module -avoid-version
 
-noinst_LTLIBRARIES = libpam_util.la
+noinst_LTLIBRARIES = libpam_util.la libpam_real.la
 libpam_util_la_SOURCES = util.c util.h
 libpam_util_la_LIBADD = @LTLIBYUBIKEY@ @YKPERS_LIBS@
+
+libpam_real_la_SOURCES = pam_yubico.c
 
 DEFS = -DDEBUG_PAM -DPAM_DEBUG @DEFS@
 

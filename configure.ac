@@ -46,7 +46,7 @@ AC_CHECK_HEADERS([security/pam_modules.h security/_pam_macros.h security/pam_mod
   [#include <sys/types.h>
    #include <security/pam_appl.h>])
 
-AC_CHECK_LIB([pam], [pam_start])
+AC_CHECK_LIB([pam], [pam_start], [AC_SUBST([LIBPAM], ["-lpam"])])
 
 AC_ARG_WITH([ldap],
             [AS_HELP_STRING([--without-ldap],
