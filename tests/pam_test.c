@@ -49,6 +49,18 @@ static struct data {
   {"foo", "vvincredibletrerdegkkrkkneieultcjdghrejjbckl"},
 };
 
+
+static const char *ldap_cfg[] = {
+  "id=1",
+  "urllist=http://localhost:8889/wsapi/2/verify;http://localhost:8888/wsapi/2/verify",
+  "authfile=aux/authfile",
+  "ldap_uri=ldap://localhost:8890",
+  "ldapdn=ou=users,dc=example,dc=com",
+  "user_attr=uid",
+  "yubi_attr=yubiKeyId",
+  "debug"
+};
+
 static const char *err = "error";
 
 static const struct data *test_get_data(void *id) {
@@ -165,18 +177,34 @@ static int test_fail_authenticate3(void) {
   return pam_sm_authenticate(3, 0, sizeof(cfg) / sizeof(char*), cfg);
 }
 
-static pid_t run_mock(const char *port) {
+static int test_authenticate_ldap1(void) {
+  return pam_sm_authenticate(0, 0, sizeof(ldap_cfg) / sizeof(char*), ldap_cfg);
+}
+
+static int test_authenticate_ldap_fail1(void) {
+  return pam_sm_authenticate(1, 0, sizeof(ldap_cfg) / sizeof(char*), ldap_cfg);
+}
+
+static int test_authenticate_ldap_fail2(void) {
+  return pam_sm_authenticate(2, 0, sizeof(ldap_cfg) / sizeof(char*), ldap_cfg);
+}
+
+static pid_t run_mock(const char *port, const char *type) {
   pid_t pid = fork();
   if(pid == 0) {
-    execlp("aux/ykval.pl", "aux/ykval.pl", port, NULL);
+    execlp(type, type, port, NULL);
   }
   return pid;
 }
 
+#define YKVAL "aux/ykval.pl"
+#define LDAP "aux/ldap.pl"
+
 int main () {
   int ret = 0;
-  pid_t child = run_mock("8888");
-  pid_t child2 = run_mock("8889");
+  pid_t child = run_mock("8888", YKVAL);
+  pid_t child2 = run_mock("8889", YKVAL);
+  pid_t child3 = run_mock("8890", LDAP);
 
   /* Give the "server" time to settle */
   sleep(1);
@@ -201,11 +229,26 @@ int main () {
     ret = 5;
     goto out;
   }
+#ifdef HAVE_LIBLDAP
+  if(test_authenticate_ldap1() != PAM_SUCCESS) {
+    ret = 6;
+    goto out;
+  }
+  if(test_authenticate_ldap_fail1() != PAM_USER_UNKNOWN) {
+    ret = 7;
+    goto out;
+  }
+  if(test_authenticate_ldap_fail2() != PAM_AUTH_ERR) {
+    ret = 8;
+    goto out;
+  }
+#endif
 
 out:
   kill(child, 9);
   kill(child2, 9);
-  printf("killed %d and %d\n", child, child2);
+  kill(child3, 9);
+  printf("killed %d, %d and %d\n", child, child2, child3);
   if(ret != 0) {
     fprintf(stderr, "test %d failed!\n", ret);
   }
