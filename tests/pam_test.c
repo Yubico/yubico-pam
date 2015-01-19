@@ -40,26 +40,18 @@
 #include <security/pam_modutil.h>
 
 static struct data {
-  int id;
   const char user[255];
   const char otp[255];
 } _data[] = {
-  {1, "foo", "vvincredibletrerdegkkrkkneieultcjdghrejjbckh"},
-  {2, "foo", "vvincredibletrerdegkkrkkneieultcjdghrejjbckh"},
-  {3, "bar", "vvincredibletrerdegkkrkkneieultcjdghrejjbckh"},
-  {4, "foo", "vvincrediblltrerdegkkrkkneieultcjdghrejjbckh"},
+  {"foo", "vvincredibletrerdegkkrkkneieultcjdghrejjbckh"},
+  {"bar", "vvincredibletrerdegkkrkkneieultcjdghrejjbckh"},
+  {"foo", "vvincrediblltrerdegkkrkkneieultcjdghrejjbckh"},
 };
 
 static const char *err = "error";
 
 static const struct data *test_get_data(void *id) {
-  size_t i;
-  for(i = 0; i < sizeof(_data) / sizeof(struct data); i++) {
-    if((int)id == _data[i].id) {
-      return &_data[i];
-    }
-  }
-  return NULL;
+  return &_data[(int)id];
 }
 
 const char * pam_strerror(pam_handle_t *pamh, int errnum) {
@@ -129,7 +121,7 @@ static int test_authenticate1(void) {
     "authfile=aux/authfile",
     "debug",
   };
-  return pam_sm_authenticate(1, 0, sizeof(cfg) / sizeof(char*), cfg);
+  return pam_sm_authenticate(0, 0, sizeof(cfg) / sizeof(char*), cfg);
 }
 
 static int test_authenticate2(void) {
@@ -139,7 +131,7 @@ static int test_authenticate2(void) {
     "authfile=aux/authfile",
     "debug",
   };
-  return pam_sm_authenticate(2, 0, sizeof(cfg) / sizeof(char*), cfg);
+  return pam_sm_authenticate(0, 0, sizeof(cfg) / sizeof(char*), cfg);
 }
 
 static int test_fail_authenticate1(void) {
@@ -149,7 +141,7 @@ static int test_fail_authenticate1(void) {
     "authfile=aux/authfile",
     "debug"
   };
-  return pam_sm_authenticate(3, 0, sizeof(cfg) / sizeof(char*), cfg);
+  return pam_sm_authenticate(1, 0, sizeof(cfg) / sizeof(char*), cfg);
 }
 
 static int test_fail_authenticate2(void) {
@@ -199,5 +191,8 @@ out:
   kill(child, 9);
   kill(child2, 9);
   printf("killed %d and %d\n", child, child2);
+  if(ret != 0) {
+    fprintf(stderr, "test %d failed!\n", ret);
+  }
   return ret;
 }
