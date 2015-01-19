@@ -51,9 +51,9 @@ static struct data {
 static const char *err = "error";
 
 static const struct data *test_get_data(void *id) {
-  int i;
+  size_t i;
   for(i = 0; i < sizeof(_data) / sizeof(struct data); i++) {
-    if(id == _data[i].id) {
+    if((int)id == _data[i].id) {
       return &_data[i];
     }
   }
@@ -98,7 +98,7 @@ static struct pam_conv pam_conversation = {
 int pam_get_item(const pam_handle_t *pamh, int item_type, const void **item) {
   fprintf(stderr, "in pam_get_item() %d\n", item_type);
   if(item_type == 5) {
-    pam_conversation.appdata_ptr = pamh;
+    pam_conversation.appdata_ptr = (void*)pamh;
     *item = &pam_conversation;
   }
   return PAM_SUCCESS;
