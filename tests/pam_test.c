@@ -60,26 +60,6 @@ static const struct data *test_get_data(void *id) {
   return NULL;
 }
 
-int test_authenticate1(void) {
-  char *cfg[] = {
-    "id=1",
-    "url=http://localhost:8888/wsapi/2/verify?id=%d&otp=%s",
-    "authfile=aux/authfile",
-    "debug",
-  };
-  return pam_sm_authenticate(1, 0, sizeof(cfg) / sizeof(char*), cfg);
-}
-
-int test_authenticate2(void) {
-  char *cfg[] = {
-    "id=1",
-    "urllist=http://localhost:8888/wsapi/2/verify",
-    "authfile=aux/authfile",
-    "debug",
-  };
-  return pam_sm_authenticate(2, 0, sizeof(cfg) / sizeof(char*), cfg);
-}
-
 const char * pam_strerror(pam_handle_t *pamh, int errnum) {
   fprintf(stderr, "in pam_strerror()\n");
   return "error";
@@ -140,7 +120,27 @@ int pam_set_item(pam_handle_t *pamh, int item_type, const void *item) {
   return PAM_SUCCESS;
 }
 
-pid_t run_mock(const char *port) {
+static int test_authenticate1(void) {
+  char *cfg[] = {
+    "id=1",
+    "url=http://localhost:8888/wsapi/2/verify?id=%d&otp=%s",
+    "authfile=aux/authfile",
+    "debug",
+  };
+  return pam_sm_authenticate(1, 0, sizeof(cfg) / sizeof(char*), cfg);
+}
+
+static int test_authenticate2(void) {
+  char *cfg[] = {
+    "id=1",
+    "urllist=http://localhost:8888/wsapi/2/verify",
+    "authfile=aux/authfile",
+    "debug",
+  };
+  return pam_sm_authenticate(2, 0, sizeof(cfg) / sizeof(char*), cfg);
+}
+
+static pid_t run_mock(const char *port) {
   pid_t pid = fork();
   if(pid == 0) {
     execlp("aux/ykval.pl", port, NULL);
