@@ -51,20 +51,21 @@ my $socket = new IO::Socket::INET (
 while(1) {
   my $clientsocket = $socket->accept();
   my $clientdata = <$clientsocket>;
-  my $ret = "status=MISSING_PARAMETER";
+  my $ret = "h=ZrU7UfjwazJVf5ay1P/oC3XCQlI=\n";
 
   if($clientdata =~ m/nonce=([a-zA-Z0-9]+).*otp=([cbdefghijklnrtuv]+)/) {
     my $nonce = $1;
     my $otp = $2;
     if($otps{$otp}) {
       my $status = $otps{$otp};
-      $ret = "h=ZrU7UfjwazJVf5ay1P/oC3XCQlI=\n";
       $ret .= "nonce=$nonce\n";
       $ret .= "otp=$otp\n";
       $ret .= "status=$status";
     } else {
-      $ret = "status=BAD_OTP";
+      $ret .= "status=BAD_OTP";
     }
+  } else {
+    $ret .= "status=MISSING_PARAMETER";
   }
   print $clientsocket "\n$ret\n";
   close $clientsocket;

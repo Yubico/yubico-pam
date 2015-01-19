@@ -46,6 +46,7 @@ static struct data {
   {"foo", "vvincredibletrerdegkkrkkneieultcjdghrejjbckh"},
   {"bar", "vvincredibletrerdegkkrkkneieultcjdghrejjbckh"},
   {"foo", "vvincrediblltrerdegkkrkkneieultcjdghrejjbckh"},
+  {"foo", "vvincredibletrerdegkkrkkneieultcjdghrejjbckl"},
 };
 
 static const char *err = "error";
@@ -154,6 +155,16 @@ static int test_fail_authenticate2(void) {
   return pam_sm_authenticate(2, 0, sizeof(cfg) / sizeof(char*), cfg);
 }
 
+static int test_fail_authenticate3(void) {
+  char *cfg[] = {
+    "id=1",
+    "urllist=http://localhost:8889/wsapi/2/verify",
+    "authfile=aux/authfile",
+    "debug"
+  };
+  return pam_sm_authenticate(3, 0, sizeof(cfg) / sizeof(char*), cfg);
+}
+
 static pid_t run_mock(const char *port) {
   pid_t pid = fork();
   if(pid == 0) {
@@ -184,6 +195,10 @@ int main () {
   }
   if(test_fail_authenticate2() != PAM_AUTH_ERR) {
     ret = 4;
+    goto out;
+  }
+  if(test_fail_authenticate3() != PAM_AUTH_ERR) {
+    ret = 5;
     goto out;
   }
 
