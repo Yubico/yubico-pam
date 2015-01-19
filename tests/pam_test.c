@@ -61,10 +61,8 @@ static const char *ldap_cfg[] = {
   "debug"
 };
 
-static const char *err = "error";
-
 static const struct data *test_get_data(void *id) {
-  return &_data[(int)id];
+  return &_data[(long)id];
 }
 
 const char * pam_strerror(pam_handle_t *pamh, int errnum) {
@@ -86,12 +84,13 @@ int pam_get_user(const pam_handle_t *pamh, const char **user, const char *prompt
 
 static int conv_func(int num_msg, const struct pam_message **msg,
     struct pam_response **resp, void *appdata_ptr) {
+  struct pam_response *reply;
   fprintf(stderr, "in conv_func()\n");
   if(num_msg != 1) {
     return PAM_CONV_ERR;
   }
 
-  struct pam_response *reply = malloc(sizeof(struct pam_response));
+  reply = malloc(sizeof(struct pam_response));
   reply->resp = test_get_data(appdata_ptr)->otp;
   *resp = reply;
   return PAM_SUCCESS;
@@ -128,7 +127,7 @@ int pam_set_item(pam_handle_t *pamh, int item_type, const void *item) {
 }
 
 static int test_authenticate1(void) {
-  char *cfg[] = {
+  const char *cfg[] = {
     "id=1",
     "url=http://localhost:8888/wsapi/2/verify?id=%d&otp=%s",
     "authfile=aux/authfile",
@@ -138,7 +137,7 @@ static int test_authenticate1(void) {
 }
 
 static int test_authenticate2(void) {
-  char *cfg[] = {
+  const char *cfg[] = {
     "id=1",
     "urllist=http://localhost:8888/wsapi/2/verify;http://localhost:8889/wsapi/2/verify",
     "authfile=aux/authfile",
@@ -148,7 +147,7 @@ static int test_authenticate2(void) {
 }
 
 static int test_fail_authenticate1(void) {
-  char *cfg[] = {
+  const char *cfg[] = {
     "id=1",
     "urllist=http://localhost:8889/wsapi/2/verify;http://localhost:8888/wsapi/2/verify",
     "authfile=aux/authfile",
@@ -158,7 +157,7 @@ static int test_fail_authenticate1(void) {
 }
 
 static int test_fail_authenticate2(void) {
-  char *cfg[] = {
+  const char *cfg[] = {
     "id=1",
     "urllist=http://localhost:8889/wsapi/2/verify;http://localhost:8888/wsapi/2/verify",
     "authfile=aux/authfile",
@@ -168,7 +167,7 @@ static int test_fail_authenticate2(void) {
 }
 
 static int test_fail_authenticate3(void) {
-  char *cfg[] = {
+  const char *cfg[] = {
     "id=1",
     "urllist=http://localhost:8889/wsapi/2/verify",
     "authfile=aux/authfile",
@@ -200,7 +199,7 @@ static pid_t run_mock(const char *port, const char *type) {
 #define YKVAL "aux/ykval.pl"
 #define LDAP "aux/ldap.pl"
 
-int main () {
+int main(void) {
   int ret = 0;
   pid_t child = run_mock("8888", YKVAL);
   pid_t child2 = run_mock("8889", YKVAL);
