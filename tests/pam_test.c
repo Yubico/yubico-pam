@@ -159,13 +159,13 @@ static int test_fail_authenticate2(void) {
     "authfile=aux/authfile",
     "debug"
   };
-  return pam_sm_authenticate(4, 0, sizeof(cfg) / sizeof(char*), cfg);
+  return pam_sm_authenticate(2, 0, sizeof(cfg) / sizeof(char*), cfg);
 }
 
 static pid_t run_mock(const char *port) {
   pid_t pid = fork();
   if(pid == 0) {
-    execlp("aux/ykval.pl", port, NULL);
+    execlp("aux/ykval.pl", "aux/ykval.pl", port, NULL);
   }
   return pid;
 }

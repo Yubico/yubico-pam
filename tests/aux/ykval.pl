@@ -38,7 +38,7 @@ my %otps = (
 );
 
 my $port = shift;
-$port |= 8888;
+die "no port specified" unless $port;
 
 my $socket = new IO::Socket::INET (
   LocalHost => '127.0.0.1',
