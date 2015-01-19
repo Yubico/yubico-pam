@@ -133,7 +133,7 @@ static int test_authenticate1(void) {
 static int test_authenticate2(void) {
   char *cfg[] = {
     "id=1",
-    "urllist=http://localhost:8888/wsapi/2/verify",
+    "urllist=http://localhost:8888/wsapi/2/verify;http://localhost:8889/wsapi/2/verify",
     "authfile=aux/authfile",
     "debug",
   };
@@ -153,6 +153,7 @@ static pid_t run_mock(const char *port) {
 int main () {
   int ret = 0;
   pid_t child = run_mock("8888");
+  pid_t child2 = run_mock("8889");
 
   if(test_authenticate1() != 0) {
     ret = 1;
@@ -165,6 +166,7 @@ int main () {
 
 out:
   kill(child, 9);
-  printf("killed %d\n", child);
+  kill(child2, 9);
+  printf("killed %d and %d\n", child, child2);
   return ret;
 }
