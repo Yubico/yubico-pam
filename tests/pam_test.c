@@ -32,15 +32,33 @@
 
 #include <sys/types.h>
 #include <signal.h>
+#include <unistd.h>
 
 #include <assert.h>
 
 #include <security/pam_appl.h>
 #include <security/pam_modutil.h>
 
+static struct data {
+  int id;
+  const char user[255];
+  const char otp[255];
+} _data[] = {
+  {1, "foo", "vvincredibletrerdegkkrkkneieultcjdghrejjbckh"},
+  {2, "foo", "vvincredibletrerdegkkrkkneieultcjdghrejjbckh"},
+};
+
 static const char *err = "error";
-static const char *foo = "foo";
-static const char *otp = "vvincredibletrerdegkkrkkneieultcjdghrejjbckh";
+
+static const struct data *test_get_data(void *id) {
+  int i;
+  for(i = 0; i < sizeof(_data) / sizeof(struct data); i++) {
+    if(id == _data[i].id) {
+      return &_data[i];
+    }
+  }
+  return NULL;
+}
 
 int test_authenticate1(void) {
   char *cfg[] = {
@@ -75,7 +93,7 @@ int pam_set_data(pam_handle_t *pamh, const char *module_data_name, void *data,
 
 int pam_get_user(const pam_handle_t *pamh, const char **user, const char *prompt) {
   fprintf(stderr, "in pam_get_user()\n");
-  *user = foo;
+  *user = test_get_data((void*)pamh)->user;
   return PAM_SUCCESS;
 }
 
@@ -87,12 +105,12 @@ static int conv_func(int num_msg, const struct pam_message **msg,
   }
 
   struct pam_response *reply = malloc(sizeof(struct pam_response));
-  reply->resp = otp;
+  reply->resp = test_get_data(appdata_ptr)->otp;
   *resp = reply;
   return PAM_SUCCESS;
 }
 
-static const struct pam_conv pam_conversation = {
+static struct pam_conv pam_conversation = {
   conv_func,
   NULL,
 };
@@ -100,6 +118,7 @@ static const struct pam_conv pam_conversation = {
 int pam_get_item(const pam_handle_t *pamh, int item_type, const void **item) {
   fprintf(stderr, "in pam_get_item() %d\n", item_type);
   if(item_type == 5) {
+    pam_conversation.appdata_ptr = pamh;
     *item = &pam_conversation;
   }
   return PAM_SUCCESS;
