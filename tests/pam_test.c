@@ -49,7 +49,7 @@ int test_authenticate1(void) {
     "authfile=aux/authfile",
     "debug",
   };
-  return pam_sm_authenticate(1, 0, 4, cfg);
+  return pam_sm_authenticate(1, 0, sizeof(cfg) / sizeof(char*), cfg);
 }
 
 int test_authenticate2(void) {
@@ -59,7 +59,7 @@ int test_authenticate2(void) {
     "authfile=aux/authfile",
     "debug",
   };
-  return pam_sm_authenticate(2, 0, 4, cfg);
+  return pam_sm_authenticate(2, 0, sizeof(cfg) / sizeof(char*), cfg);
 }
 
 const char * pam_strerror(pam_handle_t *pamh, int errnum) {
