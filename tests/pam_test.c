@@ -151,6 +151,16 @@ static int test_authenticate2(void) {
   return pam_sm_authenticate(0, 0, sizeof(cfg) / sizeof(char*), cfg);
 }
 
+static int test_authenticate3(void) {
+  const char *cfg[] = {
+    "id=1",
+    "urllist=http://localhost:"YKVAL_PORT1"/wsapi/2/verify",
+    "authfile=aux/authfile",
+    "debug",
+  };
+  return pam_sm_authenticate(4, 0, sizeof(cfg) / sizeof(char*), cfg);
+}
+
 static int test_fail_authenticate1(void) {
   const char *cfg[] = {
     "id=1",
@@ -255,6 +265,10 @@ int main(void) {
     goto out;
   }
 #endif
+  if(test_authenticate3() != PAM_SUCCESS) {
+    ret = 10;
+    goto out;
+  }
 
 out:
   kill(child, 9);
