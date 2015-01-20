@@ -61,10 +61,12 @@ You will need to have https://developers.yubico.com/yubico-c-client[libykclient]
 installed. It in turn requires cURL, which you need to have installed, and
 https://developers.yubico.com/yubico-c[libyubikey].
 
-The new Challenge-Response offline authentication requires libykpers-1
+The Challenge-Response offline authentication requires libykpers-1
 from the 
 https://developers.yubico.com/yubikey-personalization[yubikey-personalization]
 project:
+
+The selftests require perl with the module Net::LDAP::Server installed.
 
 The build system uses Autoconf, to set up the build system run:
 
