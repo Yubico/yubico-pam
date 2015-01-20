@@ -222,7 +222,9 @@ int main(void) {
   int ret = 0;
   pid_t child = run_mock(YKVAL_PORT1, YKVAL);
   pid_t child2 = run_mock(YKVAL_PORT2, YKVAL);
+#ifdef HAVE_LIBLDAP
   pid_t child3 = run_mock(LDAP_PORT, LDAP);
+#endif
 
   /* Give the "server" time to settle */
   sleep(1);
@@ -273,8 +275,12 @@ int main(void) {
 out:
   kill(child, 9);
   kill(child2, 9);
+#ifdef HAVE_LIBLDAP
   kill(child3, 9);
   printf("killed %d, %d and %d\n", child, child2, child3);
+#else
+  printf("killed %d and %d\n", child, child2);
+#endif
   if(ret != 0) {
     fprintf(stderr, "test %d failed!\n", ret);
   }
