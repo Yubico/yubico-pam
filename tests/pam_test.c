@@ -51,6 +51,7 @@ static struct data {
   {"bar", "vvincredibletrerdegkkrkkneieultcjdghrejjbckh"},
   {"foo", "vvincrediblltrerdegkkrkkneieultcjdghrejjbckh"},
   {"foo", "vvincredibletrerdegkkrkkneieultcjdghrejjbckl"},
+  {"test", "ccccccbchvthlivuitriujjifivbvtrjkjfirllluurj"},
 };
 
 
@@ -192,6 +193,10 @@ static int test_authenticate_ldap_fail2(void) {
   return pam_sm_authenticate(2, 0, sizeof(ldap_cfg) / sizeof(char*), ldap_cfg);
 }
 
+static int test_authenticate_ldap2(void) {
+  return pam_sm_authenticate(4, 0, sizeof(ldap_cfg) / sizeof(char*), ldap_cfg);
+}
+
 static pid_t run_mock(const char *port, const char *type) {
   pid_t pid = fork();
   if(pid == 0) {
@@ -243,6 +248,10 @@ int main(void) {
   }
   if(test_authenticate_ldap_fail2() != PAM_AUTH_ERR) {
     ret = 8;
+    goto out;
+  }
+  if(test_authenticate_ldap2() != PAM_SUCCESS) {
+    ret = 9;
     goto out;
   }
 #endif

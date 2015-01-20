@@ -35,6 +35,7 @@ use warnings;
 my %otps = (
   'vvincredibletrerdegkkrkkneieultcjdghrejjbckh' => 'OK',
   'vvincrediblltrerdegkkrkkneieultcjdghrejjbckh' => 'OK',
+  'ccccccbchvthlivuitriujjifivbvtrjkjfirllluurj' => 'OK',
 );
 
 my $port = shift;

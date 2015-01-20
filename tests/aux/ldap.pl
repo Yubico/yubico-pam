@@ -43,7 +43,8 @@ use constant RESULT_OK => {
 };
 
 my %objects = (
-  'uid=foo,ou=users,dc=example,dc=com' => 'vvincredible',
+  'uid=foo,ou=users,dc=example,dc=com' => ['vvincredible'],
+  'uid=test,ou=users,dc=example,dc=com' =>['cccccccfhcbe', 'ccccccbchvth'],
 );
 
 sub bind {
@@ -62,7 +63,7 @@ sub search {
     my $entry = Net::LDAP::Entry->new;
     $entry->dn($base);
     $entry->add(objectClass => [ "person" ]);
-    $entry->add(yubiKeyId => [ $id ]);
+    $entry->add(yubiKeyId => $id);
     push @entries, $entry;
   }
   return RESULT_OK, @entries;
