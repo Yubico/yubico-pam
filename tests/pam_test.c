@@ -39,6 +39,10 @@
 #include <security/pam_appl.h>
 #include <security/pam_modutil.h>
 
+#define YKVAL_PORT1 "17502"
+#define YKVAL_PORT2 "30559"
+#define LDAP_PORT "52825"
+
 static struct data {
   const char user[255];
   const char otp[255];
@@ -52,9 +56,9 @@ static struct data {
 
 static const char *ldap_cfg[] = {
   "id=1",
-  "urllist=http://localhost:8889/wsapi/2/verify;http://localhost:8888/wsapi/2/verify",
+  "urllist=http://localhost:"YKVAL_PORT2"/wsapi/2/verify;http://localhost:"YKVAL_PORT1"/wsapi/2/verify",
   "authfile=aux/authfile",
-  "ldap_uri=ldap://localhost:8890",
+  "ldap_uri=ldap://localhost:"LDAP_PORT,
   "ldapdn=ou=users,dc=example,dc=com",
   "user_attr=uid",
   "yubi_attr=yubiKeyId",
@@ -129,7 +133,7 @@ int pam_set_item(pam_handle_t *pamh, int item_type, const void *item) {
 static int test_authenticate1(void) {
   const char *cfg[] = {
     "id=1",
-    "url=http://localhost:8888/wsapi/2/verify?id=%d&otp=%s",
+    "url=http://localhost:"YKVAL_PORT1"/wsapi/2/verify?id=%d&otp=%s",
     "authfile=aux/authfile",
     "debug",
   };
@@ -139,7 +143,7 @@ static int test_authenticate1(void) {
 static int test_authenticate2(void) {
   const char *cfg[] = {
     "id=1",
-    "urllist=http://localhost:8888/wsapi/2/verify;http://localhost:8889/wsapi/2/verify",
+    "urllist=http://localhost:"YKVAL_PORT1"/wsapi/2/verify;http://localhost:"YKVAL_PORT2"/wsapi/2/verify",
     "authfile=aux/authfile",
     "debug",
   };
@@ -149,7 +153,7 @@ static int test_authenticate2(void) {
 static int test_fail_authenticate1(void) {
   const char *cfg[] = {
     "id=1",
-    "urllist=http://localhost:8889/wsapi/2/verify;http://localhost:8888/wsapi/2/verify",
+    "urllist=http://localhost:"YKVAL_PORT2"/wsapi/2/verify;http://localhost:"YKVAL_PORT1"/wsapi/2/verify",
     "authfile=aux/authfile",
     "debug"
   };
@@ -159,7 +163,7 @@ static int test_fail_authenticate1(void) {
 static int test_fail_authenticate2(void) {
   const char *cfg[] = {
     "id=1",
-    "urllist=http://localhost:8889/wsapi/2/verify;http://localhost:8888/wsapi/2/verify",
+    "urllist=http://localhost:"YKVAL_PORT2"/wsapi/2/verify;http://localhost:"YKVAL_PORT1"/wsapi/2/verify",
     "authfile=aux/authfile",
     "debug"
   };
@@ -169,7 +173,7 @@ static int test_fail_authenticate2(void) {
 static int test_fail_authenticate3(void) {
   const char *cfg[] = {
     "id=1",
-    "urllist=http://localhost:8889/wsapi/2/verify",
+    "urllist=http://localhost:"YKVAL_PORT2"/wsapi/2/verify",
     "authfile=aux/authfile",
     "debug"
   };
@@ -201,9 +205,9 @@ static pid_t run_mock(const char *port, const char *type) {
 
 int main(void) {
   int ret = 0;
-  pid_t child = run_mock("8888", YKVAL);
-  pid_t child2 = run_mock("8889", YKVAL);
-  pid_t child3 = run_mock("8890", LDAP);
+  pid_t child = run_mock(YKVAL_PORT1, YKVAL);
+  pid_t child2 = run_mock(YKVAL_PORT2, YKVAL);
+  pid_t child3 = run_mock(LDAP_PORT, LDAP);
 
   /* Give the "server" time to settle */
   sleep(1);
