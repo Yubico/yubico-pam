@@ -36,3 +36,7 @@ pam_test_LDADD = ../libpam_real.la ../libpam_util.la @LTLIBYUBIKEY@ @LTLIBYKCLIE
 
 check_PROGRAMS = test util_test pam_test
 TESTS = $(check_PROGRAMS)
+
+if ENABLE_COV
+AM_LDFLAGS += --coverage
+endif

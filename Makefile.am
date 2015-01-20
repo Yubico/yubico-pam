@@ -79,6 +79,32 @@ SUFFIXES = .1.txt .1 .8.txt .8
 .8.txt.8:
 	$(A2X) --format=manpage -a revdate="Version $(VERSION)" $<
 
+
+if ENABLE_COV
+AM_CFLAGS += --coverage
+AM_LDFLAGS = --coverage
+
+cov-reset:
+	rm -fr coverage
+	find . -name "*.gcda" -exec rm {} \;
+	lcov --directory . --zerocounters
+
+cov-report:
+	mkdir -p coverage
+	lcov --compat-libtool --directory . --capture --output-file coverage/app.info
+	lcov --extract coverage/app.info '*.c' --output-file coverage/app2.info
+	genhtml -o coverage/ coverage/app2.info
+
+cov:
+	make cov-report
+
+clean-local:
+	make cov-reset
+
+check:
+	make cov
+endif
+
 # Release
 
 ChangeLog:
