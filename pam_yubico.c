@@ -384,7 +384,12 @@ display_error(pam_handle_t *pamh, const char *message) {
   }
 
   D(("conv returned: '%s'", resp->resp));
-  free(resp);
+  if (resp)
+    {
+      if (resp->resp)
+        free (resp->resp);
+      free (resp);
+    }
   return retval;
 }
 #endif /* HAVE_CR */
@@ -1017,7 +1022,11 @@ done:
   pam_set_data (pamh, "yubico_setcred_return", (void*) (intptr_t) retval, NULL);
 
   if (resp)
-    free (resp);
+    {
+      if (resp->resp)
+        free (resp->resp);
+      free (resp);
+    }
 
   return retval;
 }
