@@ -29,6 +29,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <sys/types.h>
 #include <signal.h>
@@ -96,7 +97,7 @@ static int conv_func(int num_msg, const struct pam_message **msg,
   }
 
   reply = malloc(sizeof(struct pam_response));
-  reply->resp = test_get_data(appdata_ptr)->otp;
+  reply->resp = strdup(test_get_data(appdata_ptr)->otp);
   *resp = reply;
   return PAM_SUCCESS;
 }
