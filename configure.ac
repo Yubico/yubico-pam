@@ -112,6 +112,23 @@ AC_ARG_ENABLE([coverage],
                               [enable_cov=no])
 AM_CONDITIONAL([ENABLE_COV],[test '!' "$enable_cov" = no])
 
+AC_ARG_ENABLE([cppcheck],
+              [AS_HELP_STRING([--enable-cppcheck],
+                              [run cppcheck])],
+                              [enable_cppcheck="$enableval"],
+                              [enable_cppcheck="no"])
+
+have_cppcheck=no
+AS_IF([test "x$enable_cppcheck" != xno],
+      [AC_PATH_PROG([CPPCHECK], [cppcheck], [NONE])
+      AS_IF([test "x$enable_cppcheck" != xno],
+            [have_cppcheck=yes
+             AC_SUBST([CPPCHECK])],
+             [have_cppcheck=no
+              AS_IF([test "x$enable_cppcheck" != xauto],
+                    [AC_MSG_ERROR([cannot find cppcheck])])])])
+AM_CONDITIONAL([ENABLE_CPPCHECK],[test '!' "$have_cppcheck" = no])
+
 AC_ARG_ENABLE([gcc-warnings],
   [AS_HELP_STRING([--enable-gcc-warnings],
       [turn on lots of GCC warnings (for developers)])],
