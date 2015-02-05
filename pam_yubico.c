@@ -69,17 +69,7 @@
 #include <security/pam_modules.h>
 #endif
 
-#ifdef HAVE_LIBLDAP
-/* Some functions like ldap_init, ldap_simple_bind_s, ldap_unbind are
-   deprecated but still available. We will drop support for 'ldapserver'
-   (in favour of 'ldap_uri' and update to using the new functions instead
-   soon.
-*/
-#define LDAP_DEPRECATED 1
-
-#include <ldap.h>
-#define PORT_NUMBER  LDAP_PORT
-#endif
+#include "yubi_ldap.h"
 
 #ifndef PAM_EXTERN
 #ifdef PAM_STATIC
@@ -251,17 +241,17 @@ authorize_user_token_ldap (struct cfg *cfg,
   /* Get a handle to an LDAP connection. */
   if (cfg->ldap_uri)
     {
-      rc = ldap_initialize (&ld, cfg->ldap_uri);
+      rc = y_ldap_initialize (&ld, cfg->ldap_uri);
       if (rc != LDAP_SUCCESS)
 	{
-	  DBG (("ldap_initialize: %s", ldap_err2string (rc)));
+	  DBG (("ldap_initialize: %s", y_ldap_err2string (rc)));
 	  retval = 0;
 	  goto done;
 	}
     }
   else
     {
-      if ((ld = ldap_init (cfg->ldapserver, PORT_NUMBER)) == NULL)
+      if ((ld = y_ldap_init (cfg->ldapserver, LDAP_PORT)) == NULL)
 	{
 	  DBG (("ldap_init"));
 	  retval = 0;
@@ -270,18 +260,18 @@ authorize_user_token_ldap (struct cfg *cfg,
     }
 
   /* LDAPv2 is historical -- RFC3494. */
-  ldap_set_option(ld, LDAP_OPT_REFERRALS, LDAP_OPT_OFF);
+  y_ldap_set_option(ld, LDAP_OPT_REFERRALS, LDAP_OPT_OFF);
   protocol = LDAP_VERSION3;
-  ldap_set_option (ld, LDAP_OPT_PROTOCOL_VERSION, &protocol);
+  y_ldap_set_option (ld, LDAP_OPT_PROTOCOL_VERSION, &protocol);
 
   if (cfg->ldap_uri && cfg->ldap_cacertfile) {
     /* Set CA CERTFILE.  This makes ldaps work when using ldap_uri */
-    ldap_set_option (0, LDAP_OPT_X_TLS_CACERTFILE, cfg->ldap_cacertfile);
+    y_ldap_set_option (0, LDAP_OPT_X_TLS_CACERTFILE, cfg->ldap_cacertfile);
   }
   /* Bind anonymously to the LDAP server. */
   if (cfg->ldap_bind_user && cfg->ldap_bind_password) {
     DBG (("try bind with: %s:[%s]", cfg->ldap_bind_user, cfg->ldap_bind_password));
-    rc = ldap_simple_bind_s (ld, cfg->ldap_bind_user, cfg->ldap_bind_password);
+    rc = y_ldap_simple_bind_s (ld, cfg->ldap_bind_user, cfg->ldap_bind_password);
   } else if (cfg->ldap_bind_no_anonymous) {
     char *tmp_user;
     if (cfg->ldap_bind_user_filter) {
@@ -289,16 +279,16 @@ authorize_user_token_ldap (struct cfg *cfg,
     } else {
 	tmp_user = strdup(user);
     }
-    DBG (("try bind with: %s:[XXXXX]", tmp_user, password));
-    rc = ldap_simple_bind_s (ld, tmp_user, password);
+    DBG (("try bind with: %s:[XXXXX]", tmp_user));
+    rc = y_ldap_simple_bind_s (ld, tmp_user, password);
     free(tmp_user);
   } else {
     DBG (("try bind anonymous"));
-    rc = ldap_simple_bind_s (ld, NULL, NULL);
+    rc = y_ldap_simple_bind_s (ld, NULL, NULL);
   }
   if (rc != LDAP_SUCCESS)
     {
-      DBG (("ldap_simple_bind_s: %s", ldap_err2string (rc)));
+      DBG (("ldap_simple_bind_s: %s", y_ldap_err2string (rc)));
       retval = 0;
       goto done;
     }
@@ -326,17 +316,17 @@ authorize_user_token_ldap (struct cfg *cfg,
       filter ? filter:"(null)", cfg->yubi_attr));
 
   /* Search for the entry. */
-  if ((rc = ldap_search_ext_s (ld, find, scope,
+  if ((rc = y_ldap_search_ext_s (ld, find, scope,
 			       filter, attrs, 0, NULL, NULL, LDAP_NO_LIMIT,
 			       LDAP_NO_LIMIT, &result)) != LDAP_SUCCESS)
     {
-      DBG (("ldap_search_ext_s: %s", ldap_err2string (rc)));
+      DBG (("ldap_search_ext_s: %s", y_ldap_err2string (rc)));
 
       retval = 0;
       goto done;
     }
 
-  e = ldap_first_entry (ld, result);
+  e = y_ldap_first_entry (ld, result);
   if (e == NULL)
     {
       DBG (("No result from LDAP search"));
@@ -346,10 +336,10 @@ authorize_user_token_ldap (struct cfg *cfg,
     {
       retval = -1;
       /* Iterate through each returned attribute. */
-      for (a = ldap_first_attribute (ld, e, &ber);
-	   a != NULL; a = ldap_next_attribute (ld, e, ber))
+      for (a = y_ldap_first_attribute (ld, e, &ber);
+	   a != NULL; a = y_ldap_next_attribute (ld, e, ber))
 	{
-	  if ((vals = ldap_get_values_len (ld, e, a)) != NULL)
+	  if ((vals = y_ldap_get_values_len (ld, e, a)) != NULL)
 	    {
 	      yubi_attr_prefix_len = cfg->yubi_attr_prefix ? strlen(cfg->yubi_attr_prefix) : 0;
 
@@ -357,7 +347,7 @@ authorize_user_token_ldap (struct cfg *cfg,
 	      for (i = 0; vals[i] != NULL; i++)
 		{
 	          DBG(("LDAP : Found %i values - checking if any of them match '%s:%s:%s'",
-		       ldap_count_values_len(vals),
+		       y_ldap_count_values_len(vals),
 		       vals[i]->bv_val,
 		       cfg->yubi_attr_prefix ? cfg->yubi_attr_prefix : "", token_id));
 
@@ -371,19 +361,19 @@ authorize_user_token_ldap (struct cfg *cfg,
 		        }
 		    }
 		}
-	      ldap_value_free_len (vals);
+	      y_ldap_value_free_len (vals);
 	    }
-	  ldap_memfree (a);
+	  y_ldap_memfree (a);
 	}
       if (ber != NULL)
-	  ber_free (ber, 0);
+	  y_ber_free (ber, 0);
     }
 
  done:
   if (result != NULL)
-    ldap_msgfree (result);
+    y_ldap_msgfree (result);
   if (ld != NULL)
-    ldap_unbind (ld);
+    y_ldap_unbind_s (ld);
 
   /* free memory allocated for search strings */
   if (find != NULL)
@@ -414,7 +404,7 @@ display_error(pam_handle_t *pamh, const char *message) {
   }
 
   pmsg[0] = &msg[0];
-  msg[0].msg = message;
+  msg[0].msg = (char *)message;
   msg[0].msg_style = PAM_ERROR_MSG;
   retval = conv->conv(1, pmsg, &resp, conv->appdata_ptr);
 
