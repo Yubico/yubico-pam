@@ -44,6 +44,103 @@
 
 #include "../yubi_ykclient.h"
 
+int test_ldap_initialize(LDAP **ldpm, const char *uri) {
+  return LDAP_SUCCESS;
+}
+
+LDAP *test_ldap_init(const char *host, int port) {
+  static LDAP ldap;
+  return &ldap;
+}
+
+char *test_ldap_err2string( int err ) {
+  return ldap_err2string(err);
+}
+
+int test_ldap_set_option(LDAP *ld, int option, const void *invalue) {
+  return LDAP_SUCCESS;
+}
+
+int test_ldap_simple_bind_s(LDAP *ld, const char *who, const char *passwd) {
+  if (!strcmp(who, "administrator") && !strcmp(passwd, "Ip^U95VHGtX*42h3")) {
+    return LDAP_SUCCESS;
+  }
+  return LDAP_OPERATIONS_ERROR;
+}
+
+int test_ldap_search_ext_s(LDAP *ld, char *base, int scope, char *filter, char *attrs[], int attrsonly,
+                      LDAPControl **serverctrls, LDAPControl **clientctrls, struct timeval *timeout,
+                      int sizelimit, LDAPMessage **res) {
+  return LDAP_SUCCESS;
+}
+
+LDAPMessage *test_ldap_first_entry(LDAP *ld, LDAPMessage *result) {
+  fprintf(stderr, "test_ldap_first_entry\n");
+  return 0;
+}
+
+char *test_ldap_first_attribute(LDAP *ld, LDAPMessage *entry, BerElement **berptr) {
+  fprintf(stderr, "test_ldap_first_attribute\n");
+  return 0;
+}
+
+char *test_ldap_next_attribute(LDAP *ld, LDAPMessage *entry, BerElement *ber) {
+  fprintf(stderr, "test_ldap_next_attribute\n");
+  return 0;
+}
+
+struct berval **test_ldap_get_values_len(LDAP *ld, LDAPMessage *entry, const char *attr) {
+  fprintf(stderr, "test_ldap_get_values_len\n");
+  return 0;
+}
+
+int test_ldap_count_values_len(struct berval **vals) {
+  fprintf(stderr, "test_ldap_count_values_len\n");
+  return 0;
+}
+
+void test_ldap_value_free_len(struct berval **vals) {
+  fprintf(stderr, "test_ldap_value_free_len\n");
+}
+
+void test_ldap_memfree(void *p) {
+  fprintf(stderr, "test_ldap_memfree\n");
+}
+
+int test_ldap_msgfree(LDAPMessage *msg ) {
+  fprintf(stderr, "test_ldap_msgfree\n");
+  return LDAP_SUCCESS;
+}
+
+int test_ldap_unbind_s(LDAP *ld) {
+  fprintf(stderr, "test_ldap_unbind_s\n");
+  return LDAP_SUCCESS;
+}
+
+void y_ber_free(BerElement *ber, int freebuf) {
+  fprintf(stderr, "y_ber_free\n");
+}
+
+static YubiLdap test_ldap = {
+  &test_ldap_initialize,
+  &test_ldap_init,
+  &test_ldap_err2string,
+  &test_ldap_set_option,
+  &test_ldap_simple_bind_s,
+  &test_ldap_search_ext_s,
+  &test_ldap_first_entry,
+  &test_ldap_first_attribute,
+  &test_ldap_next_attribute,
+  &test_ldap_get_values_len,
+  &test_ldap_count_values_len,
+  &test_ldap_value_free_len,
+  &test_ldap_memfree,
+  &test_ldap_msgfree,
+  &test_ldap_unbind_s,
+  &test_ber_free
+};
+
+
 
 ykclient_rc test_ykclient_init (ykclient_t ** ykc) {
   return YKCLIENT_OK;
@@ -112,6 +209,8 @@ void test_active_directory_login_ok() {
   };
 
   y_ykclient_inject(&test_ykclient);
+  y_ldap_inject(&test_ldap);
+
 
   pam_start("yubico", "administrator", 0, &pamh);
   pam_set_item(pamh, PAM_AUTHTOK, "Ip^U95VHGtX*42h3ccccccdhuvvvijehidgthrhtglegiiijdktvgrhgukci");

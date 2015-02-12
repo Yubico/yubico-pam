@@ -51,6 +51,10 @@ static YubiLdap lib_ldap = {
 
 static YubiLdap *running = &lib_ldap;
 
+void y_ldap_inject(YubiLdap *target) {
+  running = target;
+}
+
 int y_ldap_initialize(LDAP **ldpm, const char *uri) {
   return (running->ldap_initialize)(ldpm, uri);
 }
