@@ -80,22 +80,22 @@ int test_ldap_search_ext_s(LDAP *ld, const char *base, int scope, const char *fi
 }
 
 LDAPMessage *test_ldap_first_entry(LDAP *ld, LDAPMessage *result) {
-  D(("test_ldap_first_entry"));
+  //D(("test_ldap_first_entry"));
   return result;
 }
 
 char *test_ldap_first_attribute(LDAP *ld, LDAPMessage *entry, BerElement **berptr) {
-  D(("test_ldap_first_attribute"));
+  //D(("test_ldap_first_attribute"));
   return "pager";
 }
 
 char *test_ldap_next_attribute(LDAP *ld, LDAPMessage *entry, BerElement *ber) {
-  D(("test_ldap_next_attribute"));
+  //D(("test_ldap_next_attribute"));
   return 0;
 }
 
 struct berval **test_ldap_get_values_len(LDAP *ld, LDAPMessage *entry, const char *attr) {
-  D(("test_ldap_get_values_len"));
+  //D(("test_ldap_get_values_len"));
   static struct berval *ret[1];
   static struct berval val = { sizeof("ccccccdhuvvv"), "ccccccdhuvvv" };
   ret[0] = &val;
@@ -103,30 +103,30 @@ struct berval **test_ldap_get_values_len(LDAP *ld, LDAPMessage *entry, const cha
 }
 
 int test_ldap_count_values_len(struct berval **vals) {
-  D(("test_ldap_count_values_len"));
+  //D(("test_ldap_count_values_len"));
   return 1;
 }
 
 void test_ldap_value_free_len(struct berval **vals) {
-  D(("test_ldap_value_free_len"));
+  //D(("test_ldap_value_free_len"));
 }
 
 void test_ldap_memfree(void *p) {
-  D(("test_ldap_memfree"));
+  //D(("test_ldap_memfree"));
 }
 
 int test_ldap_msgfree(LDAPMessage *msg ) {
-  D(("test_ldap_msgfree"));
+  //D(("test_ldap_msgfree"));
   return LDAP_SUCCESS;
 }
 
 int test_ldap_unbind_s(LDAP *ld) {
-  D(("test_ldap_unbind_s"));
+  //D(("test_ldap_unbind_s"));
   return LDAP_SUCCESS;
 }
 
 void test_ber_free(BerElement *ber, int freebuf) {
-  D(("test_ber_free"));
+  //D(("test_ber_free"));
 }
 
 static YubiLdap test_ldap = {
@@ -200,7 +200,7 @@ static YubiYkClient test_ykclient = {
 
 
 
-void test_active_directory_login_ok() {
+void test_active_directory_login_ok(const char *otp) {
   pam_handle_t *pamh = NULL;
   int rc;
 
@@ -216,18 +216,26 @@ void test_active_directory_login_ok() {
     "try_first_pass"
   };
 
-  y_ykclient_inject(&test_ykclient);
-  y_ldap_inject(&test_ldap);
+  if (otp == 0) {
+    otp = "ccccccdhuvvvijehidgthrhtglegiiijdktvgrhgukci";
+    y_ykclient_inject(&test_ykclient);
+    y_ldap_inject(&test_ldap);
+  }
 
 
   pam_start("yubico", "administrator", 0, &pamh);
-  pam_set_item(pamh, PAM_AUTHTOK, "Ip^U95VHGtX*42h3ccccccdhuvvvijehidgthrhtglegiiijdktvgrhgukci");
+  char password[128];
+  strcpy(password, "Ip^U95VHGtX*42h3");
+  strcat(password, otp);
+  printf("password:[%s]\n", password);
+  pam_set_item(pamh, PAM_AUTHTOK, password);
   rc = pam_sm_authenticate (pamh, 0, sizeof(argv)/sizeof(*argv), argv);
   printf ("rc %d\n", rc);
   assert(rc == 0);
 }
 
 int main (int argc, const char **argv) {
-  test_active_directory_login_ok();
+  const char *otp = argc > 1 ? argv[1] : 0;
+  test_active_directory_login_ok(otp);
 }
 
