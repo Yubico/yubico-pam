@@ -415,6 +415,12 @@ display_error(pam_handle_t *pamh, const char *message) {
   }
 
   D(("conv returned: '%s'", resp->resp));
+  if (resp)
+    {
+      if (resp->resp)
+        free (resp->resp);
+      free (resp);
+    }
   return retval;
 }
 #endif /* HAVE_CR */
@@ -782,7 +788,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
   struct pam_conv *conv;
   const struct pam_message *pmsg[1];
   struct pam_message msg[1];
-  struct pam_response *resp;
+  struct pam_response *resp = NULL;
   int nargs = 1;
   ykclient_t *ykc = NULL;
   struct cfg cfg_st;
@@ -930,7 +936,6 @@ pam_sm_authenticate (pam_handle_t * pamh,
 	  }
       }
       msg[0].msg_style = cfg->verbose_otp ? PAM_PROMPT_ECHO_ON : PAM_PROMPT_ECHO_OFF;
-      resp = NULL;
 
       retval = conv->conv (nargs, pmsg, &resp, conv->appdata_ptr);
 
@@ -1072,6 +1077,13 @@ done:
   DBG (("done. [%s]", pam_strerror (pamh, retval)));
   pam_set_data (pamh, "yubico_setcred_return", (void*)(intptr_t)retval, NULL);
   pam_set_data (pamh, "yubico_used_ldap", (void*)(intptr_t)cfg->ldap_bind_no_anonymous, NULL);
+
+  if (resp)
+    {
+      if (resp->resp)
+        free (resp->resp);
+      free (resp);
+    }
 
   return retval;
 }

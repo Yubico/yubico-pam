@@ -257,7 +257,7 @@ int challenge_response(YK_KEY *yk, int slot,
 	memset(response, 0, res_size);
 
 	if (verbose) {
-		fprintf(stderr, "Sending %i bytes %s challenge to slot %i\n", len, (hmac == true)?"HMAC":"Yubico", slot);
+		fprintf(stderr, "Sending %u bytes %s challenge to slot %i\n", len, (hmac == true)?"HMAC":"Yubico", slot);
 		//_yk_hexdump(challenge, len);
 	}
 
@@ -310,7 +310,7 @@ get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *usern
     /* 0xffffffff == 4294967295 == 10 digits */
     len = strlen(chalresp_path == NULL ? "challenge" : username) + 1 + 10 + 1;
     if ((filename = malloc(len)) != NULL) {
-      int res = snprintf(filename, len, "%s-%i", chalresp_path == NULL ? "challenge" : username, serial);
+      int res = snprintf(filename, len, "%s-%u", chalresp_path == NULL ? "challenge" : username, serial);
       filename_malloced = 1;
       if (res < 0 || res > len) {
 	/* Not enough space, strangely enough. */
@@ -451,7 +451,7 @@ write_chalresp_state(FILE *f, CR_STATE *state)
   if (ftruncate(fd, 0))
     goto out;
 
-  fprintf(f, "v2:%s:%s:%s:%d:%d\n", challenge_hex, hashed_hex, salt_hex, iterations, state->slot);
+  fprintf(f, "v2:%s:%s:%s:%u:%d\n", challenge_hex, hashed_hex, salt_hex, iterations, state->slot);
 
   if (fflush(f) < 0)
     goto out;

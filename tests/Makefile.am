@@ -29,9 +29,14 @@
 
 AM_LDFLAGS = -no-install
 AM_CFLAGS=-I$(srcdir)/.. $(WARN_CFLAGS)
+AM_CPPFLAGS = @YKPERS_CFLAGS@
 test_LDADD = ../pam_yubico.la
 util_test_LDADD = ../libpam_util.la
-util_test_CPPFLAGS = @YKPERS_CFLAGS@
+pam_test_LDADD = ../libpam_real.la ../libpam_util.la @LTLIBYUBIKEY@ @LTLIBYKCLIENT@ @LIBLDAP@
 
-check_PROGRAMS = test util_test
+check_PROGRAMS = test util_test pam_test
 TESTS = $(check_PROGRAMS)
+
+if ENABLE_COV
+AM_LDFLAGS += --coverage
+endif

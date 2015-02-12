@@ -46,7 +46,9 @@ AC_CHECK_HEADERS([security/pam_modules.h security/_pam_macros.h security/pam_mod
   [#include <sys/types.h>
    #include <security/pam_appl.h>])
 
-AC_CHECK_LIB([pam], [pam_start])
+AC_CHECK_LIB([pam], [pam_start], [AC_SUBST([LIBPAM], ["-lpam"])])
+
+AC_SEARCH_LIBS([pam_modutil_drop_priv], ["pam"], [AC_DEFINE([HAVE_PAM_MODUTIL_DROP_PRIV], [1])])
 
 AC_ARG_WITH([ldap],
             [AS_HELP_STRING([--without-ldap],
@@ -92,8 +94,6 @@ if test -n "$YKPERS_LIBS"; then
 fi
 AM_CONDITIONAL([YKPERS], [test -n "$YKPERS_LIBS"])
 
-AC_CHECK_FUNCS([pam_modutil_drop_priv])
-
 AC_SUBST(PAMDIR, "\$(exec_prefix)/lib/security")
 AC_ARG_WITH(pam-dir,
   AC_HELP_STRING([--with-pam-dir=DIR],
@@ -104,6 +104,30 @@ AC_ARG_WITH(pam-dir,
             *)  PAMDIR="\$(exec_prefix)/lib/${withval}";;
             esac])
 AC_MSG_NOTICE([PAM installation path $PAMDIR])
+
+AC_ARG_ENABLE([coverage],
+              [AS_HELP_STRING([--enable-coverage],
+                              [use Gcov to test the test suite])],
+                              [],
+                              [enable_cov=no])
+AM_CONDITIONAL([ENABLE_COV],[test '!' "$enable_cov" = no])
+
+AC_ARG_ENABLE([cppcheck],
+              [AS_HELP_STRING([--enable-cppcheck],
+                              [run cppcheck])],
+                              [enable_cppcheck="$enableval"],
+                              [enable_cppcheck="no"])
+
+have_cppcheck=no
+AS_IF([test "x$enable_cppcheck" != xno],
+      [AC_PATH_PROG([CPPCHECK], [cppcheck], [NONE])
+      AS_IF([test "x$enable_cppcheck" != xno],
+            [have_cppcheck=yes
+             AC_SUBST([CPPCHECK])],
+             [have_cppcheck=no
+              AS_IF([test "x$enable_cppcheck" != xauto],
+                    [AC_MSG_ERROR([cannot find cppcheck])])])])
+AM_CONDITIONAL([ENABLE_CPPCHECK],[test '!' "$have_cppcheck" = no])
 
 AC_ARG_ENABLE([gcc-warnings],
   [AS_HELP_STRING([--enable-gcc-warnings],
