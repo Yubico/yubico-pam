@@ -1,6 +1,14 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
-* Version 2.18 (unreleased)
+* Version 2.19 (unreleased)
+
+* Version 2.18 (released 2015-02-12)
+
+** Fix a memory leak of the pam response data.
+
+** Add more tests.
+
+** Add version flag to ykpamcfg.
 
 * Version 2.17 (released 2014-08-26)
 

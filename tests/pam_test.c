@@ -44,6 +44,10 @@
 #define YKVAL_PORT2 "30559"
 #define LDAP_PORT "52825"
 
+#define YKVAL SRCDIR"/aux/ykval.pl"
+#define LDAP SRCDIR"/aux/ldap.pl"
+#define AUTHFILE SRCDIR"/aux/authfile"
+
 static struct data {
   const char user[255];
   const char otp[255];
@@ -59,7 +63,7 @@ static struct data {
 static const char *ldap_cfg[] = {
   "id=1",
   "urllist=http://localhost:"YKVAL_PORT2"/wsapi/2/verify;http://localhost:"YKVAL_PORT1"/wsapi/2/verify",
-  "authfile=aux/authfile",
+  "authfile="AUTHFILE,
   "ldap_uri=ldap://localhost:"LDAP_PORT,
   "ldapdn=ou=users,dc=example,dc=com",
   "user_attr=uid",
@@ -136,7 +140,7 @@ static int test_authenticate1(void) {
   const char *cfg[] = {
     "id=1",
     "url=http://localhost:"YKVAL_PORT1"/wsapi/2/verify?id=%d&otp=%s",
-    "authfile=aux/authfile",
+    "authfile="AUTHFILE,
     "debug",
   };
   return pam_sm_authenticate(0, 0, sizeof(cfg) / sizeof(char*), cfg);
@@ -146,7 +150,7 @@ static int test_authenticate2(void) {
   const char *cfg[] = {
     "id=1",
     "urllist=http://localhost:"YKVAL_PORT1"/wsapi/2/verify;http://localhost:"YKVAL_PORT2"/wsapi/2/verify",
-    "authfile=aux/authfile",
+    "authfile="AUTHFILE,
     "debug",
   };
   return pam_sm_authenticate(0, 0, sizeof(cfg) / sizeof(char*), cfg);
@@ -156,7 +160,7 @@ static int test_authenticate3(void) {
   const char *cfg[] = {
     "id=1",
     "urllist=http://localhost:"YKVAL_PORT1"/wsapi/2/verify",
-    "authfile=aux/authfile",
+    "authfile="AUTHFILE,
     "debug",
   };
   return pam_sm_authenticate(4, 0, sizeof(cfg) / sizeof(char*), cfg);
@@ -166,7 +170,7 @@ static int test_fail_authenticate1(void) {
   const char *cfg[] = {
     "id=1",
     "urllist=http://localhost:"YKVAL_PORT2"/wsapi/2/verify;http://localhost:"YKVAL_PORT1"/wsapi/2/verify",
-    "authfile=aux/authfile",
+    "authfile="AUTHFILE,
     "debug"
   };
   return pam_sm_authenticate(1, 0, sizeof(cfg) / sizeof(char*), cfg);
@@ -176,7 +180,7 @@ static int test_fail_authenticate2(void) {
   const char *cfg[] = {
     "id=1",
     "urllist=http://localhost:"YKVAL_PORT2"/wsapi/2/verify;http://localhost:"YKVAL_PORT1"/wsapi/2/verify",
-    "authfile=aux/authfile",
+    "authfile="AUTHFILE,
     "debug"
   };
   return pam_sm_authenticate(2, 0, sizeof(cfg) / sizeof(char*), cfg);
@@ -186,7 +190,7 @@ static int test_fail_authenticate3(void) {
   const char *cfg[] = {
     "id=1",
     "urllist=http://localhost:"YKVAL_PORT2"/wsapi/2/verify",
-    "authfile=aux/authfile",
+    "authfile="AUTHFILE,
     "debug"
   };
   return pam_sm_authenticate(3, 0, sizeof(cfg) / sizeof(char*), cfg);
@@ -215,9 +219,6 @@ static pid_t run_mock(const char *port, const char *type) {
   }
   return pid;
 }
-
-#define YKVAL "aux/ykval.pl"
-#define LDAP "aux/ldap.pl"
 
 int main(void) {
   int ret = 0;
