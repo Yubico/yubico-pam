@@ -43,14 +43,17 @@
 #endif
 
 #include "../yubi_ykclient.h"
+#include "../yubi_ldap.h"
+#define DEBUG_PAM
+#include "../util.h"
 
 int test_ldap_initialize(LDAP **ldpm, const char *uri) {
   return LDAP_SUCCESS;
 }
 
 LDAP *test_ldap_init(const char *host, int port) {
-  static LDAP ldap;
-  return &ldap;
+  static int dummy;
+  return (LDAP*)&dummy;
 }
 
 char *test_ldap_err2string( int err ) {
@@ -62,63 +65,68 @@ int test_ldap_set_option(LDAP *ld, int option, const void *invalue) {
 }
 
 int test_ldap_simple_bind_s(LDAP *ld, const char *who, const char *passwd) {
-  if (!strcmp(who, "administrator") && !strcmp(passwd, "Ip^U95VHGtX*42h3")) {
+  if (!strcmp(who, "administrator@ad.adviser.com") && !strcmp(passwd, "Ip^U95VHGtX*42h3")) {
     return LDAP_SUCCESS;
   }
   return LDAP_OPERATIONS_ERROR;
 }
 
-int test_ldap_search_ext_s(LDAP *ld, char *base, int scope, char *filter, char *attrs[], int attrsonly,
+int test_ldap_search_ext_s(LDAP *ld, const char *base, int scope, const char *filter, char *attrs[], int attrsonly,
                       LDAPControl **serverctrls, LDAPControl **clientctrls, struct timeval *timeout,
                       int sizelimit, LDAPMessage **res) {
+  static int test_msg;
+  *res = (LDAPMessage *)&test_msg;
   return LDAP_SUCCESS;
 }
 
 LDAPMessage *test_ldap_first_entry(LDAP *ld, LDAPMessage *result) {
-  fprintf(stderr, "test_ldap_first_entry\n");
-  return 0;
+  D(("test_ldap_first_entry"));
+  return result;
 }
 
 char *test_ldap_first_attribute(LDAP *ld, LDAPMessage *entry, BerElement **berptr) {
-  fprintf(stderr, "test_ldap_first_attribute\n");
-  return 0;
+  D(("test_ldap_first_attribute"));
+  return "pager";
 }
 
 char *test_ldap_next_attribute(LDAP *ld, LDAPMessage *entry, BerElement *ber) {
-  fprintf(stderr, "test_ldap_next_attribute\n");
+  D(("test_ldap_next_attribute"));
   return 0;
 }
 
 struct berval **test_ldap_get_values_len(LDAP *ld, LDAPMessage *entry, const char *attr) {
-  fprintf(stderr, "test_ldap_get_values_len\n");
-  return 0;
+  D(("test_ldap_get_values_len"));
+  static struct berval *ret[1];
+  static struct berval val = { sizeof("ccccccdhuvvv"), "ccccccdhuvvv" };
+  ret[0] = &val;
+  return ret;
 }
 
 int test_ldap_count_values_len(struct berval **vals) {
-  fprintf(stderr, "test_ldap_count_values_len\n");
-  return 0;
+  D(("test_ldap_count_values_len"));
+  return 1;
 }
 
 void test_ldap_value_free_len(struct berval **vals) {
-  fprintf(stderr, "test_ldap_value_free_len\n");
+  D(("test_ldap_value_free_len"));
 }
 
 void test_ldap_memfree(void *p) {
-  fprintf(stderr, "test_ldap_memfree\n");
+  D(("test_ldap_memfree"));
 }
 
 int test_ldap_msgfree(LDAPMessage *msg ) {
-  fprintf(stderr, "test_ldap_msgfree\n");
+  D(("test_ldap_msgfree"));
   return LDAP_SUCCESS;
 }
 
 int test_ldap_unbind_s(LDAP *ld) {
-  fprintf(stderr, "test_ldap_unbind_s\n");
+  D(("test_ldap_unbind_s"));
   return LDAP_SUCCESS;
 }
 
-void y_ber_free(BerElement *ber, int freebuf) {
-  fprintf(stderr, "y_ber_free\n");
+void test_ber_free(BerElement *ber, int freebuf) {
+  D(("test_ber_free"));
 }
 
 static YubiLdap test_ldap = {

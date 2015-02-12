@@ -57,6 +57,8 @@ typedef struct {
 
 } YubiLdap;
 
+void y_ldap_inject(YubiLdap *target); 
+
 int y_ldap_initialize(LDAP **ldpm, const char *uri);
 LDAP *y_ldap_init(const char *host, int port);
 char *y_ldap_err2string( int err );
