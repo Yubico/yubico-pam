@@ -44,9 +44,12 @@ static void test_get_user_cfgfile_path(void) {
   assert(ret == 1);
   assert(strcmp(file, "/foo/bar/test") == 0);
   free(file);
-  ret = get_user_cfgfile_path(NULL, "test", "root", &file);
+  ret = get_user_cfgfile_path(NULL, "test", getenv("USER"), &file);
   assert(ret == 1);
-  assert(strcmp(file, "/root/.yubico/test") == 0);
+  char tmp[1024];
+  strcpy(tmp, getenv("HOME"));
+  strcat(tmp, "/.yubico/test");
+  assert(strcmp(file, tmp) == 0);
   free(file);
 }
 

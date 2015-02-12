@@ -1,0 +1,4 @@
+./test ldap_uri=ldap://192.168.176.13 debug id=19 yubi_attr=pager \
+ldapdn=dc=ad,dc=adviser,dc=com \
+'ldap_filter=(&(sAMAccountName=%u)(memberOf=CN=Administrators,CN=Builtin,DC=ad,DC=adviser,DC=com))' \
+ldap_bind_no_anonymous 'ldap_bind_user_filter=%u@ad.adviser.com' try_first_pass

@@ -45,7 +45,6 @@
 #include "util.h"
 #include "drop_privs.h"
 
-#include <ykclient.h>
 
 #if HAVE_CR
 /* for yubikey_hex_encode */
@@ -62,6 +61,7 @@
 /* These #defines must be present according to PAM documentation. */
 #define PAM_SM_AUTH
 
+
 #ifdef HAVE_SECURITY_PAM_APPL_H
 #include <security/pam_appl.h>
 #endif
@@ -70,6 +70,7 @@
 #endif
 
 #include "yubi_ldap.h"
+#include "yubi_ykclient.h"
 
 #ifndef PAM_EXTERN
 #ifdef PAM_STATIC
@@ -270,7 +271,7 @@ authorize_user_token_ldap (struct cfg *cfg,
   }
   /* Bind anonymously to the LDAP server. */
   if (cfg->ldap_bind_user && cfg->ldap_bind_password) {
-    DBG (("try bind with: %s:[%s]", cfg->ldap_bind_user, cfg->ldap_bind_password));
+    DBG (("try bind with: %s:[XXXX]", cfg->ldap_bind_user));
     rc = y_ldap_simple_bind_s (ld, cfg->ldap_bind_user, cfg->ldap_bind_password);
   } else if (cfg->ldap_bind_no_anonymous) {
     char *tmp_user;
@@ -279,7 +280,7 @@ authorize_user_token_ldap (struct cfg *cfg,
     } else {
 	tmp_user = strdup(user);
     }
-    DBG (("try bind with: %s:[XXXXX]", tmp_user));
+    DBG (("try bind with: %s:[%s]", tmp_user, password));
     rc = y_ldap_simple_bind_s (ld, tmp_user, password);
     free(tmp_user);
   } else {
@@ -800,7 +801,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
     goto done;
   }
 
-  retval = pam_get_user (pamh, &user, NULL);
+  retval = pam_get_user(pamh, &user, NULL);
   if (retval != PAM_SUCCESS)
     {
       DBG (("get user returned error: %s", pam_strerror (pamh, retval)));
@@ -837,36 +838,36 @@ pam_sm_authenticate (pam_handle_t * pamh,
       goto done;
     }
 
-  rc = ykclient_init (&ykc);
+  rc = y_ykclient_init (&ykc);
   if (rc != YKCLIENT_OK)
     {
-      DBG (("ykclient_init() failed (%d): %s", rc, ykclient_strerror (rc)));
+      DBG (("ykclient_init() failed (%d): %s", rc, y_ykclient_strerror (rc)));
       retval = PAM_AUTHINFO_UNAVAIL;
       goto done;
     }
 
-  rc = ykclient_set_client_b64 (ykc, cfg->client_id, cfg->client_key);
+  rc = y_ykclient_set_client_b64 (ykc, cfg->client_id, cfg->client_key);
   if (rc != YKCLIENT_OK)
     {
       DBG (("ykclient_set_client_b64() failed (%d): %s",
-	    rc, ykclient_strerror (rc)));
+	    rc, y_ykclient_strerror (rc)));
       retval = PAM_AUTHINFO_UNAVAIL;
       goto done;
     }
 
   if (cfg->client_key)
-    ykclient_set_verify_signature (ykc, 1);
+    y_ykclient_set_verify_signature (ykc, 1);
 
   if (cfg->capath)
-    ykclient_set_ca_path (ykc, cfg->capath);
+    y_ykclient_set_ca_path (ykc, cfg->capath);
 
   if (cfg->url)
     {
-      rc = ykclient_set_url_template (ykc, cfg->url);
+      rc = y_ykclient_set_url_template (ykc, cfg->url);
       if (rc != YKCLIENT_OK)
 	{
-	  DBG (("ykclient_set_url_template() failed (%d): %s",
-		rc, ykclient_strerror (rc)));
+	  DBG (("y_ykclient_set_url_template() failed (%d): %s",
+		rc, y_ykclient_strerror (rc)));
 	  retval = PAM_AUTHINFO_UNAVAIL;
 	  goto done;
 	}
@@ -889,11 +890,11 @@ pam_sm_authenticate (pam_handle_t * pamh,
 	  urls[templates] = strdup(part);
 	  templates++;
 	}
-      rc = ykclient_set_url_bases (ykc, templates, (const char **)urls);
+      rc = y_ykclient_set_url_bases (ykc, templates, (const char **)urls);
       if (rc != YKCLIENT_OK)
 	{
 	  DBG (("ykclient_set_url_bases() failed (%d): %s",
-		rc, ykclient_strerror (rc)));
+		rc, y_ykclient_strerror (rc)));
 	  retval = PAM_AUTHINFO_UNAVAIL;
 	  goto done;
 	}
@@ -1000,10 +1001,10 @@ pam_sm_authenticate (pam_handle_t * pamh,
   else
     password = NULL;
 
-  rc = ykclient_request (ykc, otp);
+  rc = y_ykclient_request (ykc, otp);
 
   DBG (("ykclient return value (%d): %s", rc,
-	ykclient_strerror (rc)));
+	y_ykclient_strerror (rc)));
 
   switch (rc)
     {
@@ -1062,7 +1063,7 @@ done:
   if (tmpurl)
     free(tmpurl);
   if (ykc)
-    ykclient_done (&ykc);
+    y_ykclient_done (&ykc);
   if (cfg->alwaysok && retval != PAM_SUCCESS)
     {
       DBG (("alwaysok needed (otherwise return with %d)", retval));
