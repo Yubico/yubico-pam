@@ -8,7 +8,7 @@ YKPAMCFG(1)
 ykpamcfg - Manage user settings for the Yubico PAM module
 
 == SYNOPSIS
-*ykmapcfg* [-1 | -2] [-A] [-p] [-i] [-v] [-h]
+*ykmapcfg* [-1 | -2] [-A] [-p] [-i] [-v] [-V] [-h]
 
 == OPTIONS
 *-1*::
@@ -28,6 +28,12 @@ number of iterations to use for pbkdf2 of expected response
 
 *-v*::
 enable verbose mode.
+
+*-V*::
+display version and exit
+
+*-h*::
+display help and exit
 
 == ACTIONS
 === add_hmac_chalresp

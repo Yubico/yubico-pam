@@ -59,8 +59,9 @@ const char *usage =
   "\t-p path      Specify an output path for the challenge file.\n"
   "\t-i iters     Number of iterations to use for pbkdf2 (defaults to 10000)\n"
   "\n"
-  "\t-v           verbose\n"
-  "\t-h           help (this text)\n"
+  "\t-v           Increase verbosity\n"
+  "\t-V           Show version and exit\n"
+  "\t-h           Show help (this text) and exit\n"
   "\n"
   "Actions :\n"
   "\n"
@@ -68,7 +69,7 @@ const char *usage =
   "\n"
   "\n"
   ;
-const char *optstring = "12A:p:i:vh";
+const char *optstring = "12A:p:i:vVh";
 
 static void
 report_yk_error(void)
@@ -91,8 +92,7 @@ static int
 parse_args(int argc, char **argv,
 	   int *slot, bool *verbose,
 	   char **action, char **output_dir,
-     unsigned int *iterations,
-	   int *exit_code)
+     unsigned int *iterations)
 {
   int c;
 
@@ -111,21 +111,25 @@ parse_args(int argc, char **argv,
       *output_dir = optarg;
       break;
     case 'i':
-      *iterations = strtoul(optarg, NULL, 10);
-      if(*iterations == 0) {
-        fprintf(stderr, "iterations must be numeric, %s isn't.\n", optarg);
-        *exit_code = 1;
-        return 0;
+      {
+	char *endptr;
+	*iterations = strtoul(optarg, &endptr, 10);
+	if(*endptr != '\0') {
+	  fprintf(stderr, "iterations must be numeric, %s isn't.\n", optarg);
+	  exit(1);
+	}
       }
       break;
     case 'v':
       *verbose = true;
       break;
+    case 'V':
+      printf("%s\n", VERSION);
+      exit(0);
     case 'h':
     default:
       fputs(usage, stderr);
-    *exit_code = 0;
-    return 0;
+      exit(0);
     }
   }
 
@@ -272,7 +276,7 @@ main(int argc, char **argv)
   if (! parse_args(argc, argv,
 		   &slot, &verbose,
 		   &ptr, &output_dir,
-       &iterations, &exit_code))
+       &iterations))
     goto err;
 
   exit_code = 1;
