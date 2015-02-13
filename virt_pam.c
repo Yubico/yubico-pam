@@ -78,11 +78,11 @@ int v_pam_start(const char *_service, const char *_user, const struct pam_conv *
   return (running->pam_start)(_service, _user, _pam_conv, _pamh);
 }
 
-int v_pam_modutil_drop_priv(pam_handle_t *pamh, struct pam_modutil_privs *p, const struct passwd *pw) {
+int v_pam_modutil_drop_priv(pam_handle_t *pamh, PamModutilPrivs *p, const struct passwd *pw) {
   return (running->pam_modutil_drop_priv)(pamh, p, pw);
 }
 
-int v_pam_modutil_regain_priv(pam_handle_t *pamh, struct pam_modutil_privs *p) {
+int v_pam_modutil_regain_priv(pam_handle_t *pamh, PamModutilPrivs *p) {
   return (running->pam_modutil_regain_priv)(pamh, p);
 }
 

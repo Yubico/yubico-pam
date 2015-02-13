@@ -240,11 +240,11 @@ int test_pam_start(const char *_service, const char *_user, const struct pam_con
   return 0;
 }
 
-int test_pam_modutil_drop_priv(pam_handle_t *pamh, struct pam_modutil_privs *p, const struct passwd *pw) {
+int test_pam_modutil_drop_priv(pam_handle_t *pamh, PamModutilPrivs *p, const struct passwd *pw) {
   return 0;
 }
 
-int test_pam_modutil_regain_priv(pam_handle_t *pamh, struct pam_modutil_privs *p) {
+int test_pam_modutil_regain_priv(pam_handle_t *pamh, PamModutilPrivs *p) {
   return 0;
 }
 

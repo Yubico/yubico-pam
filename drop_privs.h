@@ -31,6 +31,7 @@
 
 #ifdef HAVE_PAM_MODUTIL_DROP_PRIV
 #include <security/pam_modutil.h>
+typedef pam_modutil_privs PamModutilPrivs;
 #else
 
 #include <pwd.h>
@@ -55,8 +56,10 @@ struct _ykpam_privs {
   gid_t n##_saved_groups[SAVED_GROUPS_MAX_LEN]; \
   struct _ykpam_privs n = {-1, -1, n##_saved_groups, SAVED_GROUPS_MAX_LEN}
 
-int pam_modutil_drop_priv(pam_handle_t *, struct _ykpam_privs *, struct passwd *);
-int pam_modutil_regain_priv(pam_handle_t *, struct _ykpam_privs *);
+typedef struct _ykpam_privs PamModutilPrivs;
+
+int pam_modutil_drop_priv(pam_handle_t *, PamModutilPrivs *, const struct passwd *);
+int pam_modutil_regain_priv(pam_handle_t *, PamModutilPrivs *);
 
 #endif
 #endif

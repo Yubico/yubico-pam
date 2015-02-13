@@ -63,8 +63,8 @@ typedef struct {
   int (*pam_get_item)(const pam_handle_t *_pamh, int _item_type, const void **_item);
   int (*pam_set_item)(pam_handle_t *_pamh, int _item_type, const void *_item);
   int (*pam_start)(const char *_service, const char *_user, const struct pam_conv *_pam_conv, pam_handle_t **_pamh);
-  int (*pam_modutil_drop_priv)(pam_handle_t *pamh, struct pam_modutil_privs *p, const struct passwd *pw);
-  int (*pam_modutil_regain_priv)(pam_handle_t *pamh, struct pam_modutil_privs *p);
+  int (*pam_modutil_drop_priv)(pam_handle_t *pamh, PamModutilPrivs *p, const struct passwd *pw);
+  int (*pam_modutil_regain_priv)(pam_handle_t *pamh, PamModutilPrivs *p);
 } VirtPam;
 
 void v_pam_inject(VirtPam *target); 
@@ -74,11 +74,11 @@ int v_pam_get_data(const pam_handle_t *_pamh, const char *_module_data_name, con
 int v_pam_set_data(pam_handle_t *_pamh, const char *_module_data_name, void *_data, void (*_cleanup)(pam_handle_t *_pamh,
                   void *_data, int _pam_end_status));
 int v_pam_get_user(pam_handle_t *_pamh, const char **_user, const char *_prompt);
-int y_pam_get_item(const pam_handle_t *_pamh, int _item_type, const void **_item);
+int v_pam_get_item(const pam_handle_t *_pamh, int _item_type, const void **_item);
 int v_pam_set_item(pam_handle_t *_pamh, int _item_type, const void *_item);
 int v_pam_start(const char *_service, const char *_user, const struct pam_conv *_pam_conv, pam_handle_t **_pamh);
 
-int v_pam_modutil_drop_priv(pam_handle_t *pamh, struct pam_modutil_privs *p, const struct passwd *pw);
-int v_pam_modutil_regain_priv(pam_handle_t *pamh, struct pam_modutil_privs *p);
+int v_pam_modutil_drop_priv(pam_handle_t *pamh, PamModutilPrivs *p, const struct passwd *pw);
+int v_pam_modutil_regain_priv(pam_handle_t *pamh, PamModutilPrivs *p);
 
 #endif

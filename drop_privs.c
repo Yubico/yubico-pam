@@ -50,7 +50,7 @@
 #endif
 
 
-int pam_modutil_drop_priv(pam_handle_t *pamh, struct _ykpam_privs *privs, struct passwd *pw) {
+int pam_modutil_drop_priv(pam_handle_t *pamh, struct _ykpam_privs *privs, const struct passwd *pw) {
     privs->saved_euid = geteuid();
     privs->saved_egid = getegid();
 
