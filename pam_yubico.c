@@ -745,6 +745,8 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
   parse_cfg (flags, argc, argv, cfg);
 
+  DBG (("pam_yubico version: %s", VERSION));
+
   if (cfg->token_id_length > MAX_TOKEN_ID_LEN)
   {
     DBG (("configuration error: token_id_length too long. Maximum acceptable value : %d", MAX_TOKEN_ID_LEN));
