@@ -30,7 +30,7 @@
 AM_LDFLAGS = -no-install
 AM_CFLAGS=-I$(srcdir)/.. $(WARN_CFLAGS)
 AM_CPPFLAGS = @YKPERS_CFLAGS@
-test_LDADD = ../pam_yubico.la
+test_LDADD = ../.libs/pam_yubico.o ../.libs/drop_privs.o ../libpam_util.la @LTLIBYUBIKEY@ @LTLIBYKCLIENT@ @LIBLDAP@ @LIBPAM@
 util_test_LDADD = ../libpam_util.la
 pam_test_LDADD = ../libpam_real.la ../libpam_util.la @LTLIBYUBIKEY@ @LTLIBYKCLIENT@ @LIBLDAP@
 

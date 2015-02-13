@@ -31,7 +31,7 @@
 
 #ifdef HAVE_PAM_MODUTIL_DROP_PRIV
 #include <security/pam_modutil.h>
-typedef pam_modutil_privs PamModutilPrivs;
+typedef struct pam_modutil_privs PamModutilPrivs;
 #else
 
 #include <pwd.h>
