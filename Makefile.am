@@ -44,7 +44,7 @@ pam_yubico_la_LIBADD += libpam_util.la libpam_real.la
 pam_yubico_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = libpam_util.la libpam_real.la
-libpam_util_la_SOURCES = util.c util.h yubi_ldap.c yubi_ldap.h yubi_ykclient.c yubi_ykclient.h
+libpam_util_la_SOURCES = util.c util.h virt_ldap.c virt_ldap.h virt_ykclient.c virt_ykclient.h virt_pam.c virt_pam.h
 libpam_util_la_LIBADD = @LTLIBYUBIKEY@ @YKPERS_LIBS@
 
 libpam_real_la_SOURCES = pam_yubico.c

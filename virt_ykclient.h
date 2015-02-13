@@ -43,19 +43,19 @@ typedef struct {
   void (*ykclient_set_ca_path)(ykclient_t * ykc, const char *ca_path);
   ykclient_rc (*ykclient_set_url_template)(ykclient_t * ykc, const char *url_template);
   ykclient_rc (*ykclient_set_url_bases)(ykclient_t * ykc, size_t num_templates, const char **url_templates);
-} YubiYkClient;
+} VirtYkClient;
 
 
-void y_ykclient_inject(YubiYkClient *target);
+void v_ykclient_inject(VirtYkClient *target);
 
-ykclient_rc y_ykclient_init (ykclient_t ** ykc);
-void y_ykclient_done (ykclient_t ** ykc);
-ykclient_rc y_ykclient_request (ykclient_t * ykc, const char *yubikey_otp);
-const char *y_ykclient_strerror (ykclient_rc ret);
-ykclient_rc y_ykclient_set_client_b64 (ykclient_t * ykc, unsigned int client_id, const char *key);
-void y_ykclient_set_verify_signature (ykclient_t * ykc, int value);
-void y_ykclient_set_ca_path (ykclient_t * ykc, const char *ca_path);
-ykclient_rc y_ykclient_set_url_template (ykclient_t * ykc, const char *url_template);
-ykclient_rc y_ykclient_set_url_bases (ykclient_t * ykc, size_t num_templates, const char **url_templates);
+ykclient_rc v_ykclient_init (ykclient_t ** ykc);
+void v_ykclient_done (ykclient_t ** ykc);
+ykclient_rc v_ykclient_request (ykclient_t * ykc, const char *yubikey_otp);
+const char *v_ykclient_strerror (ykclient_rc ret);
+ykclient_rc v_ykclient_set_client_b64 (ykclient_t * ykc, unsigned int client_id, const char *key);
+void v_ykclient_set_verify_signature (ykclient_t * ykc, int value);
+void v_ykclient_set_ca_path (ykclient_t * ykc, const char *ca_path);
+ykclient_rc v_ykclient_set_url_template (ykclient_t * ykc, const char *url_template);
+ykclient_rc v_ykclient_set_url_bases (ykclient_t * ykc, size_t num_templates, const char **url_templates);
 
 #endif

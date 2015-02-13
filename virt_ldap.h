@@ -55,27 +55,27 @@ typedef struct {
   int (*ldap_unbind_s)(LDAP *ld);
   void (*ber_free)(BerElement *ber, int freebuf);
 
-} YubiLdap;
+} VirtLdap;
 
-void y_ldap_inject(YubiLdap *target); 
+void v_ldap_inject(VirtLdap *target); 
 
-int y_ldap_initialize(LDAP **ldpm, const char *uri);
-LDAP *y_ldap_init(const char *host, int port);
-char *y_ldap_err2string( int err );
-int y_ldap_set_option(LDAP *ld, int option, const void *invalue);
-int y_ldap_simple_bind_s(LDAP *ld, const char *who, const char *passwd);
-int y_ldap_search_ext_s(LDAP *ld, char *base, int scope, char *filter, char *attrs[], int attrsonly,
+int v_ldap_initialize(LDAP **ldpm, const char *uri);
+LDAP *v_ldap_init(const char *host, int port);
+char *v_ldap_err2string( int err );
+int v_ldap_set_option(LDAP *ld, int option, const void *invalue);
+int v_ldap_simple_bind_s(LDAP *ld, const char *who, const char *passwd);
+int v_ldap_search_ext_s(LDAP *ld, char *base, int scope, char *filter, char *attrs[], int attrsonly,
                       LDAPControl **serverctrls, LDAPControl **clientctrls, struct timeval *timeout,
                       int sizelimit, LDAPMessage **res);
-LDAPMessage *y_ldap_first_entry(LDAP *ld, LDAPMessage *result);
-char *y_ldap_first_attribute(LDAP *ld, LDAPMessage *entry, BerElement **berptr);
-char *y_ldap_next_attribute(LDAP *ld, LDAPMessage *entry, BerElement *ber);
-struct berval **y_ldap_get_values_len(LDAP *ld, LDAPMessage *entry, const char *attr); 
-void y_ldap_value_free_len(struct berval **vals);
-int y_ldap_count_values_len(struct berval **vals);
-void y_ldap_memfree(void *p);
-int y_ldap_msgfree(LDAPMessage *msg );
-int y_ldap_unbind_s(LDAP *ld);
-void y_ber_free(BerElement *ber, int freebuf);
+LDAPMessage *v_ldap_first_entry(LDAP *ld, LDAPMessage *result);
+char *v_ldap_first_attribute(LDAP *ld, LDAPMessage *entry, BerElement **berptr);
+char *v_ldap_next_attribute(LDAP *ld, LDAPMessage *entry, BerElement *ber);
+struct berval **v_ldap_get_values_len(LDAP *ld, LDAPMessage *entry, const char *attr); 
+void v_ldap_value_free_len(struct berval **vals);
+int v_ldap_count_values_len(struct berval **vals);
+void v_ldap_memfree(void *p);
+int v_ldap_msgfree(LDAPMessage *msg );
+int v_ldap_unbind_s(LDAP *ld);
+void v_ber_free(BerElement *ber, int freebuf);
 
 #endif

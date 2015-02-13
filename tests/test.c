@@ -32,18 +32,9 @@
 
 #include <assert.h>
 
-/* These #defines must be present according to PAM documentation. */
-#define PAM_SM_AUTH
-
-#ifdef HAVE_SECURITY_PAM_APPL_H
-#include <security/pam_appl.h>
-#endif
-#ifdef HAVE_SECURITY_PAM_MODULES_H
-#include <security/pam_modules.h>
-#endif
-
-#include "../yubi_ykclient.h"
-#include "../yubi_ldap.h"
+#include "../virt_ykclient.h"
+#include "../virt_ldap.h"
+#include "../virt_pam.h"
 #define DEBUG_PAM
 #include "../util.h"
 
@@ -96,9 +87,10 @@ char *test_ldap_next_attribute(LDAP *ld, LDAPMessage *entry, BerElement *ber) {
 
 struct berval **test_ldap_get_values_len(LDAP *ld, LDAPMessage *entry, const char *attr) {
   //D(("test_ldap_get_values_len"));
-  static struct berval *ret[1];
+  static struct berval *ret[2];
   static struct berval val = { sizeof("ccccccdhuvvv"), "ccccccdhuvvv" };
   ret[0] = &val;
+  ret[1] = 0;
   return ret;
 }
 
@@ -129,7 +121,7 @@ void test_ber_free(BerElement *ber, int freebuf) {
   //D(("test_ber_free"));
 }
 
-static YubiLdap test_ldap = {
+static VirtLdap test_ldap = {
   &test_ldap_initialize,
   &test_ldap_init,
   &test_ldap_err2string,
@@ -186,7 +178,7 @@ ykclient_rc test_ykclient_set_url_bases (ykclient_t * ykc, size_t num_templates,
   return YKCLIENT_BAD_INPUT;
 }
 
-static YubiYkClient test_ykclient = {
+static VirtYkClient test_ykclient = {
   &test_ykclient_init,
   &test_ykclient_done,
   &test_ykclient_request,
@@ -198,7 +190,85 @@ static YubiYkClient test_ykclient = {
   &test_ykclient_set_url_bases,
 };
 
+static struct TestPam {
+  const char *user;
+  const char *auth_ok_password;
+} test_pam_instance;
 
+const char *test_pam_strerror(PAM_STRERROR_CONST pam_handle_t *_pamh, int _error_number) {
+  switch (_error_number) {
+    case 0:
+      return "PAM is fine";
+    default:
+      return "really a error";
+  }
+}
+
+int test_pam_get_data(const pam_handle_t *_pamh, const char *_module_data_name, const void **_data) {
+  return 0;
+}
+
+int test_pam_set_data(pam_handle_t *_pamh, const char *_module_data_name, void *_data, void (*_cleanup)(pam_handle_t *_pamh,
+                  void *_data, int _pam_end_status)) {
+  return 0;
+}
+
+int test_pam_get_user(pam_handle_t *_pamh, const char **_user, const char *_prompt) {
+  *_user = ((struct TestPam *)_pamh)->user;
+  return 0;
+}
+
+int test_pam_get_item(const pam_handle_t *_pamh, int _item_type, const void **_item) {
+  if (_item_type == PAM_AUTHTOK) {
+    *_item = ((struct TestPam *)_pamh)->auth_ok_password;
+    return 0;
+  }
+  return 1;
+}
+
+int test_pam_set_item(pam_handle_t *_pamh, int _item_type, const void *_item) {
+  if (_item_type == PAM_AUTHTOK) {
+    ((struct TestPam *)_pamh)->auth_ok_password = _item;
+    return 0;
+  }
+  return 1;
+}
+
+int test_pam_start(const char *_service, const char *_user, const struct pam_conv *_pam_conv, pam_handle_t **_pamh) {
+  test_pam_instance.user = _user;
+  *_pamh = (pam_handle_t *)&test_pam_instance;
+  return 0;
+}
+
+int test_pam_modutil_drop_priv(pam_handle_t *pamh, struct pam_modutil_privs *p, const struct passwd *pw) {
+  return 0;
+}
+
+int test_pam_modutil_regain_priv(pam_handle_t *pamh, struct pam_modutil_privs *p) {
+  return 0;
+}
+
+
+static VirtPam test_pam = {
+  &test_pam_strerror,
+  &test_pam_get_data,
+  &test_pam_set_data,
+  &test_pam_get_user,
+  &test_pam_get_item,
+  &test_pam_set_item,
+  &test_pam_start,
+  &test_pam_modutil_drop_priv,
+  &test_pam_modutil_regain_priv
+};
+
+
+// signature from pam_yubikey.c
+PAM_EXTERN int pam_sm_authenticate (pam_handle_t * pamh, int flags, int argc, const char **argv);
+
+
+static int my_conv(int n, const struct pam_message **msg_array, struct pam_response **response_array, void *appdata_ptr) {
+  return 0;
+}
 
 void test_active_directory_login_ok(const char *otp) {
   pam_handle_t *pamh = NULL;
@@ -218,17 +288,19 @@ void test_active_directory_login_ok(const char *otp) {
 
   if (otp == 0) {
     otp = "ccccccdhuvvvijehidgthrhtglegiiijdktvgrhgukci";
-    y_ykclient_inject(&test_ykclient);
-    y_ldap_inject(&test_ldap);
+    v_ykclient_inject(&test_ykclient);
+    v_ldap_inject(&test_ldap);
   }
 
-
-  pam_start("yubico", "administrator", 0, &pamh);
+  v_pam_inject(&test_pam);
+  struct pam_conv pam_conv;
+  memset(&pam_conv, 0, sizeof(pam_conv));
+  v_pam_start("yubico", "administrator", &pam_conv, &pamh);
   char password[128];
   strcpy(password, "Ip^U95VHGtX*42h3");
   strcat(password, otp);
   printf("password:[%s]\n", password);
-  pam_set_item(pamh, PAM_AUTHTOK, password);
+  v_pam_set_item(pamh, PAM_AUTHTOK, password);
   rc = pam_sm_authenticate (pamh, 0, sizeof(argv)/sizeof(*argv), argv);
   printf ("rc %d\n", rc);
   assert(rc == 0);

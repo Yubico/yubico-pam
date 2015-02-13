@@ -28,9 +28,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "yubi_ykclient.h"
+#include "virt_ykclient.h"
 
-static YubiYkClient lib_ykclient = {
+static VirtYkClient lib_ykclient = {
   &ykclient_init,
   &ykclient_done,
   &ykclient_request,
@@ -42,45 +42,45 @@ static YubiYkClient lib_ykclient = {
   &ykclient_set_url_bases,
 };
 
-static YubiYkClient *running = &lib_ykclient;
+static VirtYkClient *running = &lib_ykclient;
 
-void y_ykclient_inject(YubiYkClient *target) {
+void v_ykclient_inject(VirtYkClient *target) {
   running = target;
 }
 
-ykclient_rc y_ykclient_init (ykclient_t ** ykc) {
+ykclient_rc v_ykclient_init (ykclient_t ** ykc) {
   return (running->ykclient_init)(ykc);
 }
 
-void y_ykclient_done (ykclient_t ** ykc) {
+void v_ykclient_done (ykclient_t ** ykc) {
   return (running->ykclient_done)(ykc);
 }
 
-ykclient_rc y_ykclient_request (ykclient_t * ykc, const char *yubikey_otp) {
+ykclient_rc v_ykclient_request (ykclient_t * ykc, const char *yubikey_otp) {
   return (running->ykclient_request)(ykc, yubikey_otp);
 }
 
-const char *y_ykclient_strerror (ykclient_rc ret) {
+const char *v_ykclient_strerror (ykclient_rc ret) {
   return (running->ykclient_strerror)(ret);
 }
 
-ykclient_rc y_ykclient_set_client_b64 (ykclient_t * ykc, unsigned int client_id, const char *key) {
+ykclient_rc v_ykclient_set_client_b64 (ykclient_t * ykc, unsigned int client_id, const char *key) {
   return (running->ykclient_set_client_b64)(ykc, client_id, key);
 }
 
-void y_ykclient_set_verify_signature (ykclient_t * ykc, int value) {
+void v_ykclient_set_verify_signature (ykclient_t * ykc, int value) {
   return (running->ykclient_set_verify_signature)(ykc, value);
 }
 
-void y_ykclient_set_ca_path (ykclient_t * ykc, const char *ca_path) {
+void v_ykclient_set_ca_path (ykclient_t * ykc, const char *ca_path) {
   return (running->ykclient_set_ca_path)(ykc, ca_path);
 }
 
-ykclient_rc y_ykclient_set_url_template (ykclient_t * ykc, const char *url_template) {
+ykclient_rc v_ykclient_set_url_template (ykclient_t * ykc, const char *url_template) {
   return (running->ykclient_set_url_template)(ykc, url_template);
 }
 
-ykclient_rc y_ykclient_set_url_bases (ykclient_t * ykc, size_t num_templates, const char **url_templates) {
+ykclient_rc v_ykclient_set_url_bases (ykclient_t * ykc, size_t num_templates, const char **url_templates) {
   return (running->ykclient_set_url_bases)(ykc, num_templates, url_templates);
 }
 

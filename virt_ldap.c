@@ -28,9 +28,30 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "yubi_ldap.h"
+#include <stdio.h>
+#include "virt_ldap.h"
 
-static YubiLdap lib_ldap = {
+#ifndef LDAP_DEPRECATED
+int ldap_simple_bind_s(LDAP *ld, const char *who, const char *passwd) {
+  struct berval creds;
+  creds.bv_len = strlen(passwd);
+  creds.bv_val = (char*)passwd;
+  return ldap_sasl_bind_s(ld, who, NULL, &creds, NULL, NULL, NULL);
+}
+int ldap_unbind_s(LDAP *ld) {
+  return ldap_unbind_ext(ld, NULL, NULL);
+}
+LDAP *ldap_init(const char *host, int port) {
+  LDAP *ret;
+  char uri[sizeof("ldap://") + strlen(host) + sizeof(":99999") + 10];
+  sprintf(uri, "ldap://%s:%d", host, port);
+  ldap_initialize(&ret, uri);
+  return ret;
+}
+#endif
+
+
+static VirtLdap lib_ldap = {
   &ldap_initialize,
   &ldap_init,
   &ldap_err2string,
@@ -49,76 +70,76 @@ static YubiLdap lib_ldap = {
   &ber_free
 };
 
-static YubiLdap *running = &lib_ldap;
+static VirtLdap *running = &lib_ldap;
 
-void y_ldap_inject(YubiLdap *target) {
+void v_ldap_inject(VirtLdap *target) {
   running = target;
 }
 
-int y_ldap_initialize(LDAP **ldpm, const char *uri) {
+int v_ldap_initialize(LDAP **ldpm, const char *uri) {
   return (running->ldap_initialize)(ldpm, uri);
 }
 
-LDAP *y_ldap_init(const char *host, int port) {
+LDAP *v_ldap_init(const char *host, int port) {
   return (running->ldap_init)(host, port);
 }
 
-char *y_ldap_err2string( int err ) {
+char *v_ldap_err2string( int err ) {
   return (running->ldap_err2string)(err);
 }
 
-int y_ldap_set_option(LDAP *ld, int option, const void *invalue) {
+int v_ldap_set_option(LDAP *ld, int option, const void *invalue) {
   return (running->ldap_set_option)(ld, option, invalue);
 }
 
-int y_ldap_simple_bind_s(LDAP *ld, const char *who, const char *passwd) {
+int v_ldap_simple_bind_s(LDAP *ld, const char *who, const char *passwd) {
   return (running->ldap_simple_bind_s)(ld, who, passwd);
 }
 
-int y_ldap_search_ext_s(LDAP *ld, char *base, int scope, char *filter, char *attrs[], int attrsonly,
+int v_ldap_search_ext_s(LDAP *ld, char *base, int scope, char *filter, char *attrs[], int attrsonly,
                       LDAPControl **serverctrls, LDAPControl **clientctrls, struct timeval *timeout,
                       int sizelimit, LDAPMessage **res) {
   return (running->ldap_search_ext_s)(ld, base, scope, filter, attrs, attrsonly, serverctrls, 
                                       clientctrls, timeout, sizelimit, res);
 }
 
-LDAPMessage *y_ldap_first_entry(LDAP *ld, LDAPMessage *result) {
+LDAPMessage *v_ldap_first_entry(LDAP *ld, LDAPMessage *result) {
   return (running->ldap_first_entry)(ld, result);
 }
 
-char *y_ldap_first_attribute(LDAP *ld, LDAPMessage *entry, BerElement **berptr) {
+char *v_ldap_first_attribute(LDAP *ld, LDAPMessage *entry, BerElement **berptr) {
   return (running->ldap_first_attribute)(ld, entry, berptr);
 }
 
-char *y_ldap_next_attribute(LDAP *ld, LDAPMessage *entry, BerElement *ber) {
+char *v_ldap_next_attribute(LDAP *ld, LDAPMessage *entry, BerElement *ber) {
   return (running->ldap_next_attribute)(ld, entry, ber);
 }
 
-struct berval **y_ldap_get_values_len(LDAP *ld, LDAPMessage *entry, const char *attr) {
+struct berval **v_ldap_get_values_len(LDAP *ld, LDAPMessage *entry, const char *attr) {
   return (running->ldap_get_values_len)(ld, entry, attr); 
 }
 
-int y_ldap_count_values_len(struct berval **vals) {
+int v_ldap_count_values_len(struct berval **vals) {
   return (running->ldap_count_values_len)(vals);
 }
 
-void y_ldap_value_free_len(struct berval **vals) {
+void v_ldap_value_free_len(struct berval **vals) {
   (running->ldap_value_free_len)(vals);
 }
 
-void y_ldap_memfree(void *p) {
+void v_ldap_memfree(void *p) {
   (running->ldap_memfree)(p);
 }
 
-int y_ldap_msgfree(LDAPMessage *msg ) {
+int v_ldap_msgfree(LDAPMessage *msg ) {
   return (running->ldap_msgfree)(msg );
 }
 
-int y_ldap_unbind_s(LDAP *ld) {
+int v_ldap_unbind_s(LDAP *ld) {
   return (running->ldap_unbind_s)(ld);
 }
 
-void y_ber_free(BerElement *ber, int freebuf) {
+void v_ber_free(BerElement *ber, int freebuf) {
   (running->ber_free)(ber, freebuf);
 }
 

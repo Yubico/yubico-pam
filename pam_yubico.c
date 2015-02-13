@@ -53,24 +53,10 @@
 #include <ykpbkdf2.h>
 #endif /* HAVE_CR */
 
-/* Libtool defines PIC for shared objects */
-#ifndef PIC
-#define PAM_STATIC
-#endif
 
-/* These #defines must be present according to PAM documentation. */
-#define PAM_SM_AUTH
-
-
-#ifdef HAVE_SECURITY_PAM_APPL_H
-#include <security/pam_appl.h>
-#endif
-#ifdef HAVE_SECURITY_PAM_MODULES_H
-#include <security/pam_modules.h>
-#endif
-
-#include "yubi_ldap.h"
-#include "yubi_ykclient.h"
+#include "virt_pam.h"
+#include "virt_ldap.h"
+#include "virt_ykclient.h"
 
 #ifndef PAM_EXTERN
 #ifdef PAM_STATIC
@@ -165,7 +151,7 @@ authorize_user_token (struct cfg *cfg,
       }
 
       DBG (("Dropping privileges"));
-      if(pam_modutil_drop_priv(pamh, &privs, p)) {
+      if(v_pam_modutil_drop_priv(pamh, &privs, p)) {
         DBG (("could not drop privileges"));
 	retval = 0;
 	goto free_out;
@@ -173,7 +159,7 @@ authorize_user_token (struct cfg *cfg,
 
       retval = check_user_token (userfile, username, otp_id, cfg->debug);
 
-      if(pam_modutil_regain_priv(pamh, &privs)) {
+      if(v_pam_modutil_regain_priv(pamh, &privs)) {
         DBG (("could not restore privileges"));
         retval = 0;
         goto free_out;
@@ -242,17 +228,17 @@ authorize_user_token_ldap (struct cfg *cfg,
   /* Get a handle to an LDAP connection. */
   if (cfg->ldap_uri)
     {
-      rc = y_ldap_initialize (&ld, cfg->ldap_uri);
+      rc = v_ldap_initialize (&ld, cfg->ldap_uri);
       if (rc != LDAP_SUCCESS)
 	{
-	  DBG (("ldap_initialize: %s", y_ldap_err2string (rc)));
+	  DBG (("ldap_initialize: %s", v_ldap_err2string (rc)));
 	  retval = 0;
 	  goto done;
 	}
     }
   else
     {
-      if ((ld = y_ldap_init (cfg->ldapserver, LDAP_PORT)) == NULL)
+      if ((ld = v_ldap_init (cfg->ldapserver, LDAP_PORT)) == NULL)
 	{
 	  DBG (("ldap_init"));
 	  retval = 0;
@@ -261,18 +247,18 @@ authorize_user_token_ldap (struct cfg *cfg,
     }
 
   /* LDAPv2 is historical -- RFC3494. */
-  y_ldap_set_option(ld, LDAP_OPT_REFERRALS, LDAP_OPT_OFF);
+  v_ldap_set_option(ld, LDAP_OPT_REFERRALS, LDAP_OPT_OFF);
   protocol = LDAP_VERSION3;
-  y_ldap_set_option (ld, LDAP_OPT_PROTOCOL_VERSION, &protocol);
+  v_ldap_set_option (ld, LDAP_OPT_PROTOCOL_VERSION, &protocol);
 
   if (cfg->ldap_uri && cfg->ldap_cacertfile) {
     /* Set CA CERTFILE.  This makes ldaps work when using ldap_uri */
-    y_ldap_set_option (0, LDAP_OPT_X_TLS_CACERTFILE, cfg->ldap_cacertfile);
+    v_ldap_set_option (0, LDAP_OPT_X_TLS_CACERTFILE, cfg->ldap_cacertfile);
   }
   /* Bind anonymously to the LDAP server. */
   if (cfg->ldap_bind_user && cfg->ldap_bind_password) {
     DBG (("try bind with: %s:[XXXX]", cfg->ldap_bind_user));
-    rc = y_ldap_simple_bind_s (ld, cfg->ldap_bind_user, cfg->ldap_bind_password);
+    rc = v_ldap_simple_bind_s (ld, cfg->ldap_bind_user, cfg->ldap_bind_password);
   } else if (cfg->ldap_bind_no_anonymous) {
     char *tmp_user;
     if (cfg->ldap_bind_user_filter) {
@@ -281,15 +267,15 @@ authorize_user_token_ldap (struct cfg *cfg,
 	tmp_user = strdup(user);
     }
     DBG (("try bind with: %s:[%s]", tmp_user, password));
-    rc = y_ldap_simple_bind_s (ld, tmp_user, password);
+    rc = v_ldap_simple_bind_s (ld, tmp_user, password);
     free(tmp_user);
   } else {
     DBG (("try bind anonymous"));
-    rc = y_ldap_simple_bind_s (ld, NULL, NULL);
+    rc = v_ldap_simple_bind_s (ld, NULL, NULL);
   }
   if (rc != LDAP_SUCCESS)
     {
-      DBG (("ldap_simple_bind_s: %s", y_ldap_err2string (rc)));
+      DBG (("ldap_simple_bind_s: %s", v_ldap_err2string (rc)));
       retval = 0;
       goto done;
     }
@@ -317,17 +303,17 @@ authorize_user_token_ldap (struct cfg *cfg,
       filter ? filter:"(null)", cfg->yubi_attr));
 
   /* Search for the entry. */
-  if ((rc = y_ldap_search_ext_s (ld, find, scope,
+  if ((rc = v_ldap_search_ext_s (ld, find, scope,
 			       filter, attrs, 0, NULL, NULL, LDAP_NO_LIMIT,
 			       LDAP_NO_LIMIT, &result)) != LDAP_SUCCESS)
     {
-      DBG (("ldap_search_ext_s: %s", y_ldap_err2string (rc)));
+      DBG (("ldap_search_ext_s: %s", v_ldap_err2string (rc)));
 
       retval = 0;
       goto done;
     }
 
-  e = y_ldap_first_entry (ld, result);
+  e = v_ldap_first_entry (ld, result);
   if (e == NULL)
     {
       DBG (("No result from LDAP search"));
@@ -337,10 +323,10 @@ authorize_user_token_ldap (struct cfg *cfg,
     {
       retval = -1;
       /* Iterate through each returned attribute. */
-      for (a = y_ldap_first_attribute (ld, e, &ber);
-	   a != NULL; a = y_ldap_next_attribute (ld, e, ber))
+      for (a = v_ldap_first_attribute (ld, e, &ber);
+	   a != NULL; a = v_ldap_next_attribute (ld, e, ber))
 	{
-	  if ((vals = y_ldap_get_values_len (ld, e, a)) != NULL)
+	  if ((vals = v_ldap_get_values_len (ld, e, a)) != NULL)
 	    {
 	      yubi_attr_prefix_len = cfg->yubi_attr_prefix ? strlen(cfg->yubi_attr_prefix) : 0;
 
@@ -348,7 +334,7 @@ authorize_user_token_ldap (struct cfg *cfg,
 	      for (i = 0; vals[i] != NULL; i++)
 		{
 	          DBG(("LDAP : Found %i values - checking if any of them match '%s:%s:%s'",
-		       y_ldap_count_values_len(vals),
+		       v_ldap_count_values_len(vals),
 		       vals[i]->bv_val,
 		       cfg->yubi_attr_prefix ? cfg->yubi_attr_prefix : "", token_id));
 
@@ -362,19 +348,19 @@ authorize_user_token_ldap (struct cfg *cfg,
 		        }
 		    }
 		}
-	      y_ldap_value_free_len (vals);
+	      v_ldap_value_free_len (vals);
 	    }
-	  y_ldap_memfree (a);
+	  v_ldap_memfree (a);
 	}
       if (ber != NULL)
-	  y_ber_free (ber, 0);
+	  v_ber_free (ber, 0);
     }
 
  done:
   if (result != NULL)
-    y_ldap_msgfree (result);
+    v_ldap_msgfree (result);
   if (ld != NULL)
-    y_ldap_unbind_s (ld);
+    v_ldap_unbind_s (ld);
 
   /* free memory allocated for search strings */
   if (find != NULL)
@@ -398,9 +384,9 @@ display_error(pam_handle_t *pamh, const char *message) {
   struct pam_response *resp = NULL;
   int retval;
 
-  retval = pam_get_item (pamh, PAM_CONV, (const void **) &conv);
+  retval = v_pam_get_item (pamh, PAM_CONV, (const void **) &conv);
   if (retval != PAM_SUCCESS) {
-    D(("get conv returned error: %s", pam_strerror (pamh, retval)));
+    D(("get conv returned error: %s", v_pam_strerror (pamh, retval)));
     return retval;
   }
 
@@ -410,7 +396,7 @@ display_error(pam_handle_t *pamh, const char *message) {
   retval = conv->conv(1, pmsg, &resp, conv->appdata_ptr);
 
   if (retval != PAM_SUCCESS) {
-    D(("conv returned error: %s", pam_strerror (pamh, retval)));
+    D(("conv returned error: %s", v_pam_strerror (pamh, retval)));
     return retval;
   }
 
@@ -474,7 +460,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   }
 
   /* Drop privileges before opening user file. */
-  if (pam_modutil_drop_priv(pamh, &privs, p)) {
+  if (v_pam_modutil_drop_priv(pamh, &privs, p)) {
       DBG (("could not drop privileges"));
       goto out;
   }
@@ -513,7 +499,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   }
   f = NULL;
 
-  if (pam_modutil_regain_priv(pamh, &privs)) {
+  if (v_pam_modutil_regain_priv(pamh, &privs)) {
       DBG (("could not restore privileges"));
       goto out;
   }
@@ -582,7 +568,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   /* point to the fresh privs structure.. */
   privs = privs2;
   /* Drop privileges before creating new challenge file. */
-  if (pam_modutil_drop_priv(pamh, &privs, p)) {
+  if (v_pam_modutil_drop_priv(pamh, &privs, p)) {
       DBG (("could not drop privileges"));
       goto out;
   }
@@ -618,7 +604,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
     goto restpriv_out;
   }
 
-  if (pam_modutil_regain_priv(pamh, &privs)) {
+  if (v_pam_modutil_regain_priv(pamh, &privs)) {
       DBG (("could not restore privileges"));
       goto out;
   }
@@ -629,7 +615,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   goto out;
 
 restpriv_out:
-  if (pam_modutil_regain_priv(pamh, &privs)) {
+  if (v_pam_modutil_regain_priv(pamh, &privs)) {
       DBG (("could not restore privileges"));
   }
 
@@ -807,10 +793,10 @@ pam_sm_authenticate (pam_handle_t * pamh,
     goto done;
   }
 
-  retval = pam_get_user(pamh, &user, NULL);
+  retval = v_pam_get_user(pamh, &user, NULL);
   if (retval != PAM_SUCCESS)
     {
-      DBG (("get user returned error: %s", pam_strerror (pamh, retval)));
+      DBG (("get user returned error: %s", v_pam_strerror (pamh, retval)));
       goto done;
     }
   DBG (("get user returned: %s", user));
@@ -827,11 +813,11 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
   if (cfg->try_first_pass || cfg->use_first_pass)
     {
-      retval = pam_get_item (pamh, PAM_AUTHTOK, (const void **) &password);
+      retval = v_pam_get_item (pamh, PAM_AUTHTOK, (const void **) &password);
       if (retval != PAM_SUCCESS)
 	{
 	  DBG (("get password returned error: %s",
-	      pam_strerror (pamh, retval)));
+	      v_pam_strerror (pamh, retval)));
 	  goto done;
 	}
       DBG (("get password returned: %s", password));
@@ -844,36 +830,36 @@ pam_sm_authenticate (pam_handle_t * pamh,
       goto done;
     }
 
-  rc = y_ykclient_init (&ykc);
+  rc = v_ykclient_init (&ykc);
   if (rc != YKCLIENT_OK)
     {
-      DBG (("ykclient_init() failed (%d): %s", rc, y_ykclient_strerror (rc)));
+      DBG (("ykclient_init() failed (%d): %s", rc, v_ykclient_strerror (rc)));
       retval = PAM_AUTHINFO_UNAVAIL;
       goto done;
     }
 
-  rc = y_ykclient_set_client_b64 (ykc, cfg->client_id, cfg->client_key);
+  rc = v_ykclient_set_client_b64 (ykc, cfg->client_id, cfg->client_key);
   if (rc != YKCLIENT_OK)
     {
       DBG (("ykclient_set_client_b64() failed (%d): %s",
-	    rc, y_ykclient_strerror (rc)));
+	    rc, v_ykclient_strerror (rc)));
       retval = PAM_AUTHINFO_UNAVAIL;
       goto done;
     }
 
   if (cfg->client_key)
-    y_ykclient_set_verify_signature (ykc, 1);
+    v_ykclient_set_verify_signature (ykc, 1);
 
   if (cfg->capath)
-    y_ykclient_set_ca_path (ykc, cfg->capath);
+    v_ykclient_set_ca_path (ykc, cfg->capath);
 
   if (cfg->url)
     {
-      rc = y_ykclient_set_url_template (ykc, cfg->url);
+      rc = v_ykclient_set_url_template (ykc, cfg->url);
       if (rc != YKCLIENT_OK)
 	{
-	  DBG (("y_ykclient_set_url_template() failed (%d): %s",
-		rc, y_ykclient_strerror (rc)));
+	  DBG (("v_ykclient_set_url_template() failed (%d): %s",
+		rc, v_ykclient_strerror (rc)));
 	  retval = PAM_AUTHINFO_UNAVAIL;
 	  goto done;
 	}
@@ -896,11 +882,11 @@ pam_sm_authenticate (pam_handle_t * pamh,
 	  urls[templates] = strdup(part);
 	  templates++;
 	}
-      rc = y_ykclient_set_url_bases (ykc, templates, (const char **)urls);
+      rc = v_ykclient_set_url_bases (ykc, templates, (const char **)urls);
       if (rc != YKCLIENT_OK)
 	{
 	  DBG (("ykclient_set_url_bases() failed (%d): %s",
-		rc, y_ykclient_strerror (rc)));
+		rc, v_ykclient_strerror (rc)));
 	  retval = PAM_AUTHINFO_UNAVAIL;
 	  goto done;
 	}
@@ -908,10 +894,10 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
   if (password == NULL)
     {
-      retval = pam_get_item (pamh, PAM_CONV, (const void **) &conv);
+      retval = v_pam_get_item (pamh, PAM_CONV, (const void **) &conv);
       if (retval != PAM_SUCCESS)
 	{
-	  DBG (("get conv returned error: %s", pam_strerror (pamh, retval)));
+	  DBG (("get conv returned error: %s", v_pam_strerror (pamh, retval)));
 	  goto done;
 	}
 
@@ -943,7 +929,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
       if (retval != PAM_SUCCESS)
 	{
-	  DBG (("conv returned error: %s", pam_strerror (pamh, retval)));
+	  DBG (("conv returned error: %s", v_pam_strerror (pamh, retval)));
 	  goto done;
 	}
 
@@ -996,20 +982,20 @@ pam_sm_authenticate (pam_handle_t * pamh,
       DBG (("Extracted a probable system password entered before the OTP - "
 	    "setting item PAM_AUTHTOK"));
 
-      retval = pam_set_item (pamh, PAM_AUTHTOK, onlypasswd);
+      retval = v_pam_set_item (pamh, PAM_AUTHTOK, onlypasswd);
       if (retval != PAM_SUCCESS)
 	{
-	  DBG (("set_item returned error: %s", pam_strerror (pamh, retval)));
+	  DBG (("set_item returned error: %s", v_pam_strerror (pamh, retval)));
 	  goto done;
 	}
     }
   else
     password = NULL;
 
-  rc = y_ykclient_request (ykc, otp);
+  rc = v_ykclient_request (ykc, otp);
 
   DBG (("ykclient return value (%d): %s", rc,
-	y_ykclient_strerror (rc)));
+	v_ykclient_strerror (rc)));
 
   switch (rc)
     {
@@ -1068,15 +1054,15 @@ done:
   if (tmpurl)
     free(tmpurl);
   if (ykc)
-    y_ykclient_done (&ykc);
+    v_ykclient_done (&ykc);
   if (cfg->alwaysok && retval != PAM_SUCCESS)
     {
       DBG (("alwaysok needed (otherwise return with %d)", retval));
       retval = PAM_SUCCESS;
     }
-  DBG (("done. [%s]", pam_strerror (pamh, retval)));
-  pam_set_data (pamh, "yubico_setcred_return", (void*)(intptr_t)retval, NULL);
-  pam_set_data (pamh, "yubico_used_ldap", (void*)(intptr_t)cfg->ldap_bind_no_anonymous, NULL);
+  DBG (("done. [%s]", v_pam_strerror (pamh, retval)));
+  v_pam_set_data (pamh, "yubico_setcred_return", (void*)(intptr_t)retval, NULL);
+  v_pam_set_data (pamh, "yubico_used_ldap", (void*)(intptr_t)cfg->ldap_bind_no_anonymous, NULL);
 
   if (resp)
     {
@@ -1098,10 +1084,10 @@ PAM_EXTERN int
 pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
   int use_ldap = -1;
-  int rc = pam_get_data(pamh, "yubico_used_ldap", (const void**)&use_ldap);
+  int rc = v_pam_get_data(pamh, "yubico_used_ldap", (const void**)&use_ldap);
   if (rc == PAM_SUCCESS && use_ldap) {
 	  int retval;
-	  rc = pam_get_data(pamh, "yubico_setcred_return", (const void**)&retval);
+	  rc = v_pam_get_data(pamh, "yubico_setcred_return", (const void**)&retval);
 	  if (rc == PAM_SUCCESS && retval == PAM_SUCCESS) {
 	      D (("pam_sm_acct_mgmt returing PAM_SUCCESS"));
 	      return PAM_SUCCESS;
