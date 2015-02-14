@@ -354,14 +354,18 @@ OpenVPN and ActiveDirectory
 ---------------------------
 
 create file '/etc/pam.d/openvpn':
+------
 auth  required  pam_yubico.so ldap_uri=ldap://ldap-srv debug id=19 yubi_attr=pager
    ldapdn=dc=ad,dc=next-audience,dc=net
    ldap_filter=(&(sAMAccountName=%u)(memberOf=CN=mygroup,OU=DefaultUser,DC=adivser,DC=net))
    ldap_bind_no_anonymous ldap_bind_user_filter=%u@adviser.com try_first_pass
 account required  pam_yubico.so
+------
 
 create file 'openvpn.conf'
+------
 plugin openvpn-plugin-auth-pam.so openvpn
+------
 
 
 Feedback
