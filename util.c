@@ -465,40 +465,37 @@ write_chalresp_state(FILE *f, CR_STATE *state)
 }
 #endif /* HAVE_CR */
 
-
-int filter_result_len(const char *filter, const char *user, char *output) {
-  int user_len = strlen(user);
-  int filter_len = strlen(filter);
-  const char *result;
-  int result_len = 0;
-  const char *percent_sign;
-  for (result = filter ; (percent_sign = strchr(result, '%')) ; result = percent_sign) {
-    if ((percent_sign + 1 - filter) > filter_len) {
-      break;
+size_t filter_result_len(const char *filter, const char *user, char *output) {
+  const char *part = NULL;
+  char *ptr = output;
+  size_t result = 0;
+  do
+    {
+      size_t len;
+      part = strstr(filter, "%u");
+      if(part)
+        len = part - filter;
+      else
+        len = strlen(filter);
+      if (output)
+        {
+          strncpy(ptr, filter, len);
+          ptr += len;
+        }
+      result += len;
+      filter += len + 2;
+      if(part != NULL)
+        {
+          if(output)
+            {
+              strncpy(ptr, user, strlen(user));
+              ptr += strlen(user);
+            }
+          result += strlen(user);
+        }
     }
-    if (output) {
-      memcpy(output, result, percent_sign - result);
-      output += percent_sign - result;
-    }
-    if (*(percent_sign+1) == 'u') {
-      if (output) {
-        memcpy(output, user, user_len);
-        output += user_len;
-      }
-      result_len += (percent_sign - result) + user_len;
-      ++percent_sign; // skip u
-    } else {
-      if (output) {
-        *output++ = '%';
-      }
-      result_len += percent_sign + 1 - result;
-    }
-    ++percent_sign;
-  }
-  if (output) {
-    memcpy(output, result, ((filter+filter_len)-result) + 1);
-  }
-  return result_len + (filter+filter_len-result);
+  while(part != NULL);
+  return result;
 }
 
 char *filter_printf(const char *filter, const char *user) {
@@ -506,4 +503,3 @@ char *filter_printf(const char *filter, const char *user) {
   filter_result_len(filter, user, result);
   return result;
 }
-
