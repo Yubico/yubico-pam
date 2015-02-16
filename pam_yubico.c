@@ -723,13 +723,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
       if (strncmp (argv[i], "ldap_filter=", sizeof("ldap_filter=")-1) == 0)
 	cfg->ldap_filter = argv[i] + sizeof("ldap_filter=")-1;
       if (strncmp (argv[i], "ldap_cacertfile=", sizeof("ldap_cacertfile=")-1) == 0)
-      cfg->ldap_cacertfile = (char *) argv[i] + sizeof("ldap_cacertfile=")-1;
-      /* compatible with https://github.com/Yubico/yubico-pam/pull/39/files */
-      if (strncmp (argv[i], "binddn=", sizeof("binddn=")-1) == 0)
-      cfg->ldap_bind_user = (char *) argv[i] + sizeof("binddn=")-1;
-      if (strncmp (argv[i], "bindpw=", sizeof("bindpw=")-1) == 0)
-      cfg->ldap_bind_password = (char *) argv[i] + sizeof("bindpw=")-1;
-      /* compatible with https://github.com/Yubico/yubico-pam/pull/39/files */
+        cfg->ldap_cacertfile = (char *) argv[i] + sizeof("ldap_cacertfile=")-1;
       if (strncmp (argv[i], "ldapdn=", 7) == 0)
 	cfg->ldapdn = argv[i] + 7;
       if (strncmp (argv[i], "user_attr=", 10) == 0)
