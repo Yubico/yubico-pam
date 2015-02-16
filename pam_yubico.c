@@ -791,8 +791,13 @@ pam_sm_authenticate (pam_handle_t * pamh,
       goto done;
     }
 
-  rc = ykclient_init (&ykc);
-  if (rc != YKCLIENT_OK)
+  if(ykclient_global_init() != YKCLIENT_OK)
+    {
+      DBG (("Failed initializing ykclient library"));
+      retval = PAM_AUTHINFO_UNAVAIL;
+      goto done;
+    }
+  if (ykclient_init (&ykc) != YKCLIENT_OK)
     {
       DBG (("ykclient_init() failed (%d): %s", rc, ykclient_strerror (rc)));
       retval = PAM_AUTHINFO_UNAVAIL;
@@ -1014,7 +1019,10 @@ done:
   if (tmpurl)
     free(tmpurl);
   if (ykc)
-    ykclient_done (&ykc);
+    {
+      ykclient_done (&ykc);
+      ykclient_global_done();
+    }
   if (cfg->alwaysok && retval != PAM_SUCCESS)
     {
       DBG (("alwaysok needed (otherwise return with %d)", retval));
