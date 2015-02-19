@@ -82,6 +82,8 @@ struct cfg
   int debug;
   int alwaysok;
   int verbose_otp;
+  const char *password_prompt;
+  const char *yubi_prompt;
   int try_first_pass;
   int use_first_pass;
   const char *auth_file;
@@ -105,10 +107,32 @@ struct cfg
   const char *chalresp_path;
 };
 
+struct YubiPassword {
+  const char *password;
+  char otp[MAX_TOKEN_ID_LEN + TOKEN_OTP_LEN + 1];
+  char otp_id[MAX_TOKEN_ID_LEN + 1];
+};
+
 #ifdef DBG
 #undef DBG
 #endif
 #define DBG(x) if (cfg->debug) { D(x); }
+
+static void password_free(const char *d) {
+  if (d) {
+    memset((void*)d, 0, strlen(d));
+    free((void*)d);
+  }
+}
+
+static void free_yubipw(struct YubiPassword *yp) {
+  if (!yp) {
+    return;
+  }
+  if (yp->password) {
+    password_free(yp->password);
+  }
+}
 
 /*
  * Authorize authenticated OTP_ID for login as USERNAME using
@@ -193,9 +217,7 @@ free_out:
  */
 static int
 authorize_user_token_ldap (struct cfg *cfg,
-			   const char *user,
-                     const char *password,
-			   const char *token_id)
+			   const char *user, struct YubiPassword *yubipw)
 {
   int retval = 0;
   int protocol;
@@ -266,8 +288,8 @@ authorize_user_token_ldap (struct cfg *cfg,
     } else {
 	tmp_user = strdup(user);
     }
-    DBG (("try bind with: %s:[%s]", tmp_user, password));
-    rc = v_ldap_simple_bind_s (ld, tmp_user, password);
+    DBG (("try bind with: %s:[XXXX]", tmp_user));
+    rc = v_ldap_simple_bind_s (ld, tmp_user, yubipw->password);
     free(tmp_user);
   } else {
     DBG (("try bind anonymous"));
@@ -336,12 +358,12 @@ authorize_user_token_ldap (struct cfg *cfg,
 	          DBG(("LDAP : Found %i values - checking if any of them match '%s:%s:%s'",
 		       v_ldap_count_values_len(vals),
 		       vals[i]->bv_val,
-		       cfg->yubi_attr_prefix ? cfg->yubi_attr_prefix : "", token_id));
+		       cfg->yubi_attr_prefix ? cfg->yubi_attr_prefix : "", yubipw->otp_id));
 
 		  /* Only values containing this prefix are considered. */
 		  if ((!cfg->yubi_attr_prefix || !strncmp (cfg->yubi_attr_prefix, vals[i]->bv_val, yubi_attr_prefix_len)))
 		    {
-		      if(!strncmp (token_id, vals[i]->bv_val + yubi_attr_prefix_len, strlen (token_id)))
+		      if(!strncmp (yubipw->otp_id, vals[i]->bv_val + yubi_attr_prefix_len, strlen (yubipw->otp_id)))
 		        {
 		          DBG (("Token Found :: %s", vals[i]->bv_val));
 		          retval = 1;
@@ -660,6 +682,8 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
   cfg->client_id = -1;
   cfg->token_id_length = DEFAULT_TOKEN_ID_LEN;
   cfg->mode = CLIENT;
+  cfg->password_prompt = "password: ";
+  cfg->yubi_prompt = "Yubikey for '%u': ";
 
   for (i = 0; i < argc; i++)
     {
@@ -673,6 +697,12 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->alwaysok = 1;
       if (strcmp (argv[i], "verbose_otp") == 0)
 	cfg->verbose_otp = 1;
+      if (strncmp (argv[i], "password_prompt=", sizeof("password_prompt=")-1) == 0)
+	cfg->password_prompt = argv[i] + sizeof("password_prompt=")-1;
+      if (strncmp (argv[i], "yubikey_prompt=", sizeof("yubikey_prompt=")-1) == 0)
+	cfg->yubi_prompt = argv[i] + sizeof("yubikey_prompt=")-1;
+      if (strncmp (argv[i], "ldap_uri=", 9) == 0)
+	cfg->ldap_uri = argv[i] + 9;
       if (strcmp (argv[i], "try_first_pass") == 0)
 	cfg->try_first_pass = 1;
       if (strcmp (argv[i], "use_first_pass") == 0)
@@ -730,6 +760,8 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
       D (("debug=%d", cfg->debug));
       D (("alwaysok=%d", cfg->alwaysok));
       D (("verbose_otp=%d", cfg->verbose_otp));
+      D (("password_prompt=%s", cfg->password_prompt));
+      D (("yubi_prompt=%s", cfg->yubi_prompt));
       D (("try_first_pass=%d", cfg->try_first_pass));
       D (("use_first_pass=%d", cfg->use_first_pass));
       D (("authfile=%s", cfg->auth_file ? cfg->auth_file : "(null)"));
@@ -753,30 +785,181 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
     }
 }
 
+static int ykclient_setup(struct cfg *cfg, ykclient_t **ykc, size_t *templates, char **urls) {
+  int rc;
+  rc = v_ykclient_init (ykc);
+  if (rc != YKCLIENT_OK)
+    {
+      DBG (("ykclient_init() failed (%d): %s", rc, v_ykclient_strerror (rc)));
+      return PAM_AUTHINFO_UNAVAIL;
+    }
+
+  rc = v_ykclient_set_client_b64 (*ykc, cfg->client_id, cfg->client_key);
+  if (rc != YKCLIENT_OK)
+    {
+      DBG (("ykclient_set_client_b64() failed (%d): %s",
+	    rc, v_ykclient_strerror (rc)));
+      return PAM_AUTHINFO_UNAVAIL;
+    }
+
+  if (cfg->client_key)
+    v_ykclient_set_verify_signature (*ykc, 1);
+
+  if (cfg->capath)
+    v_ykclient_set_ca_path (*ykc, cfg->capath);
+
+  if (cfg->url)
+    {
+      rc = v_ykclient_set_url_template (*ykc, cfg->url);
+      if (rc != YKCLIENT_OK)
+	{
+	  DBG (("v_ykclient_set_url_template() failed (%d): %s",
+		rc, v_ykclient_strerror (rc)));
+	  return PAM_AUTHINFO_UNAVAIL;
+	}
+    }
+
+  if (cfg->urllist)
+    {
+      char *saveptr = NULL;
+      char *part = NULL;
+      char *tmpurl = strdup(cfg->urllist);
+
+      while ((part = strtok_r(*templates == 0 ? tmpurl : NULL, ";", &saveptr)))
+	{
+	  if(*templates == 10)
+	    {
+	      DBG (("maximum 10 urls supported in list."));
+	      return PAM_AUTHINFO_UNAVAIL;
+	    }
+	  urls[*templates] = strdup(part);
+	  (*templates)++;
+	}
+      free(tmpurl);
+      rc = v_ykclient_set_url_bases (*ykc, *templates, (const char **)urls);
+      if (rc != YKCLIENT_OK)
+	{
+	  DBG (("ykclient_set_url_bases() failed (%d): %s",
+		rc, v_ykclient_strerror (rc)));
+	  return PAM_AUTHINFO_UNAVAIL;
+	}
+    }
+  return PAM_SUCCESS;
+}
+
+static int ask_user_for_input(struct cfg *cfg, pam_handle_t * pamh, const char *user, const char *template, char **password) {
+  struct pam_conv *conv;
+  const struct pam_message *pmsg[1];
+  struct pam_message msg[1];
+  struct pam_response *resp = NULL;
+
+  int retval = v_pam_get_item(pamh, PAM_CONV, (const void **) &conv);
+  if (retval != PAM_SUCCESS)
+    {
+      DBG (("get conv returned error: %s", v_pam_strerror (pamh, retval)));
+      return retval;
+    }
+  pmsg[0] = &msg[0];
+  const char *prompt = filter_printf(template, user);
+  msg[0].msg = filter_printf(template, user);
+  if (!msg[0].msg)
+    {
+      DBG (("filter_printf return null for %s:%s", template, user));
+      return PAM_BUF_ERR;
+    }
+  msg[0].msg_style = cfg->verbose_otp ? PAM_PROMPT_ECHO_ON : PAM_PROMPT_ECHO_OFF;
+  retval = conv->conv (sizeof(msg)/sizeof(msg[0]), pmsg, &resp, conv->appdata_ptr);
+  free (msg[0].msg);
+  if (retval != PAM_SUCCESS)
+    {
+      DBG (("conv returned error: %s", v_pam_strerror (pamh, retval)));
+      return retval;
+    }
+  password_free(*password);
+  *password = strdup(resp->resp);
+  password_free(resp->resp);
+  free(resp);
+  return PAM_SUCCESS;
+}
+
+static int ask_password_and_otp(struct cfg *cfg, pam_handle_t *pamh, const char *user, char **password) {
+  if (*password == NULL) {
+    int rc = ask_user_for_input(cfg, pamh, user, cfg->password_prompt, password);
+    if (rc != PAM_SUCCESS) {
+      return rc;
+    }
+  }
+  if (*password != NULL && strlen(*password) < (cfg->token_id_length + TOKEN_OTP_LEN)) {
+    char *yubikey = NULL;
+    int rc = ask_user_for_input(cfg, pamh, user, cfg->yubi_prompt, &yubikey);
+    if (rc != PAM_SUCCESS) {
+      return rc;
+    }
+    char *passwd_plus_otp = malloc(strlen(*password) + strlen(yubikey) + 1);
+    strcpy(passwd_plus_otp, *password);
+    strcat(passwd_plus_otp, yubikey);
+    password_free(yubikey);
+    password_free(*password);
+    *password = passwd_plus_otp;
+  }
+  return PAM_SUCCESS;
+}
+
+static int split_password(struct cfg *cfg, pam_handle_t *pamh, const char *password, struct YubiPassword *yubipw) {
+  if (password == NULL)
+    {
+      DBG (("no password, giving up"));
+      return PAM_AUTH_ERR;
+    }
+
+  int password_len = strlen (password);
+  if (password_len < (cfg->token_id_length + TOKEN_OTP_LEN))
+    {
+      DBG (("OTP too short to be considered : %i < %i", password_len, (cfg->token_id_length + TOKEN_OTP_LEN)));
+      return PAM_AUTH_ERR;
+    }
+
+  /* In case the input was systempassword+YubiKeyOTP, we want to skip over
+     "systempassword" when copying the token_id and OTP to separate buffers */
+  int skip_bytes = password_len - (cfg->token_id_length + TOKEN_OTP_LEN);
+
+  DBG (("Skipping first %i bytes. Length is %i, token_id set to %i and token OTP always %i.",
+	skip_bytes, password_len, cfg->token_id_length, TOKEN_OTP_LEN));
+
+  /* Copy full YubiKey output (public ID + OTP) into otp */
+  strncpy (yubipw->otp, password + skip_bytes, sizeof (yubipw->otp) - 1);
+  /* Copy only public ID into otp_id. Destination buffer is zeroed. */
+  strncpy (yubipw->otp_id, password + skip_bytes, cfg->token_id_length);
+  DBG (("OTP: %s ID: %s ", yubipw->otp, yubipw->otp_id));
+
+  char *onlypasswd = malloc(password_len - (TOKEN_OTP_LEN + cfg->token_id_length)+1);
+  strncpy(onlypasswd, password, password_len - (TOKEN_OTP_LEN + cfg->token_id_length));
+  // loosing the password memory
+  int retval = v_pam_set_item (pamh, PAM_AUTHTOK, onlypasswd);
+  if (retval != PAM_SUCCESS)
+    {
+      DBG (("set_item returned error: %s", v_pam_strerror(pamh, retval)));
+      return retval; 
+    }
+  return PAM_SUCCESS;
+}
+
 PAM_EXTERN int
 pam_sm_authenticate (pam_handle_t * pamh,
 		     int flags, int argc, const char **argv)
 {
   int retval, rc;
   const char *user = NULL;
-  const char *password = NULL;
-  char otp[MAX_TOKEN_ID_LEN + TOKEN_OTP_LEN + 1] = { 0 };
-  char otp_id[MAX_TOKEN_ID_LEN + 1] = { 0 };
-  int password_len = 0;
+  char *password = NULL;
   int skip_bytes = 0;
   int valid_token = 0;
   struct pam_conv *conv;
-  const struct pam_message *pmsg[1];
-  struct pam_message msg[1];
-  struct pam_response *resp = NULL;
-  int nargs = 1;
   ykclient_t *ykc = NULL;
   struct cfg cfg_st;
   struct cfg *cfg = &cfg_st; /* for DBG macro */
-  size_t templates = 0;
   char *urls[10];
-  char *tmpurl = NULL;
-  char *onlypasswd = NULL;
+  size_t templates = 0;
+  struct YubiPassword yubipw;
 
   parse_cfg (flags, argc, argv, cfg);
 
@@ -807,7 +990,9 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
   if (cfg->try_first_pass || cfg->use_first_pass)
     {
-      retval = v_pam_get_item (pamh, PAM_AUTHTOK, (const void **) &password);
+      char *tmp;
+      retval = v_pam_get_item (pamh, PAM_AUTHTOK, (const void **) &tmp);
+      password = strdup(tmp);
       if (retval != PAM_SUCCESS)
 	{
 	  DBG (("get password returned error: %s",
@@ -817,180 +1002,24 @@ pam_sm_authenticate (pam_handle_t * pamh,
       DBG (("get password returned: %s", password));
     }
 
-  if (cfg->use_first_pass && password == NULL)
-    {
-      DBG (("use_first_pass set and no password, giving up"));
-      retval = PAM_AUTH_ERR;
+  if (ykclient_setup(cfg, &ykc, &templates, urls) != PAM_SUCCESS) {
+    goto done;
+  }
+
+  if (!cfg->use_first_pass) {
+    retval = ask_password_and_otp(cfg, pamh, user, &password);
+    if (retval != PAM_SUCCESS) {
+      DBG (("ask_password_and_otp failed"));
       goto done;
     }
+  }
 
-  rc = v_ykclient_init (&ykc);
-  if (rc != YKCLIENT_OK)
-    {
-      DBG (("ykclient_init() failed (%d): %s", rc, v_ykclient_strerror (rc)));
-      retval = PAM_AUTHINFO_UNAVAIL;
+  retval = split_password(cfg, pamh, password, &yubipw);
+  if (PAM_SUCCESS != NULL) {
+      DBG (("split_password failed"));
       goto done;
-    }
-
-  rc = v_ykclient_set_client_b64 (ykc, cfg->client_id, cfg->client_key);
-  if (rc != YKCLIENT_OK)
-    {
-      DBG (("ykclient_set_client_b64() failed (%d): %s",
-	    rc, v_ykclient_strerror (rc)));
-      retval = PAM_AUTHINFO_UNAVAIL;
-      goto done;
-    }
-
-  if (cfg->client_key)
-    v_ykclient_set_verify_signature (ykc, 1);
-
-  if (cfg->capath)
-    v_ykclient_set_ca_path (ykc, cfg->capath);
-
-  if (cfg->url)
-    {
-      rc = v_ykclient_set_url_template (ykc, cfg->url);
-      if (rc != YKCLIENT_OK)
-	{
-	  DBG (("v_ykclient_set_url_template() failed (%d): %s",
-		rc, v_ykclient_strerror (rc)));
-	  retval = PAM_AUTHINFO_UNAVAIL;
-	  goto done;
-	}
-    }
-
-  if (cfg->urllist)
-    {
-      char *saveptr = NULL;
-      char *part = NULL;
-      tmpurl = strdup(cfg->urllist);
-
-      while ((part = strtok_r(templates == 0 ? tmpurl : NULL, ";", &saveptr)))
-	{
-	  if(templates == 10)
-	    {
-	      DBG (("maximum 10 urls supported in list."));
-	      retval = PAM_AUTHINFO_UNAVAIL;
-	      goto done;
-	    }
-	  urls[templates] = strdup(part);
-	  templates++;
-	}
-      rc = v_ykclient_set_url_bases (ykc, templates, (const char **)urls);
-      if (rc != YKCLIENT_OK)
-	{
-	  DBG (("ykclient_set_url_bases() failed (%d): %s",
-		rc, v_ykclient_strerror (rc)));
-	  retval = PAM_AUTHINFO_UNAVAIL;
-	  goto done;
-	}
-    }
-
-  if (password == NULL)
-    {
-      retval = v_pam_get_item (pamh, PAM_CONV, (const void **) &conv);
-      if (retval != PAM_SUCCESS)
-	{
-	  DBG (("get conv returned error: %s", v_pam_strerror (pamh, retval)));
-	  goto done;
-	}
-
-      pmsg[0] = &msg[0];
-      {
-#define QUERY_TEMPLATE "YubiKey for `%s': "
-	size_t len = strlen (QUERY_TEMPLATE) + strlen (user);
-	int wrote;
-
-	msg[0].msg = malloc (len);
-	if (!msg[0].msg)
-	  {
-	    retval = PAM_BUF_ERR;
-	    goto done;
-	  }
-
-	wrote = snprintf ((char *) msg[0].msg, len, QUERY_TEMPLATE, user);
-	if (wrote < 0 || wrote >= len)
-	  {
-	    retval = PAM_BUF_ERR;
-	    goto done;
-	  }
-      }
-      msg[0].msg_style = cfg->verbose_otp ? PAM_PROMPT_ECHO_ON : PAM_PROMPT_ECHO_OFF;
-
-      retval = conv->conv (nargs, pmsg, &resp, conv->appdata_ptr);
-
-      free ((char *) msg[0].msg);
-
-      if (retval != PAM_SUCCESS)
-	{
-	  DBG (("conv returned error: %s", v_pam_strerror (pamh, retval)));
-	  goto done;
-	}
-
-      if (resp->resp == NULL)
-	{
-	  DBG (("conv returned NULL passwd?"));
-	  retval = PAM_AUTH_ERR;
-	  goto done;
-	}
-
-      DBG (("conv returned %lu bytes", (unsigned long) strlen(resp->resp)));
-
-      password = resp->resp;
-    }
-
-  password_len = strlen (password);
-  if (password_len < (cfg->token_id_length + TOKEN_OTP_LEN))
-    {
-      DBG (("OTP too short to be considered : %i < %i", password_len, (cfg->token_id_length + TOKEN_OTP_LEN)));
-      retval = PAM_AUTH_ERR;
-      goto done;
-    }
-
-  /* In case the input was systempassword+YubiKeyOTP, we want to skip over
-     "systempassword" when copying the token_id and OTP to separate buffers */
-  skip_bytes = password_len - (cfg->token_id_length + TOKEN_OTP_LEN);
-
-  DBG (("Skipping first %i bytes. Length is %i, token_id set to %i and token OTP always %i.",
-	skip_bytes, password_len, cfg->token_id_length, TOKEN_OTP_LEN));
-
-  /* Copy full YubiKey output (public ID + OTP) into otp */
-  strncpy (otp, password + skip_bytes, sizeof (otp) - 1);
-  /* Copy only public ID into otp_id. Destination buffer is zeroed. */
-  strncpy (otp_id, password + skip_bytes, cfg->token_id_length);
-
-  DBG (("OTP: %s ID: %s ", otp, otp_id));
-
-  /* user entered their system password followed by generated OTP? */
-  if (password_len > TOKEN_OTP_LEN + cfg->token_id_length)
-    {
-      onlypasswd = strdup (password);
-
-      if (! onlypasswd) {
-	retval = PAM_BUF_ERR;
-	goto done;
-      }
-
-      onlypasswd[password_len - (TOKEN_OTP_LEN + cfg->token_id_length)] = '\0';
-
-      DBG (("Extracted a probable system password entered before the OTP - "
-	    "setting item PAM_AUTHTOK"));
-
-      retval = v_pam_set_item (pamh, PAM_AUTHTOK, onlypasswd);
-      if (retval != PAM_SUCCESS)
-	{
-	  DBG (("set_item returned error: %s", v_pam_strerror (pamh, retval)));
-	  goto done;
-	}
-    }
-  else
-    password = NULL;
-
-  rc = v_ykclient_request (ykc, otp);
-
-  DBG (("ykclient return value (%d): %s", rc,
-	v_ykclient_strerror (rc)));
-
+  }
+  rc = v_ykclient_request (ykc, yubipw.otp);
   switch (rc)
     {
     case YKCLIENT_OK:
@@ -998,19 +1027,21 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
     case YKCLIENT_BAD_OTP:
     case YKCLIENT_REPLAYED_OTP:
+      DBG (("ykclient return value (%d): %s", rc, v_ykclient_strerror (rc)));
       retval = PAM_AUTH_ERR;
       goto done;
 
     default:
+      DBG (("ykclient return value (%d): %s", rc, v_ykclient_strerror (rc)));
       retval = PAM_AUTHINFO_UNAVAIL;
       goto done;
     }
 
   /* authorize the user with supplied token id */
   if (cfg->ldapserver != NULL || cfg->ldap_uri != NULL)
-    valid_token = authorize_user_token_ldap (cfg, user, onlypasswd, otp_id);
+    valid_token = authorize_user_token_ldap (cfg, user, &yubipw);
   else
-    valid_token = authorize_user_token (cfg, user, otp_id, pamh);
+    valid_token = authorize_user_token (cfg, user, yubipw.otp_id, pamh);
 
   switch(valid_token)
     {
@@ -1035,20 +1066,14 @@ pam_sm_authenticate (pam_handle_t * pamh,
     }
 
 done:
-  if (onlypasswd)
-    free(onlypasswd);
-  if (templates > 0)
-    {
-      size_t i;
-      for(i = 0; i < templates; i++)
-        {
-	  free(urls[i]);
-        }
-    }
-  if (tmpurl)
-    free(tmpurl);
+  password_free(password);
+  free_yubipw(&yubipw);
   if (ykc)
     v_ykclient_done (&ykc);
+  for(int i = 0; i < templates; i++)
+    {
+      free(urls[i]);
+    }
   if (cfg->alwaysok && retval != PAM_SUCCESS)
     {
       DBG (("alwaysok needed (otherwise return with %d)", retval));
@@ -1057,14 +1082,6 @@ done:
   DBG (("done. [%s]", v_pam_strerror (pamh, retval)));
   v_pam_set_data (pamh, "yubico_setcred_return", (void*)(intptr_t)retval, NULL);
   v_pam_set_data (pamh, "yubico_used_ldap", (void*)(intptr_t)cfg->ldap_bind_no_anonymous, NULL);
-
-  if (resp)
-    {
-      if (resp->resp)
-        free (resp->resp);
-      free (resp);
-    }
-
   return retval;
 }
 

@@ -32,16 +32,16 @@
 #include "virt_ldap.h"
 
 #ifndef LDAP_DEPRECATED
-int ldap_simple_bind_s(LDAP *ld, const char *who, const char *passwd) {
+static int ldap_simple_bind_s(LDAP *ld, const char *who, const char *passwd) {
   struct berval creds;
   creds.bv_len = strlen(passwd);
   creds.bv_val = (char*)passwd;
   return ldap_sasl_bind_s(ld, who, NULL, &creds, NULL, NULL, NULL);
 }
-int ldap_unbind_s(LDAP *ld) {
+static int ldap_unbind_s(LDAP *ld) {
   return ldap_unbind_ext(ld, NULL, NULL);
 }
-LDAP *ldap_init(const char *host, int port) {
+static LDAP *ldap_init(const char *host, int port) {
   LDAP *ret;
   char uri[sizeof("ldap://") + strlen(host) + sizeof(":99999") + 10];
   sprintf(uri, "ldap://%s:%d", host, port);
