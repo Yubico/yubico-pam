@@ -37,6 +37,12 @@
 #include <stdio.h>
 #include <stdint.h>
 
+
+typedef struct {
+  int  free;
+  char *buf;
+} YubiMem;
+
 #if defined(DEBUG_PAM)
 # if defined(HAVE_SECURITY__PAM_MACROS_H)
 #  define DEBUG
@@ -52,7 +58,7 @@
 # define D(x)
 #endif /* DEBUG_PAM */
 
-int get_user_cfgfile_path(const char *common_path, const char *filename, const char *username, char **fn);
+int get_user_cfgfile_path(YubiMem *ym, const char *common_path, const char *filename, const char *username, char **fn);
 int check_user_token(const char *authfile, const char *username, const char *otp_id, int verbose);
 
 #if HAVE_CR
@@ -82,7 +88,7 @@ typedef struct chalresp_state CR_STATE;
 
 int generate_random(void *buf, int len);
 
-int get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *username, char **fn);
+int get_user_challenge_file(YubiMem *ym, YK_KEY *yk, const char *chalresp_path, const char *username, char **fn);
 
 int load_chalresp_state(FILE *f, CR_STATE *state, bool verbose);
 int write_chalresp_state(FILE *f, CR_STATE *state);
@@ -97,6 +103,13 @@ int challenge_response(YK_KEY *yk, int slot,
 #endif /* HAVE_CR */
 
 int filter_result_len(const char *filter, const char *user, char *output);
-char *filter_printf(const char *filter, const char *user);
+char *filter_printf(YubiMem *ym, const char *filter, const char *user);
+
+YubiMem *y_construct();
+void y_release(YubiMem *ym);
+
+void *y_alloc(YubiMem *ym, size_t t);
+char *y_strdup(YubiMem *ym, const char *str);
+
 
 #endif /* __PAM_YUBICO_UTIL_H_INCLUDED__ */

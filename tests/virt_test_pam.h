@@ -1,6 +1,8 @@
+
 static struct TestPam {
   const char *user;
   const char *auth_ok_password;
+  const struct pam_conv *conv;
 } test_pam_instance;
 
 const char *test_pam_strerror(PAM_STRERROR_CONST pam_handle_t *_pamh, int _error_number) {
@@ -31,6 +33,10 @@ int test_pam_get_item(const pam_handle_t *_pamh, int _item_type, const void **_i
     *_item = ((struct TestPam *)_pamh)->auth_ok_password;
     return 0;
   }
+  if (_item_type == PAM_CONV) {
+    *_item = test_pam_instance.conv;
+    return 0;
+  }
   return 1;
 }
 
@@ -45,6 +51,7 @@ int test_pam_set_item(pam_handle_t *_pamh, int _item_type, const void *_item) {
 int test_pam_start(const char *_service, const char *_user, const struct pam_conv *_pam_conv, pam_handle_t **_pamh) {
   test_pam_instance.user = _user;
   *_pamh = (pam_handle_t *)&test_pam_instance;
+  test_pam_instance.conv = _pam_conv;
   return 0;
 }
 
