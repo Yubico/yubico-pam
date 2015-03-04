@@ -126,13 +126,13 @@ static void test_load_chalresp_state(void) {
 #endif /* HAVE_CR */
 
 static void test_filter_printf(void) {
-    assert(filter_result_len("meno %u", "doof", NULL) == 9);
-    assert(filter_result_len("meno %u %u", "doof", NULL) == 14);
-    assert(filter_result_len("%u meno %u", "doof", NULL) == 14);
-    assert(filter_result_len("%u me %u no %u", "doof", NULL) == 20);
-    assert(filter_result_len("meno %w %%u", "doof", NULL) == 13);
-    assert(filter_result_len("meno %w %%u meno", "doof", NULL) == 18);
-    assert(filter_result_len("meno ", "doof", NULL) == 5);
+    assert(filter_result_len("meno %u", "doof", NULL) == 10);
+    assert(filter_result_len("meno %u %u", "doof", NULL) == 15);
+    assert(filter_result_len("%u meno %u", "doof", NULL) == 15);
+    assert(filter_result_len("%u me %u no %u", "doof", NULL) == 21);
+    assert(filter_result_len("meno %w %%u", "doof", NULL) == 14);
+    assert(filter_result_len("meno %w %%u meno", "doof", NULL) == 19);
+    assert(filter_result_len("meno ", "doof", NULL) == 6);
 
     assert(!strcmp(filter_printf("meno %u", "doof"), "meno doof"));
     assert(!strcmp(filter_printf("meno %u %u", "doof"), "meno doof doof"));

@@ -476,16 +476,16 @@ size_t filter_result_len(const char *filter, const char *user, char *output) {
         len = part - filter;
       else
         len = strlen(filter);
-      if (output != NULL)
+      if (output)
         {
           strncpy(output, filter, len);
           output += len;
         }
       result += len;
       filter += len + 2;
-      if(part != NULL)
+      if(part)
         {
-          if(output != NULL)
+          if(output)
             {
               strncpy(output, user, strlen(user));
               output += strlen(user);
@@ -493,12 +493,15 @@ size_t filter_result_len(const char *filter, const char *user, char *output) {
           result += strlen(user);
         }
     }
-  while(part != NULL);
-  return result;
+  while(part);
+
+  if(output)
+    *output = '\0';
+  return(result + 1);
 }
 
 char *filter_printf(const char *filter, const char *user) {
-  char *result = malloc(filter_result_len(filter, user, NULL) + 1);
+  char *result = malloc(filter_result_len(filter, user, NULL));
   filter_result_len(filter, user, result);
   return result;
 }
