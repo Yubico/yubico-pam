@@ -993,7 +993,11 @@ pam_sm_authenticate (pam_handle_t * pamh,
           DBG (("setting empty password"));
           password = y_strdup(ym, "");
 	} else {
-          password = y_strdup(ym, tmp);
+          if (tmp == NULL) {
+            password = y_strdup(ym, "");
+          } else {
+            password = y_strdup(ym, tmp);
+          }
         }
       DBG (("get password returned: %s", password));
     }
