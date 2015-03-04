@@ -40,6 +40,7 @@
 
 typedef struct {
   int  free;
+  int  size;
   char *buf;
 } YubiMem;
 

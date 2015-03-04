@@ -506,20 +506,24 @@ char *filter_printf(YubiMem *ym, const char *filter, const char *user) {
 YubiMem *y_construct() {
   YubiMem *ym = malloc(sizeof(YubiMem)); 
   ym->free = 8192;
+  ym->size = ym->free;
   ym->buf = malloc(ym->free);
   return ym;
 }
 
 void y_release(YubiMem *ym) {
+  memset(ym->buf, 0, ym->size);
   free(ym->buf);
   free(ym);
 }
 
 void *y_alloc(YubiMem *ym, size_t t) {
+  t = (t/sizeof(size_t)+1)*sizeof(size_t);
   if (ym->free >= t) {
     ym->free -= t;
     return &ym->buf[ym->free];
   }
+  D(("out of memory"));
   return 0;
 }
 
