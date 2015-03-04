@@ -712,18 +712,18 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->ldapserver = argv[i] + 11;
       if (strncmp (argv[i], "ldap_uri=", 9) == 0)
 	cfg->ldap_uri = argv[i] + 9;
-      if (strncmp (argv[i], "ldap_bind_no_anonymous", sizeof("ldap_bind_no_anonymous")-1) == 0)
+      if (strncmp (argv[i], "ldap_bind_no_anonymous", 22) == 0)
 	cfg->ldap_bind_no_anonymous = 1;
-      if (strncmp (argv[i], "ldap_bind_user=", sizeof("ldap_bind_user=")-1) == 0)
-	cfg->ldap_bind_user = argv[i] + sizeof("ldap_bind_user=")-1;
-      if (strncmp (argv[i], "ldap_bind_user_filter=", sizeof("ldap_bind_user_filter=")-1) == 0)
-	cfg->ldap_bind_user_filter = argv[i] + sizeof("ldap_bind_user_filter=")-1;
-      if (strncmp (argv[i], "ldap_bind_password=", sizeof("ldap_bind_password=")-1) == 0)
-	cfg->ldap_bind_password = argv[i] + sizeof("ldap_bind_password=")-1;
-      if (strncmp (argv[i], "ldap_filter=", sizeof("ldap_filter=")-1) == 0)
-	cfg->ldap_filter = argv[i] + sizeof("ldap_filter=")-1;
-      if (strncmp (argv[i], "ldap_cacertfile=", sizeof("ldap_cacertfile=")-1) == 0)
-        cfg->ldap_cacertfile = (char *) argv[i] + sizeof("ldap_cacertfile=")-1;
+      if (strncmp (argv[i], "ldap_bind_user=", 15) == 0)
+	cfg->ldap_bind_user = argv[i] + 15;
+      if (strncmp (argv[i], "ldap_bind_user_filter=", 22) == 0)
+	cfg->ldap_bind_user_filter = argv[i] + 22;
+      if (strncmp (argv[i], "ldap_bind_password=", 19) == 0)
+	cfg->ldap_bind_password = argv[i] + 19;
+      if (strncmp (argv[i], "ldap_filter=", 12) == 0)
+	cfg->ldap_filter = argv[i] + 12;
+      if (strncmp (argv[i], "ldap_cacertfile=", 16) == 0)
+        cfg->ldap_cacertfile = (char *) argv[i] + 16;
       if (strncmp (argv[i], "ldapdn=", 7) == 0)
 	cfg->ldapdn = argv[i] + 7;
       if (strncmp (argv[i], "user_attr=", 10) == 0)
