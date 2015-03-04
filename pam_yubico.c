@@ -382,9 +382,9 @@ display_error(pam_handle_t *pamh, const char *message) {
     return retval;
   }
 
-  D(("conv returned: '%s'", resp->resp));
   if (resp)
     {
+      D(("conv returned: '%s'", resp->resp));
       if (resp->resp)
         free (resp->resp);
       free (resp);
