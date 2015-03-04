@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014 Yubico AB
+ * Copyright (c) 2011-2015 Yubico AB
  * Copyright (c) 2011 Tollef Fog Heen <tfheen@err.no>
  * All rights reserved.
  *
@@ -35,6 +35,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <pwd.h>
 #include <unistd.h>
 
@@ -49,8 +52,9 @@
 #include <ykdef.h>
 #endif /* HAVE_CR */
 
+
 int
-get_user_cfgfile_path(const char *common_path, const char *filename, const char *username, char **fn)
+get_user_cfgfile_path(YubiMem *ym, const char *common_path, const char *filename, const char *username, char **fn)
 {
   /* Getting file from user home directory, e.g. ~/.yubico/challenge, or
    * from a system wide directory.
@@ -63,7 +67,7 @@ get_user_cfgfile_path(const char *common_path, const char *filename, const char 
 
   if (common_path != NULL) {
     len = strlen(common_path) + 1 + strlen(filename) + 1;
-    if ((userfile = malloc(len)) == NULL) {
+    if ((userfile = y_alloc(ym, len)) == NULL) {
       return 0;
     }
     snprintf(userfile, len, "%s/%s", common_path, filename);
@@ -78,7 +82,7 @@ get_user_cfgfile_path(const char *common_path, const char *filename, const char 
     return 0;
 
   len = strlen(p->pw_dir) + 9 + strlen(filename) + 1;
-  if ((userfile = malloc(len)) == NULL) {
+  if ((userfile = y_alloc(ym, len)) == NULL) {
     return 0;
   }
   snprintf(userfile, len, "%s/.yubico/%s", p->pw_dir, filename);
@@ -279,7 +283,7 @@ int challenge_response(YK_KEY *yk, int slot,
 }
 
 int
-get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *username, char **fn)
+get_user_challenge_file(YubiMem *ym, YK_KEY *yk, const char *chalresp_path, const char *username, char **fn)
 {
   /* Getting file from user home directory, i.e. ~/.yubico/challenge, or
    * from a system wide directory.
@@ -291,7 +295,6 @@ get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *usern
    */
 
   char *filename; /* not including directory */
-  int filename_malloced = 0;
   unsigned int serial = 0;
   int ret;
 
@@ -306,12 +309,10 @@ get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *usern
     int len;
     /* 0xffffffff == 4294967295 == 10 digits */
     len = strlen(chalresp_path == NULL ? "challenge" : username) + 1 + 10 + 1;
-    if ((filename = malloc(len)) != NULL) {
+    if ((filename = y_alloc(ym, len)) != NULL) {
       int res = snprintf(filename, len, "%s-%u", chalresp_path == NULL ? "challenge" : username, serial);
-      filename_malloced = 1;
       if (res < 0 || res > len) {
 	/* Not enough space, strangely enough. */
-	free(filename);
 	filename = NULL;
       }
     }
@@ -320,10 +321,7 @@ get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *usern
   if (filename == NULL)
     return 0;
 
-  ret = get_user_cfgfile_path (chalresp_path, filename, username, fn);
-  if(filename_malloced == 1) {
-    free(filename);
-  }
+  ret = get_user_cfgfile_path (ym, chalresp_path, filename, username, fn);
   return ret;
 }
 
@@ -461,3 +459,78 @@ write_chalresp_state(FILE *f, CR_STATE *state)
   return 0;
 }
 #endif /* HAVE_CR */
+
+
+int filter_result_len(const char *filter, const char *user, char *output) {
+  int user_len = strlen(user);
+  int filter_len = strlen(filter);
+  const char *result;
+  int result_len = 0;
+  const char *percent_sign;
+  for (result = filter ; (percent_sign = strchr(result, '%')) ; result = percent_sign) {
+    if ((percent_sign + 1 - filter) > filter_len) {
+      break;
+    }
+    if (output) {
+      memcpy(output, result, percent_sign - result);
+      output += percent_sign - result;
+    }
+    if (*(percent_sign+1) == 'u') {
+      if (output) {
+        memcpy(output, user, user_len);
+        output += user_len;
+      }
+      result_len += (percent_sign - result) + user_len;
+      ++percent_sign; // skip u
+    } else {
+      if (output) {
+        *output++ = '%';
+      }
+      result_len += percent_sign + 1 - result;
+    }
+    ++percent_sign;
+  }
+  if (output) {
+    memcpy(output, result, ((filter+filter_len)-result) + 1);
+  }
+  return result_len + (filter+filter_len-result);
+}
+
+char *filter_printf(YubiMem *ym, const char *filter, const char *user) {
+  char *result = y_alloc(ym, filter_result_len(filter, user, NULL) + 1);
+  filter_result_len(filter, user, result);
+  return result;
+}
+
+
+YubiMem *y_construct() {
+  YubiMem *ym = malloc(sizeof(YubiMem)); 
+  ym->free = 8192;
+  ym->size = ym->free;
+  ym->buf = malloc(ym->free);
+  return ym;
+}
+
+void y_release(YubiMem *ym) {
+  memset(ym->buf, 0, ym->size);
+  free(ym->buf);
+  free(ym);
+}
+
+void *y_alloc(YubiMem *ym, size_t t) {
+  t = (t/sizeof(size_t)+1)*sizeof(size_t);
+  if (ym->free >= t) {
+    ym->free -= t;
+    return &ym->buf[ym->free];
+  }
+  D(("out of memory"));
+  return 0;
+}
+
+char *y_strdup(YubiMem *ym, const char *str) {
+  int len = strlen(str);
+  char *buf = y_alloc(ym, len+1);
+  memcpy(buf, str, len+1);
+  return buf;
+}
+

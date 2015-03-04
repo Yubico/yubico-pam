@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Yubico AB
+ * Copyright (c) 2015 Yubico AB
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -44,9 +44,12 @@ static void test_get_user_cfgfile_path(void) {
   assert(ret == 1);
   assert(strcmp(file, "/foo/bar/test") == 0);
   free(file);
-  ret = get_user_cfgfile_path(NULL, "test", "root", &file);
+  ret = get_user_cfgfile_path(NULL, "test", getenv("USER"), &file);
   assert(ret == 1);
-  assert(strcmp(file, "/root/.yubico/test") == 0);
+  char tmp[1024];
+  strcpy(tmp, getenv("HOME"));
+  strcat(tmp, "/.yubico/test");
+  assert(strcmp(file, tmp) == 0);
   free(file);
 }
 
@@ -125,7 +128,27 @@ static void test_load_chalresp_state(void) {
 
 #endif /* HAVE_CR */
 
+static void test_filter_printf(void) {
+    assert(filter_result_len("meno %u", "doof", NULL) == 9);
+    assert(filter_result_len("meno %u %u", "doof", NULL) == 14);
+    assert(filter_result_len("%u meno %u", "doof", NULL) == 14);
+    assert(filter_result_len("%u me %u no %u", "doof", NULL) == 20);
+    assert(filter_result_len("meno %w %%u", "doof", NULL) == 13);
+    assert(filter_result_len("meno %w %%u meno", "doof", NULL) == 18);
+    assert(filter_result_len("meno ", "doof", NULL) == 5);
+
+    assert(!strcmp(filter_printf("meno %u", "doof"), "meno doof"));
+    assert(!strcmp(filter_printf("meno %u %u", "doof"), "meno doof doof"));
+    assert(!strcmp(filter_printf("%u meno %u", "doof"), "doof meno doof"));
+    assert(!strcmp(filter_printf("%u me %u no %u", "doof"), "doof me doof no doof"));
+    assert(!strcmp(filter_printf("meno %w %%u", "doof"), "meno %w %doof"));
+    assert(!strcmp(filter_printf("meno %w %%u meno", "doof"), "meno %w %doof meno"));
+    assert(!strcmp(filter_printf("meno ", "doof"), "meno "));
+    printf("test_filter_printf OK\n");
+}
+
 int main (void) {
+  test_filter_printf();
   test_get_user_cfgfile_path();
   test_check_user_token();
 #if HAVE_CR

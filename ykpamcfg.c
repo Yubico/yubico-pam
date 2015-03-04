@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014 Yubico AB
+ * Copyright (c) 2011-2015 Yubico AB
  * All rights reserved.
  *
  * Author : Fredrik Thulin <fredrik@yubico.com>
@@ -146,6 +146,7 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, u
   char *fn;
   struct passwd *p;
   FILE *f = NULL;
+  YubiMem *ym = y_construct();
 
   state.iterations = iterations;
   state.slot = slot;
@@ -185,8 +186,7 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, u
 	  }
       }
   }
-
-  if (! get_user_challenge_file(yk, output_dir, p->pw_name, &fn)) {
+  if (! get_user_challenge_file(ym, yk, output_dir, p->pw_name, &fn)) {
     fprintf (stderr, "Failed getting chalresp state filename\n");
     goto out;
   }
@@ -249,7 +249,7 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, u
  out:
   if (f)
     fclose (f);
-
+  y_release(ym);
   return ret;
 }
 
