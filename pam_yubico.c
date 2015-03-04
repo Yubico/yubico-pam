@@ -499,7 +499,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
    */
 
   yubikey_hex_encode(response_hex, buf, response_len);
-  if(state.salt_len > 0) { // the expected response has gone through pbkdf2
+  if(state.salt_len > 0) { /* the expected response has gone through pbkdf2 */
     YK_PRF_METHOD prf_method = {20, yk_hmac_sha1};
     yk_pbkdf2(response_hex, (unsigned char*)state.salt, state.salt_len, state.iterations,
         (unsigned char*)buf, response_len, &prf_method);
