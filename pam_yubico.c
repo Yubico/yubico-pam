@@ -121,7 +121,7 @@ struct cfg
   const char *user_attr;
   const char *yubi_attr;
   const char *yubi_attr_prefix;
-  int token_id_length;
+  unsigned int token_id_length;
   enum key_mode mode;
   const char *chalresp_path;
 };
@@ -715,7 +715,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
       if (strncmp (argv[i], "yubi_attr_prefix=", 17) == 0)
 	cfg->yubi_attr_prefix = argv[i] + 17;
       if (strncmp (argv[i], "token_id_length=", 16) == 0)
-	sscanf (argv[i], "token_id_length=%d", &cfg->token_id_length);
+	sscanf (argv[i], "token_id_length=%u", &cfg->token_id_length);
       if (strcmp (argv[i], "mode=challenge-response") == 0)
 	cfg->mode = CHRESP;
       if (strcmp (argv[i], "mode=client") == 0)
@@ -766,7 +766,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
   const char *password = NULL;
   char otp[MAX_TOKEN_ID_LEN + TOKEN_OTP_LEN + 1] = { 0 };
   char otp_id[MAX_TOKEN_ID_LEN + 1] = { 0 };
-  int password_len = 0;
+  size_t password_len = 0;
   int skip_bytes = 0;
   int valid_token = 0;
   struct pam_conv *conv;
