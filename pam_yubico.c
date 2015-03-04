@@ -314,7 +314,7 @@ authorize_user_token_ldap (struct cfg *cfg,
     sprintf (find, "%s=%s,%s", cfg->user_attr, user, cfg->ldapdn);
     filter = NULL;
   } else {
-    find = strdup(cfg->ldapdn); // allow free later-:)
+    find = strdup(cfg->ldapdn); /* allow free later */
   }
   if (cfg->ldap_filter) {
     filter = filter_printf(cfg->ldap_filter, user);
