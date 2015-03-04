@@ -215,7 +215,6 @@ free_out:
 static int
 authorize_user_token_ldap (struct cfg *cfg,
 			   const char *user,
-                     const char *password,
 			   const char *token_id)
 {
   int retval = 0;
@@ -1021,7 +1020,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
   /* authorize the user with supplied token id */
   if (cfg->ldapserver != NULL || cfg->ldap_uri != NULL)
-    valid_token = authorize_user_token_ldap (cfg, user, onlypasswd, otp_id);
+    valid_token = authorize_user_token_ldap (cfg, user, otp_id);
   else
     valid_token = authorize_user_token (cfg, user, otp_id, pamh);
 
