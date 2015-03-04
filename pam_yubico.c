@@ -723,7 +723,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
       if (strncmp (argv[i], "ldap_filter=", 12) == 0)
 	cfg->ldap_filter = argv[i] + 12;
       if (strncmp (argv[i], "ldap_cacertfile=", 16) == 0)
-        cfg->ldap_cacertfile = (char *) argv[i] + 16;
+        cfg->ldap_cacertfile = argv[i] + 16;
       if (strncmp (argv[i], "ldapdn=", 7) == 0)
 	cfg->ldapdn = argv[i] + 7;
       if (strncmp (argv[i], "user_attr=", 10) == 0)
