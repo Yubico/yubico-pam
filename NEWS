@@ -49,10 +49,10 @@ ldap_cacertfile to use a specific cacert for ldaps
 
 * Version 2.13 (released 2013-03-01)
 
-* Fix a bug in the version check to support major version > 2 (neo).
+** Fix a bug in the version check to support major version > 2 (neo).
   Patch from https://github.com/wwest4
 
-* Give ykpamcfg an option for specifying path.
+** Give ykpamcfg an option for specifying path.
 
 * Version 2.12 (released 2012-06-15)
 
