@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014 Yubico AB
+ * Copyright (c) 2011-2015 Yubico AB
  * Copyright (c) 2011 Tollef Fog Heen <tfheen@err.no>
  * All rights reserved.
  *

@@ -1,6 +1,5 @@
-/* Written by Meno Abels <meno.abels@gmail.com>
+/* 
  * Copyright (c) 2015 Yubico AB
- * Copyright (c) 2015 Meno.Abels@gmail.com
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
