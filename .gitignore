@@ -52,6 +52,7 @@ tests/core
 tests/pam_test
 tests/pam_test.log
 tests/pam_test.o
+tests/pam_test-pam_test.o
 tests/pam_test.trs
 coverage/
 tests/pam_test.gcno

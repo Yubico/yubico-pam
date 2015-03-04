@@ -43,6 +43,8 @@ typedef struct {
   void (*ykclient_set_ca_path)(ykclient_t * ykc, const char *ca_path);
   ykclient_rc (*ykclient_set_url_template)(ykclient_t * ykc, const char *url_template);
   ykclient_rc (*ykclient_set_url_bases)(ykclient_t * ykc, size_t num_templates, const char **url_templates);
+  ykclient_rc (*ykclient_global_init)();
+  void (*ykclient_global_done)();
 } VirtYkClient;
 
 
@@ -57,5 +59,8 @@ void v_ykclient_set_verify_signature (ykclient_t * ykc, int value);
 void v_ykclient_set_ca_path (ykclient_t * ykc, const char *ca_path);
 ykclient_rc v_ykclient_set_url_template (ykclient_t * ykc, const char *url_template);
 ykclient_rc v_ykclient_set_url_bases (ykclient_t * ykc, size_t num_templates, const char **url_templates);
+
+ykclient_rc v_ykclient_global_init ();
+void v_ykclient_global_done ();
 
 #endif

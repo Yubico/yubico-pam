@@ -770,6 +770,11 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 
 static int ykclient_setup(YubiMem *ym, struct cfg *cfg, ykclient_t **ykc, size_t *templates, char **urls) {
   int rc;
+  if(v_ykclient_global_init() != YKCLIENT_OK)
+      {
+        DBG (("Failed initializing ykclient library"));
+        return  PAM_AUTHINFO_UNAVAIL;
+      }
   rc = v_ykclient_init (ykc);
   if (rc != YKCLIENT_OK)
     {
@@ -954,6 +959,8 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
   parse_cfg (flags, argc, argv, cfg);
 
+  DBG (("pam_yubico version: %s", VERSION));
+
   if (cfg->token_id_length > MAX_TOKEN_ID_LEN)
   {
     DBG (("configuration error: token_id_length too long. Maximum acceptable value : %d", MAX_TOKEN_ID_LEN));
@@ -1066,8 +1073,10 @@ pam_sm_authenticate (pam_handle_t * pamh,
     }
 
 done:
-  if (ykc)
+  if (ykc) {
     v_ykclient_done (&ykc);
+    v_ykclient_global_done();
+  }
   if (cfg->alwaysok && retval != PAM_SUCCESS)
     {
       DBG (("alwaysok needed (otherwise return with %d)", retval));

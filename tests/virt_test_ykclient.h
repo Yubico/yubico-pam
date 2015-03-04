@@ -36,6 +36,13 @@ ykclient_rc test_ykclient_set_url_bases (ykclient_t * ykc, size_t num_templates,
   return YKCLIENT_BAD_INPUT;
 }
 
+ykclient_rc test_ykclient_global_init () {
+  return YKCLIENT_OK;
+}
+
+void test_ykclient_global_done () {
+}
+
 static VirtYkClient test_ykclient = {
   &test_ykclient_init,
   &test_ykclient_done,
@@ -46,5 +53,7 @@ static VirtYkClient test_ykclient = {
   &test_ykclient_set_ca_path,
   &test_ykclient_set_url_template,
   &test_ykclient_set_url_bases,
+  &test_ykclient_global_init,
+  &test_ykclient_global_done,
 };
 

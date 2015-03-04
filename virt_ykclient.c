@@ -40,6 +40,8 @@ static VirtYkClient lib_ykclient = {
   &ykclient_set_ca_path,
   &ykclient_set_url_template,
   &ykclient_set_url_bases,
+  &ykclient_global_init,
+  &ykclient_global_done
 };
 
 static VirtYkClient *running = &lib_ykclient;
@@ -84,3 +86,10 @@ ykclient_rc v_ykclient_set_url_bases (ykclient_t * ykc, size_t num_templates, co
   return (running->ykclient_set_url_bases)(ykc, num_templates, url_templates);
 }
 
+ykclient_rc v_ykclient_global_init () {
+  return (running->ykclient_global_init)();
+}
+
+void v_ykclient_global_done () {
+  (running->ykclient_global_done)();
+}
