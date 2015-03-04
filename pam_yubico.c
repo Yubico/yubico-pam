@@ -1089,7 +1089,6 @@ done:
     }
   DBG (("done. [%s]", pam_strerror (pamh, retval)));
   pam_set_data (pamh, "yubico_setcred_return", (void*)(intptr_t)retval, NULL);
-  pam_set_data (pamh, "yubico_used_ldap", (void*)(intptr_t)cfg->ldap_bind_no_anonymous, NULL);
 
   if (resp)
     {
@@ -1110,17 +1109,13 @@ pam_sm_setcred (pam_handle_t * pamh, int flags, int argc, const char **argv)
 PAM_EXTERN int
 pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
-  int use_ldap = -1;
-  int rc = pam_get_data(pamh, "yubico_used_ldap", (const void**)&use_ldap);
-  if (rc == PAM_SUCCESS && use_ldap) {
-	  int retval;
-	  rc = pam_get_data(pamh, "yubico_setcred_return", (const void**)&retval);
-	  if (rc == PAM_SUCCESS && retval == PAM_SUCCESS) {
-	      D (("pam_sm_acct_mgmt returing PAM_SUCCESS"));
-	      return PAM_SUCCESS;
-	  }
+  int retval;
+  int rc = pam_get_data(pamh, "yubico_setcred_return", (const void**)&retval);
+  if (rc == PAM_SUCCESS && retval == PAM_SUCCESS) {
+    D (("pam_sm_acct_mgmt returing PAM_SUCCESS"));
+    return PAM_SUCCESS;
   }
-  D (("pam_sm_acct_mgmt returing PAM_AUTH_ERR:%d", use_ldap));
+  D (("pam_sm_acct_mgmt returing PAM_AUTH_ERR:%d", rc));
   return PAM_AUTH_ERR;
 }
 
