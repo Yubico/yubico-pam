@@ -70,6 +70,15 @@ static const char *ldap_cfg[] = {
   "debug"
 };
 
+static const char *ldap_cfg2[] = {
+  "id=1",
+  "urllist=http://localhost:"YKVAL_PORT1"/wsapi/2/verify;http://localhost:"YKVAL_PORT2"/wsapi/2/verify",
+  "ldap_uri=ldap://localhost:"LDAP_PORT,
+  "ldap_filter=(uid=%u)",
+  "yubi_attr=yubiKeyId",
+  "debug"
+};
+
 static const struct data *test_get_data(void *id) {
   return &_data[(long)id];
 }
@@ -211,6 +220,10 @@ static int test_authenticate_ldap2(void) {
   return pam_sm_authenticate(4, 0, sizeof(ldap_cfg) / sizeof(char*), ldap_cfg);
 }
 
+static int test_authenticate_ldap3(void) {
+  return pam_sm_authenticate(4, 0, sizeof(ldap_cfg2) / sizeof(char*), ldap_cfg2);
+}
+
 static pid_t run_mock(const char *port, const char *type) {
   pid_t pid = fork();
   if(pid == 0) {
@@ -250,28 +263,32 @@ int main(void) {
     ret = 5;
     goto out;
   }
-#ifdef HAVE_LIBLDAP
-  if(test_authenticate_ldap1() != PAM_SUCCESS) {
+  if(test_authenticate3() != PAM_SUCCESS) {
     ret = 6;
     goto out;
   }
+#ifdef HAVE_LIBLDAP
+  if(test_authenticate_ldap1() != PAM_SUCCESS) {
+    ret = 1001;
+    goto out;
+  }
   if(test_authenticate_ldap_fail1() != PAM_USER_UNKNOWN) {
-    ret = 7;
+    ret = 1002;
     goto out;
   }
   if(test_authenticate_ldap_fail2() != PAM_AUTH_ERR) {
-    ret = 8;
+    ret = 1003;
     goto out;
   }
   if(test_authenticate_ldap2() != PAM_SUCCESS) {
-    ret = 9;
+    ret = 1004;
+    goto out;
+  }
+  if(test_authenticate_ldap3() != PAM_SUCCESS) {
+    ret = 1005;
     goto out;
   }
 #endif
-  if(test_authenticate3() != PAM_SUCCESS) {
-    ret = 10;
-    goto out;
-  }
 
 out:
   kill(child, 9);
