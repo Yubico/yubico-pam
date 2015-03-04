@@ -797,7 +797,8 @@ pam_sm_authenticate (pam_handle_t * pamh,
       retval = PAM_AUTHINFO_UNAVAIL;
       goto done;
     }
-  if (ykclient_init (&ykc) != YKCLIENT_OK)
+  rc = ykclient_init (&ykc);
+  if (rc != YKCLIENT_OK)
     {
       DBG (("ykclient_init() failed (%d): %s", rc, ykclient_strerror (rc)));
       retval = PAM_AUTHINFO_UNAVAIL;
