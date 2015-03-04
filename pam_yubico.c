@@ -209,8 +209,9 @@ authorize_user_token_ldap (struct cfg *cfg,
 			   const char *token_id)
 {
   int retval = 0;
-  int protocol;
 #ifdef HAVE_LIBLDAP
+  /* LDAPv2 is historical -- RFC3494. */
+  int protocol = LDAP_VERSION3;
   int yubi_attr_prefix_len = 0;
   LDAP *ld = NULL;
   LDAPMessage *result = NULL, *e;
@@ -260,8 +261,6 @@ authorize_user_token_ldap (struct cfg *cfg,
 	}
     }
 
-  /* LDAPv2 is historical -- RFC3494. */
-  protocol = LDAP_VERSION3;
   ldap_set_option (ld, LDAP_OPT_PROTOCOL_VERSION, &protocol);
 
   /* Bind anonymously to the LDAP server. */
