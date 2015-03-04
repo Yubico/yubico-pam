@@ -240,8 +240,8 @@ authorize_user_token_ldap (struct cfg *cfg,
     DBG (("Trying to look up user to YubiKey mapping in LDAP, but yubi_attr not set!"));
     return 0;
   }
-  if (cfg->ldapdn == NULL) {
-    DBG (("Trying to look up user to YubiKey mapping in LDAP, but ldapdn not set!"));
+  if (cfg->user_attr && cfg->ldapdn == NULL) {
+    DBG (("Trying to look up user to YubiKey mapping in LDAP, user_attr set but ldapdn not set!"));
     return 0;
   }
 
@@ -291,7 +291,7 @@ authorize_user_token_ldap (struct cfg *cfg,
     }
 
   /* Allocation of memory for search strings depending on input size */
-  if (cfg->user_attr && cfg->yubi_attr) {
+  if (cfg->user_attr && cfg->yubi_attr && cfg->ldapdn) {
     i = (strlen(cfg->user_attr) + strlen(cfg->ldapdn) + strlen(user) + 3) * sizeof(char);
     if ((find = malloc(i)) == NULL) {
       DBG (("Failed allocating %i bytes", i));
@@ -300,7 +300,7 @@ authorize_user_token_ldap (struct cfg *cfg,
     }
     sprintf (find, "%s=%s,%s", cfg->user_attr, user, cfg->ldapdn);
     filter = NULL;
-  } else {
+  } else if (cfg->ldapdn) {
     find = strdup(cfg->ldapdn); /* allow free later */
   }
   if (cfg->ldap_filter) {
