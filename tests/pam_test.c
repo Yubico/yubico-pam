@@ -63,7 +63,6 @@ static struct data {
 static const char *ldap_cfg[] = {
   "id=1",
   "urllist=http://localhost:"YKVAL_PORT2"/wsapi/2/verify;http://localhost:"YKVAL_PORT1"/wsapi/2/verify",
-  "authfile="AUTHFILE,
   "ldap_uri=ldap://localhost:"LDAP_PORT,
   "ldapdn=ou=users,dc=example,dc=com",
   "user_attr=uid",
