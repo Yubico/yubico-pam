@@ -107,7 +107,7 @@ endif
 
 if ENABLE_CPPCHECK
 cppcheck:
-	$(CPPCHECK) -q -v -f --enable=all .
+	$(CPPCHECK) -q -v -f --enable=all $(DEFS) .
 endif
 
 # Release
