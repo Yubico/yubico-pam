@@ -467,7 +467,6 @@ write_chalresp_state(FILE *f, CR_STATE *state)
 
 size_t filter_result_len(const char *filter, const char *user, char *output) {
   const char *part = NULL;
-  char *ptr = output;
   size_t result = 0;
   do
     {
@@ -477,19 +476,19 @@ size_t filter_result_len(const char *filter, const char *user, char *output) {
         len = part - filter;
       else
         len = strlen(filter);
-      if (output)
+      if (output != NULL)
         {
-          strncpy(ptr, filter, len);
-          ptr += len;
+          strncpy(output, filter, len);
+          output += len;
         }
       result += len;
       filter += len + 2;
       if(part != NULL)
         {
-          if(output)
+          if(output != NULL)
             {
-              strncpy(ptr, user, strlen(user));
-              ptr += strlen(user);
+              strncpy(output, user, strlen(user));
+              output += strlen(user);
             }
           result += strlen(user);
         }
