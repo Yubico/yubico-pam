@@ -100,7 +100,7 @@ enum key_mode {
 
 struct cfg
 {
-  int client_id;
+  unsigned int client_id;
   const char *client_key;
   int debug;
   int alwaysok;
@@ -640,7 +640,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
   int i;
 
   memset (cfg, 0, sizeof(struct cfg));
-  cfg->client_id = -1;
+  cfg->client_id = 0;
   cfg->token_id_length = DEFAULT_TOKEN_ID_LEN;
   cfg->mode = CLIENT;
 
@@ -696,7 +696,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
       D (("flags %d argc %d", flags, argc));
       for (i = 0; i < argc; i++)
 	D (("argv[%d]=%s", i, argv[i]));
-      D (("id=%d", cfg->client_id));
+      D (("id=%u", cfg->client_id));
       D (("key=%s", cfg->client_key ? cfg->client_key : "(null)"));
       D (("debug=%d", cfg->debug));
       D (("alwaysok=%d", cfg->alwaysok));
