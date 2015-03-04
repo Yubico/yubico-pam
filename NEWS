@@ -2,6 +2,11 @@ pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
 * Version 2.19 (unreleased)
 
+** Add new ldap functionality
+ldap_bind_user and ldap_bind_password for authenticated binds
+ldap_filter for using subtree search and a filter
+ldap_cacertfile to use a specific cacert for ldaps
+
 * Version 2.18 (released 2015-02-12)
 
 ** Fix a memory leak of the pam response data.
