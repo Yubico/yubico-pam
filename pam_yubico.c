@@ -118,6 +118,7 @@ struct YubiPassword {
 #undef DBG
 #endif
 #define DBG(x) if (cfg->debug) { D(x); }
+#define CFGDUMP(x) if (cfg->debug&0x2) { D(x); }
 
 static void str_free(char *a)  {
   memset(a, 0, strlen(a));
@@ -734,37 +735,37 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 
   if (cfg->debug)
     {
-      D (("called."));
-      D (("flags %d argc %d", flags, argc));
+      CFGDUMP (("called."));
+      CFGDUMP (("flags %d argc %d", flags, argc));
       for (i = 0; i < argc; i++)
-	D (("argv[%d]=%s", i, argv[i]));
-      D (("id=%d", cfg->client_id));
-      D (("key=%s", cfg->client_key ? cfg->client_key : "(null)"));
-      D (("debug=%d", cfg->debug));
-      D (("alwaysok=%d", cfg->alwaysok));
-      D (("verbose_otp=%d", cfg->verbose_otp));
-      D (("password_prompt=%s", cfg->password_prompt));
-      D (("yubi_prompt=%s", cfg->yubi_prompt));
-      D (("try_first_pass=%d", cfg->try_first_pass));
-      D (("use_first_pass=%d", cfg->use_first_pass));
-      D (("authfile=%s", cfg->auth_file ? cfg->auth_file : "(null)"));
-      D (("ldapserver=%s", cfg->ldapserver ? cfg->ldapserver : "(null)"));
-      D (("ldap_uri=%s", cfg->ldap_uri ? cfg->ldap_uri : "(null)"));
-      D (("ldap_bind_no_anonymous=%d", cfg->ldap_bind_no_anonymous));
-      D (("ldap_bind_user=%s", cfg->ldap_bind_user ? cfg->ldap_bind_user : "(null)"));
-      D (("ldap_bind_password=%s", cfg->ldap_bind_password ? cfg->ldap_bind_password : "(null)"));
-      D (("ldap_filter=%s", cfg->ldap_filter ? cfg->ldap_filter : "(null)"));
-      D (("ldap_cacertfile=%s", cfg->ldap_cacertfile ? cfg->ldap_cacertfile : "(null)"));
-      D (("ldapdn=%s", cfg->ldapdn ? cfg->ldapdn : "(null)"));
-      D (("user_attr=%s", cfg->user_attr ? cfg->user_attr : "(null)"));
-      D (("yubi_attr=%s", cfg->yubi_attr ? cfg->yubi_attr : "(null)"));
-      D (("yubi_attr_prefix=%s", cfg->yubi_attr_prefix ? cfg->yubi_attr_prefix : "(null)"));
-      D (("url=%s", cfg->url ? cfg->url : "(null)"));
-      D (("urllist=%s", cfg->urllist ? cfg->urllist : "(null)"));
-      D (("capath=%s", cfg->capath ? cfg->capath : "(null)"));
-      D (("token_id_length=%d", cfg->token_id_length));
-      D (("mode=%s", cfg->mode == CLIENT ? "client" : "chresp" ));
-      D (("chalresp_path=%s", cfg->chalresp_path ? cfg->chalresp_path : "(null)"));
+	CFGDUMP (("argv[%d]=%s", i, argv[i]));
+      CFGDUMP (("id=%d", cfg->client_id));
+      CFGDUMP (("key=%s", cfg->client_key ? cfg->client_key : "(null)"));
+      CFGDUMP (("debug=%d", cfg->debug));
+      CFGDUMP (("alwaysok=%d", cfg->alwaysok));
+      CFGDUMP (("verbose_otp=%d", cfg->verbose_otp));
+      CFGDUMP (("password_prompt=%s", cfg->password_prompt));
+      CFGDUMP (("yubi_prompt=%s", cfg->yubi_prompt));
+      CFGDUMP (("try_first_pass=%d", cfg->try_first_pass));
+      CFGDUMP (("use_first_pass=%d", cfg->use_first_pass));
+      CFGDUMP (("authfile=%s", cfg->auth_file ? cfg->auth_file : "(null)"));
+      CFGDUMP (("ldapserver=%s", cfg->ldapserver ? cfg->ldapserver : "(null)"));
+      CFGDUMP (("ldap_uri=%s", cfg->ldap_uri ? cfg->ldap_uri : "(null)"));
+      CFGDUMP (("ldap_bind_no_anonymous=%d", cfg->ldap_bind_no_anonymous));
+      CFGDUMP (("ldap_bind_user=%s", cfg->ldap_bind_user ? cfg->ldap_bind_user : "(null)"));
+      CFGDUMP (("ldap_bind_password=%s", cfg->ldap_bind_password ? cfg->ldap_bind_password : "(null)"));
+      CFGDUMP (("ldap_filter=%s", cfg->ldap_filter ? cfg->ldap_filter : "(null)"));
+      CFGDUMP (("ldap_cacertfile=%s", cfg->ldap_cacertfile ? cfg->ldap_cacertfile : "(null)"));
+      CFGDUMP (("ldapdn=%s", cfg->ldapdn ? cfg->ldapdn : "(null)"));
+      CFGDUMP (("user_attr=%s", cfg->user_attr ? cfg->user_attr : "(null)"));
+      CFGDUMP (("yubi_attr=%s", cfg->yubi_attr ? cfg->yubi_attr : "(null)"));
+      CFGDUMP (("yubi_attr_prefix=%s", cfg->yubi_attr_prefix ? cfg->yubi_attr_prefix : "(null)"));
+      CFGDUMP (("url=%s", cfg->url ? cfg->url : "(null)"));
+      CFGDUMP (("urllist=%s", cfg->urllist ? cfg->urllist : "(null)"));
+      CFGDUMP (("capath=%s", cfg->capath ? cfg->capath : "(null)"));
+      CFGDUMP (("token_id_length=%d", cfg->token_id_length));
+      CFGDUMP (("mode=%s", cfg->mode == CLIENT ? "client" : "chresp" ));
+      CFGDUMP (("chalresp_path=%s", cfg->chalresp_path ? cfg->chalresp_path : "(null)"));
     }
 }
 
