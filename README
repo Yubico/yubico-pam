@@ -20,7 +20,7 @@ later. This has introduced a dependency of libykpers-1 from the
 ykpersonalize package. Pass `--without-cr` to `configure` to avoid
 this dependency.
 
-The development community is co-ordinated via 
+The development community is co-ordinated via
 https://github.com/Yubico/yubico-pam[the GitHub project page].
 
 The project is licensed under a BSD license.  See the file COPYING for
@@ -150,7 +150,7 @@ service, go https://upgrade.yubico.com/getapikey[here].
 
 debug:: to enable debug output to stdout.
 
-alwaysok:: 
+alwaysok::
 to enable all authentication attempts to succeed
 (aka presentation mode).
 
@@ -310,10 +310,10 @@ information including the OTP and ID of your token to the shell -- copy the ID
 into your config file and you should be up and going.
 
 ------
-Yubikey for `youruser': 
+Yubikey for `youruser':
 [pam_yubico.c:pam_sm_authenticate(867)] conv returned 44 bytes
 [pam_yubico.c:pam_sm_authenticate(885)] Skipping first 0 bytes. Length is 44, token_id set to 12 and token OTP always 32.
-[pam_yubico.c:pam_sm_authenticate(892)] OTP: ccccccclabcabkhbdncicglfltnukadfoifadfhhhhfe ID: cccccclabcab 
+[pam_yubico.c:pam_sm_authenticate(892)] OTP: ccccccclabcabkhbdncicglfltnukadfoifadfhhhhfe ID: cccccclabcab
 ------
 
 
@@ -336,5 +336,27 @@ Examples
 If you want to use the YubiKey to authenticate you on Linux console
 logins, add the following to the top of `/etc/pam.d/login`:
 
- auth sufficient pam_yubico.so id=16 debug
+   auth sufficient pam_yubico.so id=16 debug
+
+OpenVPN and ActiveDirectory
+---------------------------
+
+create file '/etc/pam.d/openvpn':
+
+   auth  required  pam_yubico.so ldap_uri=ldap://ldap-srv debug id=19 yubi_attr=pager
+      ldapdn=dc=ad,dc=next-audience,dc=net
+      ldap_filter=(&(sAMAccountName=%u)(memberOf=CN=mygroup,OU=DefaultUser,DC=adivser,DC=net))
+      ldap_bind_user=bind_user ldap_bind_password=bind_password try_first_pass
+   account required  pam_yubico.so
+
+create file 'openvpn.conf'
+
+   plugin openvpn-plugin-auth-pam.so openvpn
+
+
+Feedback
+--------
+
+If you want to discuss anything related to the Yubico PAM module,
+please e-mail the mailing list yubico-devel@googlegroups.com.
 

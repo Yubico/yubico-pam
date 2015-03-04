@@ -43,8 +43,9 @@ use constant RESULT_OK => {
 };
 
 my %objects = (
-  'uid=foo,ou=users,dc=example,dc=com' => ['vvincredible'],
-  'uid=test,ou=users,dc=example,dc=com' =>['cccccccfhcbe', 'ccccccbchvth'],
+  'base=uid=foo,ou=users,dc=example,dc=com' => {keys => ['vvincredible']},
+  'base=uid=test,ou=users,dc=example,dc=com' => {keys => ['cccccccfhcbe', 'ccccccbchvth']},
+  'sub:base=:(uid=test)' => {keys => ['cccccccfhcbe', 'ccccccbchvth'], dn => 'uid=test,out=users,dc=example,dc=com'},
 );
 
 sub bind {
@@ -56,14 +57,22 @@ sub bind {
 sub search {
   my $self = shift;
   my $reqData = shift;
-  my $base = $reqData->{'baseObject'};
-  my $id = $objects{$base};
+  my $id;
+  my $base;
+  if($reqData->{'scope'} == 0) {
+    $base = $reqData->{'baseObject'};
+    $id = $objects{'base=' . $base};
+  } elsif($reqData->{'scope'} == 2) {
+    my $match = $reqData->{'filter'}->{'equalityMatch'};
+    $id = $objects{'sub:base=' . $reqData->{'baseObject'} . ':(' . $match->{'attributeDesc'} . '=' . $match->{'assertionValue'} . ')'};
+    $base = $id->{'dn'};
+  }
   my @entries;
   if($id) {
     my $entry = Net::LDAP::Entry->new;
     $entry->dn($base);
     $entry->add(objectClass => [ "person" ]);
-    $entry->add(yubiKeyId => $id);
+    $entry->add(yubiKeyId => $id->{'keys'});
     push @entries, $entry;
   }
   return RESULT_OK, @entries;

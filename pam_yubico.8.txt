@@ -57,10 +57,10 @@ This argument is used to show the OTP (One Time Password) when it is entered, i.
 Specify the LDAP server URI (e.g. ldap://localhost).
 
 *ldap_server*=_server_::
-Specify the LDAP server host (default LDAP port is used). *Deprecated.  Use "ldap_uri" instead.*
+Specify the LDAP server host (default LDAP port is used). *Deprecated.  Use 'ldap_uri' instead.*
 
 *ldapdn*=_dn_::
-The dn where the users are stored (eg: ou=users,dc=domain,dc=com).
+The dn where the users are stored (eg: ou=users,dc=domain,dc=com). If 'ldap_filter' is used this is the base from which the subtree search will be performed.
 
 *user_attr*=_attr_::
 The LDAP attribute used to store user names (eg:cn).
@@ -74,11 +74,25 @@ The prefix of the LDAP attribute's value, in case of a generic attribute, used t
 *token_id_length*=_length_::
 Length of ID prefixing the OTP (this is 12 if using the YubiCloud).
 
+*ldap_bind_user*=_user_::
+The user to attempt a LDAP bind as.
+
+*ldap_bind_password*=_password_::
+The password to use on LDAP bind.
+
+*ldap_filter*=_filter_::
+An ldap filter to use for attempting to find the correct object in LDAP. In this string %u will be replaced with the username.
+
+*ldap_cacertfile*=_cacertfile_::
+Ca certfile for the LDAP connection.
+
 == EXAMPLES
 
   auth sufficient pam_yubico.so id=16 debug
 
   auth required pam_yubico.so mode=challenge-response
+
+  auth required pam_yubico.so id=16 ldap_uri=ldaps://ldap.example.com ldap_filter=(uid=%u) yubi_attr=yubiKeyId
 
 == BUGS
 Report yubico-pam bugs in the issue tracker: https://github.com/Yubico/yubico-pam/issues

@@ -125,7 +125,27 @@ static void test_load_chalresp_state(void) {
 
 #endif /* HAVE_CR */
 
+static void test_filter_printf(void) {
+    assert(filter_result_len("meno %u", "doof", NULL) == 10);
+    assert(filter_result_len("meno %u %u", "doof", NULL) == 15);
+    assert(filter_result_len("%u meno %u", "doof", NULL) == 15);
+    assert(filter_result_len("%u me %u no %u", "doof", NULL) == 21);
+    assert(filter_result_len("meno %w %%u", "doof", NULL) == 14);
+    assert(filter_result_len("meno %w %%u meno", "doof", NULL) == 19);
+    assert(filter_result_len("meno ", "doof", NULL) == 6);
+
+    assert(!strcmp(filter_printf("meno %u", "doof"), "meno doof"));
+    assert(!strcmp(filter_printf("meno %u %u", "doof"), "meno doof doof"));
+    assert(!strcmp(filter_printf("%u meno %u", "doof"), "doof meno doof"));
+    assert(!strcmp(filter_printf("%u me %u no %u", "doof"), "doof me doof no doof"));
+    assert(!strcmp(filter_printf("meno %w %%u", "doof"), "meno %w %doof"));
+    assert(!strcmp(filter_printf("meno %w %%u meno", "doof"), "meno %w %doof meno"));
+    assert(!strcmp(filter_printf("meno ", "doof"), "meno "));
+    printf("test_filter_printf OK\n");
+}
+
 int main (void) {
+  test_filter_printf();
   test_get_user_cfgfile_path();
   test_check_user_token();
 #if HAVE_CR
