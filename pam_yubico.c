@@ -113,8 +113,6 @@ struct cfg
   const char *urllist;
   const char *ldapserver;
   const char *ldap_uri;
-  int ldap_bind_no_anonymous;
-  const char *ldap_bind_user_filter;
   const char *ldap_bind_user;
   const char *ldap_bind_password;
   const char *ldap_filter;
@@ -282,16 +280,6 @@ authorize_user_token_ldap (struct cfg *cfg,
   if (cfg->ldap_bind_user && cfg->ldap_bind_password) {
     DBG (("try bind with: %s:[%s]", cfg->ldap_bind_user, cfg->ldap_bind_password));
     rc = ldap_simple_bind_s (ld, cfg->ldap_bind_user, cfg->ldap_bind_password);
-  } else if (cfg->ldap_bind_no_anonymous) {
-    char *tmp_user;
-    if (cfg->ldap_bind_user_filter) {
-	tmp_user = filter_printf(cfg->ldap_bind_user_filter, user);
-    } else {
-	tmp_user = strdup(user);
-    }
-    DBG (("try bind with: %s:[XXXXX]", tmp_user, password));
-    rc = ldap_simple_bind_s (ld, tmp_user, password);
-    free(tmp_user);
   } else {
     DBG (("try bind anonymous"));
     rc = ldap_simple_bind_s (ld, NULL, NULL);
@@ -712,12 +700,8 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->ldapserver = argv[i] + 11;
       if (strncmp (argv[i], "ldap_uri=", 9) == 0)
 	cfg->ldap_uri = argv[i] + 9;
-      if (strncmp (argv[i], "ldap_bind_no_anonymous", 22) == 0)
-	cfg->ldap_bind_no_anonymous = 1;
       if (strncmp (argv[i], "ldap_bind_user=", 15) == 0)
 	cfg->ldap_bind_user = argv[i] + 15;
-      if (strncmp (argv[i], "ldap_bind_user_filter=", 22) == 0)
-	cfg->ldap_bind_user_filter = argv[i] + 22;
       if (strncmp (argv[i], "ldap_bind_password=", 19) == 0)
 	cfg->ldap_bind_password = argv[i] + 19;
       if (strncmp (argv[i], "ldap_filter=", 12) == 0)
@@ -758,7 +742,6 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
       D (("authfile=%s", cfg->auth_file ? cfg->auth_file : "(null)"));
       D (("ldapserver=%s", cfg->ldapserver ? cfg->ldapserver : "(null)"));
       D (("ldap_uri=%s", cfg->ldap_uri ? cfg->ldap_uri : "(null)"));
-      D (("ldap_bind_no_anonymous=%d", cfg->ldap_bind_no_anonymous));
       D (("ldap_bind_user=%s", cfg->ldap_bind_user ? cfg->ldap_bind_user : "(null)"));
       D (("ldap_bind_password=%s", cfg->ldap_bind_password ? cfg->ldap_bind_password : "(null)"));
       D (("ldap_filter=%s", cfg->ldap_filter ? cfg->ldap_filter : "(null)"));
