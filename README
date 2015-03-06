@@ -140,7 +140,7 @@ mappings of Yubikey token IDs to user names.
 
 id:: 
 Your API Client ID in the Yubico validation server.
-If you want to the default YubiCloud service, 
+If you want to use the default YubiCloud service, 
 go https://upgrade.yubico.com/getapikey[here].
 
 key::
