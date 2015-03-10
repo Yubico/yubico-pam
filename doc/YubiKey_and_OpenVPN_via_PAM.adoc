@@ -14,7 +14,7 @@ Complier:: http://gcc.gnu.org[GNU GCC complier]
 https://developers.yubico.com/yubico-pam[Yubico PAM Module]:: Version 1.8
 http://openvpn.net/index.php/downloads.html[OpenVPN]:: Version 2.0.9.
 http://freeradius.org/download.html[FreeRADIUS]: Version 1.1.7 or later.
-Pam_Radius:: ftp://ftp.freeradius.org/pub/radius/pam_radius-1.3.17.tar.gz[Version 1.3.17].
+Pam_Radius:: Version 1.3.17.
 
 == Configuration
 
