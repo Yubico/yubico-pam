@@ -119,7 +119,7 @@ Install it in your PAM setup by adding a line to an appropriate file
 in `/etc/pam.d/`:
 
 ----
-auth sufficient pam_yubico.so id=16 debug
+auth sufficient pam_yubico.so id=[Your API Client ID] debug
 ----
 
 and move pam_yubico.so into /lib/security/ (or wherever PAM modules
@@ -138,7 +138,10 @@ authfile::
 To indicate the location of the file that holds the
 mappings of Yubikey token IDs to user names.
 
-id:: To indicate your client identity.
+id:: 
+Your API Client ID in the Yubico validation server.
+If you want to use the default YubiCloud service, 
+go https://upgrade.yubico.com/getapikey[here].
 
 key::
 To indicate your client key in base64 format.
@@ -260,7 +263,7 @@ The mappings should look like this, one per line:
 Now add `authfile=/etc/yubikey_mappings` to your PAM configuration line, so it
 looks like:
 
- auth sufficient pam_yubico.so id=16 authfile=/etc/yubikey_mappings
+ auth sufficient pam_yubico.so id=[Your API Client ID] authfile=/etc/yubikey_mappings
 
  
 === Individual authorization mapping by user
@@ -336,14 +339,14 @@ Examples
 If you want to use the YubiKey to authenticate you on Linux console
 logins, add the following to the top of `/etc/pam.d/login`:
 
-   auth sufficient pam_yubico.so id=16 debug
+   auth sufficient pam_yubico.so id=[Your API Client ID] debug
 
 OpenVPN and ActiveDirectory
 ---------------------------
 
 create file '/etc/pam.d/openvpn':
 
-   auth  required  pam_yubico.so ldap_uri=ldap://ldap-srv debug id=19 yubi_attr=pager
+   auth  required  pam_yubico.so ldap_uri=ldap://ldap-srv debug id=[Your API Client ID] yubi_attr=pager
       ldapdn=dc=ad,dc=next-audience,dc=net
       ldap_filter=(&(sAMAccountName=%u)(memberOf=CN=mygroup,OU=DefaultUser,DC=adivser,DC=net))
       ldap_bind_user=bind_user ldap_bind_password=bind_password try_first_pass
