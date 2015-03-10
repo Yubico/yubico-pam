@@ -210,7 +210,7 @@ To configure OpenVPN with FreeRADIUS support, please follow the steps below:
 
 * Follow all the steps mentioned in the section “OpenVPN Configuration without FreeRADIUS support” to configure OpenVPN server to support PAM authentication.
 
-* https://github.com/Yubico/yubico-pam/blob/master/doc/YubiKey_and_FreeRADIUS_via_PAM.adoc[Install and configure FreeRADIUS server for two factor authentication].
+* https://developers.yubico.com/yubico-pam/YubiKey_and_FreeRADIUS_via_PAM.html[Install and configure FreeRADIUS server for two factor authentication].
 
 * Install and configure pam_radius_auth.so and copy it to /lib/security directory
 
