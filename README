@@ -38,7 +38,7 @@ version.
 You may check out the sources using Git with the following command:
 
 ------
-$ git clone https://github.com:Yubico/yubico-pam.git yubico-pam
+$ git clone https://github.com/Yubico/yubico-pam.git
 ------
 
 This will create the directory `yubico-pam`.
