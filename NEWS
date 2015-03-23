@@ -1,5 +1,7 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
+* Version 2.20 (unreleased)
+
 * Version 2.19 (released 2015-03-23)
 
 ** Add new ldap functionality
