@@ -400,7 +400,7 @@ display_error(pam_handle_t *pamh, const char *message) {
   }
 
   pmsg[0] = &msg[0];
-  msg[0].msg = message;
+  msg[0].msg = (char *) message; /* on some systems, pam_message.msg isn't const */
   msg[0].msg_style = PAM_ERROR_MSG;
   retval = conv->conv(1, pmsg, &resp, conv->appdata_ptr);
 
