@@ -62,7 +62,7 @@ get_user_cfgfile_path(const char *common_path, const char *filename, const char 
    */
   struct passwd *p;
   char *userfile;
-  int len;
+  size_t len;
 
   if (common_path != NULL) {
     len = strlen(common_path) + 1 + strlen(filename) + 1;
