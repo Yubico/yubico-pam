@@ -306,13 +306,12 @@ get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *usern
       filename = username;
   } else {
     /* We have serial number */
-    int len;
     /* 0xffffffff == 4294967295 == 10 digits */
-    len = strlen(chalresp_path == NULL ? "challenge" : username) + 1 + 10 + 1;
+    size_t len = strlen(chalresp_path == NULL ? "challenge" : username) + 1 + 10 + 1;
     if ((ptr = malloc(len)) != NULL) {
       int res = snprintf(ptr, len, "%s-%u", chalresp_path == NULL ? "challenge" : username, serial);
       filename = ptr;
-      if (res < 0 || res > len) {
+      if (res < 0 || (unsigned long)res > len) {
 	/* Not enough space, strangely enough. */
 	free(ptr);
 	filename = NULL;
