@@ -89,9 +89,9 @@
 #endif
 #endif
 
-#define TOKEN_OTP_LEN 32
-#define MAX_TOKEN_ID_LEN 16
-#define DEFAULT_TOKEN_ID_LEN 12
+#define TOKEN_OTP_LEN 32u
+#define MAX_TOKEN_ID_LEN 16u
+#define DEFAULT_TOKEN_ID_LEN 12u
 
 enum key_mode {
   CHRESP,
@@ -400,7 +400,7 @@ display_error(pam_handle_t *pamh, const char *message) {
   }
 
   pmsg[0] = &msg[0];
-  msg[0].msg = message;
+  msg[0].msg = (char *) message; /* on some systems, pam_message.msg isn't const */
   msg[0].msg_style = PAM_ERROR_MSG;
   retval = conv->conv(1, pmsg, &resp, conv->appdata_ptr);
 
@@ -538,7 +538,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
     goto out;
   }
 
-  DBG(("Got the expected response, generating new challenge (%i bytes).", CR_CHALLENGE_SIZE));
+  DBG(("Got the expected response, generating new challenge (%u bytes).", CR_CHALLENGE_SIZE));
 
   errstr = "Error generating new challenge, please check syslog or contact your system administrator";
   if (generate_random(state.challenge, sizeof(state.challenge))) {
@@ -568,7 +568,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
    * Write the challenge and response we will expect the next time to the state file.
    */
   if (response_len > sizeof(state.response)) {
-    DBG(("Got too long response ??? (%u/%lu)", response_len, (unsigned long) sizeof(state.response)));
+    DBG(("Got too long response ??? (%u/%zu)", response_len, sizeof(state.response)));
     goto out;
   }
   memcpy (state.response, buf, response_len);
@@ -788,7 +788,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
   if (cfg->token_id_length > MAX_TOKEN_ID_LEN)
   {
-    DBG (("configuration error: token_id_length too long. Maximum acceptable value : %d", MAX_TOKEN_ID_LEN));
+    DBG (("configuration error: token_id_length too long. Maximum acceptable value : %u", MAX_TOKEN_ID_LEN));
     retval = PAM_AUTHINFO_UNAVAIL;
     goto done;
   }
@@ -946,7 +946,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
 	  goto done;
 	}
 
-      DBG (("conv returned %lu bytes", (unsigned long) strlen(resp->resp)));
+      DBG (("conv returned %zu bytes", strlen(resp->resp)));
 
       password = resp->resp;
     }
@@ -954,7 +954,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
   password_len = strlen (password);
   if (password_len < (cfg->token_id_length + TOKEN_OTP_LEN))
     {
-      DBG (("OTP too short to be considered : %i < %i", password_len, (cfg->token_id_length + TOKEN_OTP_LEN)));
+      DBG (("OTP too short to be considered : %zu < %u", password_len, (cfg->token_id_length + TOKEN_OTP_LEN)));
       retval = PAM_AUTH_ERR;
       goto done;
     }
@@ -963,7 +963,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
      "systempassword" when copying the token_id and OTP to separate buffers */
   skip_bytes = password_len - (cfg->token_id_length + TOKEN_OTP_LEN);
 
-  DBG (("Skipping first %i bytes. Length is %i, token_id set to %i and token OTP always %i.",
+  DBG (("Skipping first %i bytes. Length is %zu, token_id set to %u and token OTP always %u.",
 	skip_bytes, password_len, cfg->token_id_length, TOKEN_OTP_LEN));
 
   /* Copy full YubiKey output (public ID + OTP) into otp */
