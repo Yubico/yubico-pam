@@ -293,8 +293,8 @@ get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *usern
    * the option chalresp_path can be used to point to a system-wide directory.
    */
 
-  char *filename; /* not including directory */
-  int filename_malloced = 0;
+  const char *filename = NULL; /* not including directory */
+  char *ptr = NULL;
   unsigned int serial = 0;
   int ret;
 
@@ -303,18 +303,18 @@ get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *usern
     if (! chalresp_path)
       filename = "challenge";
     else
-      filename = (char *) username;
+      filename = username;
   } else {
     /* We have serial number */
     int len;
     /* 0xffffffff == 4294967295 == 10 digits */
     len = strlen(chalresp_path == NULL ? "challenge" : username) + 1 + 10 + 1;
-    if ((filename = malloc(len)) != NULL) {
-      int res = snprintf(filename, len, "%s-%u", chalresp_path == NULL ? "challenge" : username, serial);
-      filename_malloced = 1;
+    if ((ptr = malloc(len)) != NULL) {
+      int res = snprintf(ptr, len, "%s-%u", chalresp_path == NULL ? "challenge" : username, serial);
+      filename = ptr;
       if (res < 0 || res > len) {
 	/* Not enough space, strangely enough. */
-	free(filename);
+	free(ptr);
 	filename = NULL;
       }
     }
@@ -324,8 +324,8 @@ get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *usern
     return 0;
 
   ret = get_user_cfgfile_path (chalresp_path, filename, username, fn);
-  if(filename_malloced == 1) {
-    free(filename);
+  if(ptr) {
+    free(ptr);
   }
   return ret;
 }
