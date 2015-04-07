@@ -49,6 +49,8 @@ my $socket = new IO::Socket::INET (
   Reuse => 1
 ) or die "Oops: $! \n";
 
+warn "YKVAL mockup started on $port";
+
 while(1) {
   my $clientsocket = $socket->accept();
   my $clientdata = <$clientsocket>;

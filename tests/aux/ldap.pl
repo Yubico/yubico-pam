@@ -97,6 +97,8 @@ $sock->listen();
 my $sel = IO::Select->new($sock);
 my %handlers;
 
+warn "LDAP mockup started";
+
 while (my @ready = $sel->can_read) {
   foreach my $fh (@ready) {
     if ($fh == $sock) {
