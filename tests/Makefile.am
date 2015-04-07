@@ -35,6 +35,7 @@ util_test_LDADD = ../libpam_util.la
 pam_test_LDADD = ../libpam_real.la ../libpam_util.la @LTLIBYUBIKEY@ @LTLIBYKCLIENT@ @LIBLDAP@
 
 pam_test_CPPFLAGS = -DSRCDIR=\"$(srcdir)\"
+TESTS_ENVIRONMENT = export LDAPNOINIT=1;
 
 check_PROGRAMS = test util_test pam_test
 TESTS = $(check_PROGRAMS)
