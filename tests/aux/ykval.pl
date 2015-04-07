@@ -57,6 +57,7 @@ while(1) {
   if($clientdata =~ m/nonce=([a-zA-Z0-9]+).*otp=([cbdefghijklnrtuv]+)/) {
     my $nonce = $1;
     my $otp = $2;
+    warn "validation for $otp (on port $port)";
     if($otps{$otp}) {
       my $status = $otps{$otp};
       $ret .= "nonce=$nonce\n";
