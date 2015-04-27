@@ -1002,6 +1002,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
   DBG (("ykclient return value (%d): %s", rc,
 	ykclient_strerror (rc)));
+  DBG (("ykclient url used: %s", ykclient_get_last_url(ykc)));
 
   switch (rc)
     {
