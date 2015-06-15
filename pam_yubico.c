@@ -109,6 +109,7 @@ struct cfg
   int use_first_pass;
   const char *auth_file;
   const char *capath;
+  const char *cainfo;
   const char *url;
   const char *urllist;
   const char *ldapserver;
@@ -690,6 +691,8 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->auth_file = argv[i] + 9;
       if (strncmp (argv[i], "capath=", 7) == 0)
 	cfg->capath = argv[i] + 7;
+      if (strncmp (argv[i], "cainfo=", 7) == 0)
+        cfg->cainfo = argv[i] + 7;
       if (strncmp (argv[i], "url=", 4) == 0)
 	cfg->url = argv[i] + 4;
       if (strncmp (argv[i], "urllist=", 8) == 0)
@@ -751,6 +754,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
       D (("url=%s", cfg->url ? cfg->url : "(null)"));
       D (("urllist=%s", cfg->urllist ? cfg->urllist : "(null)"));
       D (("capath=%s", cfg->capath ? cfg->capath : "(null)"));
+      D (("cainfo=%s", cfg->cainfo ? cfg->cainfo : "(null)"));
       D (("token_id_length=%d", cfg->token_id_length));
       D (("mode=%s", cfg->mode == CLIENT ? "client" : "chresp" ));
       D (("chalresp_path=%s", cfg->chalresp_path ? cfg->chalresp_path : "(null)"));
@@ -858,6 +862,9 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
   if (cfg->capath)
     ykclient_set_ca_path (ykc, cfg->capath);
+
+  if (cfg->cainfo)
+    ykclient_set_ca_info (ykc, cfg->cainfo);
 
   if (cfg->url)
     {
