@@ -775,7 +775,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
   int valid_token = 0;
   struct pam_conv *conv;
   const struct pam_message *pmsg[1];
-  struct pam_message msg[1];
+  struct pam_message msg[1] = {0};
   struct pam_response *resp = NULL;
   int nargs = 1;
   ykclient_t *ykc = NULL;
@@ -938,8 +938,6 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
       retval = conv->conv (nargs, pmsg, &resp, conv->appdata_ptr);
 
-      free ((char *) msg[0].msg);
-
       if (retval != PAM_SUCCESS)
 	{
 	  DBG (("conv returned error: %s", pam_strerror (pamh, retval)));
@@ -1085,6 +1083,11 @@ done:
       if (resp->resp)
         free (resp->resp);
       free (resp);
+    }
+
+  if(msg[0].msg)
+    {
+      free((char*)msg[0].msg);
     }
 
   return retval;
