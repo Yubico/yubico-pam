@@ -58,7 +58,9 @@ static void test_check_user_token(void) {
 
   assert(fd != -1);
   handle = fdopen(fd, "w");
+  fprintf(handle, "# This is a comment containing foobar:foobar\n");
   fprintf(handle, "foobar:hhhvhvhdhbid:hnhbhnhbhnhb:\n");
+  fprintf(handle, "# This is a comment in the middle\n");
   fprintf(handle, "kaka:hdhrhbhjhvhu:hihbhdhrhbhj\n");
   fprintf(handle, "bar:hnhbhnhbhnhb\n");
   fclose(handle);
