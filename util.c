@@ -147,6 +147,12 @@ check_user_token (const char *authfile,
       char *saveptr = NULL;
       if (buf[strlen (buf) - 1] == '\n')
 	buf[strlen (buf) - 1] = '\0';
+      if (buf[0] == '#') {
+          //This is a comment and we may skip it
+          if(verbose)
+              D (("Skipping comment line: %s", buf));
+          continue;
+      }
       if(verbose)
 	  D (("Authorization line: %s", buf));
       s_user = strtok_r (buf, ":", &saveptr);
