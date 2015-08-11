@@ -86,6 +86,9 @@ An ldap filter to use for attempting to find the correct object in LDAP. In this
 *ldap_cacertfile*=_cacertfile_::
 Ca certfile for the LDAP connection.
 
+*chalresp_path*=_path_::
+Path of a system wide directory where challenge response files can be found for users.
+
 == EXAMPLES
 
   auth sufficient pam_yubico.so id=16 debug
