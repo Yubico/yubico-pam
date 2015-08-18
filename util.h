@@ -36,6 +36,9 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <grp.h>
+#include <pwd.h>
+#include <string.h>
 
 #if defined(DEBUG_PAM)
 # if defined(HAVE_SECURITY__PAM_MACROS_H)
@@ -43,10 +46,10 @@
 #  include <security/_pam_macros.h>
 # else
 #  define D(x) do {							\
-    printf ("debug: %s:%d (%s): ", __FILE__, __LINE__, __FUNCTION__);	\
-    printf x;								\
-    printf ("\n");							\
-  } while (0)
+printf ("debug: %s:%d (%s): ", __FILE__, __LINE__, __FUNCTION__);	\
+printf x;								\
+printf ("\n");							\
+} while (0)
 # endif /* HAVE_SECURITY__PAM_MACROS_H */
 #else
 # define D(x)
@@ -68,14 +71,14 @@ int check_user_token(const char *authfile, const char *username, const char *otp
 #define CR_DEFAULT_ITERATIONS 10000
 
 struct chalresp_state {
-  char challenge[CR_CHALLENGE_SIZE];
-  uint8_t challenge_len;
-  char response[CR_RESPONSE_SIZE];
-  uint8_t response_len;
-  char salt[CR_SALT_SIZE];
-  uint8_t salt_len;
-  uint8_t slot;
-  uint32_t iterations;
+    char challenge[CR_CHALLENGE_SIZE];
+    uint8_t challenge_len;
+    char response[CR_RESPONSE_SIZE];
+    uint8_t response_len;
+    char salt[CR_SALT_SIZE];
+    uint8_t salt_len;
+    uint8_t slot;
+    uint32_t iterations;
 };
 
 typedef struct chalresp_state CR_STATE;
@@ -90,13 +93,15 @@ int write_chalresp_state(FILE *f, CR_STATE *state);
 int init_yubikey(YK_KEY **yk);
 int check_firmware_version(YK_KEY *yk, bool verbose, bool quiet);
 int challenge_response(YK_KEY *yk, int slot,
-		       char *challenge, unsigned int len,
-		       bool hmac, bool may_block, bool verbose,
-		       char *response, unsigned int res_size, unsigned int *res_len);
+                       char *challenge, unsigned int len,
+                       bool hmac, bool may_block, bool verbose,
+                       char *response, unsigned int res_size, unsigned int *res_len);
 
 #endif /* HAVE_CR */
 
 size_t filter_result_len(const char *filter, const char *user, char *output);
 char *filter_printf(const char *filter, const char *user);
+
+int CheckGroup(char *username, char *group);
 
 #endif /* __PAM_YUBICO_UTIL_H_INCLUDED__ */
