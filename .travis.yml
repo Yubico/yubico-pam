@@ -1,0 +1,18 @@
+language: c
+compiler:
+  - gcc
+  - clang
+env:
+  - CONFIGURE_ARGS="" EXTRA="libldap2-dev libykpers-1-dev libnet-ldap-server-perl"
+  - CONFIGURE_ARGS="--without-ldap" EXTRA="libykpers-1-dev"
+  - CONFIGURE_ARGS="--without-cr" EXTRA="libldap2-dev libnet-ldap-server-perl"
+  - CONFIGURE_ARGS="--without-ldap --without-cr"
+before_install:
+  - sudo add-apt-repository -y ppa:yubico/stable
+  - sudo apt-get update -qq || true
+  - sudo apt-get install -qq -y --no-install-recommends libykclient-dev libpam0g-dev libyubikey-dev asciidoc docbook-xml xsltproc libxml2-utils $EXTRA
+script: tests/aux/build-and-test.sh
+matrix:
+  include:
+    - compiler: gcc
+      env: COVERAGE="--enable-coverage" EXTRA="libldap2-dev libykpers-1-dev libnet-ldap-server-perl lcov"

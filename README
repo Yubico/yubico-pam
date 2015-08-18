@@ -1,0 +1,365 @@
+== Yubico PAM module
+
+The Yubico PAM module provides an easy way to integrate the Yubikey
+into your existing user authentication infrastructure.  PAM is used by
+GNU/Linux, Solaris and Mac OS X for user authentication, and by other
+specialized applications such as NCSA MyProxy.
+
+
+Status and Roadmap
+------------------
+
+The module is working for multi-user systems. The primary mode of
+operation is by doing online validation using a YubiKey validation
+service (such as the YubiCloud, or a private one configured using
+the 'urllist' parameter).
+
+In version 2.6, offline validation was also made possible through
+the use of HMAC-SHA1 Challenge-Response found in YubiKey 2.2 and
+later. This has introduced a dependency of libykpers-1 from the
+ykpersonalize package. Pass `--without-cr` to `configure` to avoid
+this dependency.
+
+The development community is co-ordinated via
+https://github.com/Yubico/yubico-pam[the GitHub project page].
+
+The project is licensed under a BSD license.  See the file COPYING for
+exact wording.  For any copyright year range specified as YYYY-ZZZZ in
+this package note that the range specifies every single year in that
+closed interval.
+
+
+Building from Git
+-----------------
+
+Skip to the next section if you are using an official packaged
+version.
+
+You may check out the sources using Git with the following command:
+
+------
+$ git clone https://github.com/Yubico/yubico-pam.git
+------
+
+This will create the directory `yubico-pam`.
+
+Autoconf, automake, asciidoc and libtool must be installed to create a
+compilable source tree.
+
+Generate the build system using:
+
+------
+$ cd yubico-pam
+$ autoreconf --install
+------
+
+
+=== Building
+
+You will need to have https://developers.yubico.com/yubico-c-client[libykclient]
+(ykclient.h, libykclient.so) and libpam-dev (security/pam_appl.h, libpam.so)
+installed. It in turn requires cURL, which you need to have installed, and
+https://developers.yubico.com/yubico-c[libyubikey].
+
+The Challenge-Response offline authentication requires libykpers-1
+from the 
+https://developers.yubico.com/yubikey-personalization[yubikey-personalization]
+project:
+
+The selftests require perl with the module Net::LDAP::Server installed.
+
+The build system uses Autoconf, to set up the build system run:
+
+ ./configure
+
+Use --without-ldap to disable ldap support.
+
+Then build the code, run the self-test and install the binaries:
+
+ make check install
+
+ 
+== Installation
+
+=== Fedora/EPEL
+
+There is already a package in Fedora/EPEL of yubico-pam that can be installed
+by using yum:
+
+ $ sudo yum install pam_yubico
+
+
+=== Ubuntu PPA
+
+There is an Ubuntu PPA (Personal Package Archive) for yubico-pam that
+can be installed using the following commands on reasonably modern
+Ubuntu platforms :
+
+  $ sudo add-apt-repository ppa:yubico/stable
+  $ sudo apt-get update
+  $ sudo apt-get install libpam-yubico
+
+See the file `/usr/share/doc/libpam-yubico/README.Debian` after installing.
+
+
+=== FreeBSD ports
+
+yubico-pam and the supporting Yubico packages have corresponding FreeBSD ports. To install:
+
+  $ cd /usr/ports/security/pam_yubico
+  $ make install clean
+
+Advanced configuration notes are available http://mjslabs.com/yubihow.html[here].
+
+
+Configuration
+-------------
+
+Install it in your PAM setup by adding a line to an appropriate file
+in `/etc/pam.d/`:
+
+----
+auth sufficient pam_yubico.so id=[Your API Client ID] debug
+----
+
+and move pam_yubico.so into /lib/security/ (or wherever PAM modules
+live in your system) :
+
+----
+mv /usr/local/lib/security/pam_yubico.so /lib/security/
+----
+
+For more information, see the project Wiki page.
+
+Supported PAM module parameters are:
+
+[horizontal]
+authfile::
+To indicate the location of the file that holds the
+mappings of Yubikey token IDs to user names.
+
+id:: 
+Your API Client ID in the Yubico validation server.
+If you want to use the default YubiCloud service, 
+go https://upgrade.yubico.com/getapikey[here].
+
+key::
+To indicate your client key in base64 format.
+The client key is also known as API key, and provides
+integrity in the communication between the client (you)
+and the validation server.
+If you want to get one for use with the default YubiCloud
+service, go https://upgrade.yubico.com/getapikey[here].
+
+debug:: to enable debug output to stdout.
+
+alwaysok::
+to enable all authentication attempts to succeed
+(aka presentation mode).
+
+try_first_pass::
+Before prompting the user for their password, the module
+first tries the previous stacked module´s password in case
+that satisfies this module as well.
+
+use_first_pass::
+The argument use_first_pass forces the module to use a previous
+stacked modules password and will never prompt the user - if no
+password is available or the password is not appropriate, the user
+will be denied access.
+
+urllist::
+List  of  URL  templates to be used. This is set by calling
+ykclient_set_url_bases. The list should be in the format :
+`https://server/wsapi/2.0/verify;https://server/wsapi/2.0/verify`
+
+url::
+This option should not be used, please use the urllist
+option instead.
+Specify the URL template to use, this is set by calling
+yubikey_client_set_url_template, which defaults to:
+`https://api.yubico.com/wsapi/verify?id=%d&otp=%s`
+or
+`https://api.yubico.com/wsapi/2.0/verify?id=%d&otp=%s`
+depending on your version of yubico-c-client.
+
+capath::
+specify the path where X509 certificates are stored. This is
+required if 'https' or 'ldaps' are used in 'url' and 'ldap_uri'
+respectively.
+
+verbose_otp::
+   This argument is used to show the OTP (One-Time Password) when it
+   is entered, i.e. to enable terminal echo of entered characters.
+   You are advised to not use this, if you are using two factor
+   authentication because that will display your password on the
+   screen.
+   This requires the service using the PAM module to
+   display custom fields.  For example, OpenSSH requires
+   you to configure `ChallengeResponseAuthentication no`.
+
+ldap_uri:: specify the LDAP server URI (e.g. ldap://localhost).
+
+
+ldapserver::
+specify the LDAP server host (default LDAP port is used).
+_Deprecated.  Use "ldap_uri" instead._
+
+ldapdn::
+specify the dn where the users are stored
+(eg: ou=users,dc=domain,dc=com).
+
+user_attr:: specify the LDAP attribute used to store user names (eg:cn).
+
+yubi_attr::  specify the LDAP attribute used to store the Yubikey ID.
+
+yubi_attr_prefix::
+specify the prefix of the LDAP attribute's value, in case
+of a generic attribute, used to store several types of IDs.
+
+token_id_length::
+Length of ID prefixing the OTP (this is 12 if using the
+YubiCloud).
+
+mode::
+Mode of operation. Use "client" for online validation with
+a YubiKey validation service such as the YubiCloud, or use
+"challenge-response" for offline validation using YubiKeys
+with HMAC-SHA-1 Challenge-Response configurations. See the
+man-page ykpamcfg(1) for further details on how to configure
+offline Challenge-Response validation.
+
+If you are using "debug" you may find it useful to create a
+world-writable log file:
+
+[source, sh]
+----
+touch /var/run/pam-debug.log
+chmod go+w /var/run/pam-debug.log
+----
+
+
+Authorization Mapping Files
+---------------------------
+A mapping must be made between the YubiKey token ID and the user ID it is
+attached to. There are two ways to do this, either centrally in one file, or
+individually, where users can create the mapping in their home directories.
+If the central authorization mapping file is being used, user home directory
+mappings will not be used and the opposite applies if user home directory
+mappings are being used, the central authorization mappings file will not
+be used.
+
+
+=== Central authorization mapping
+Create a `/etc/yubikey_mappings`, the file must contain a user name and the
+Yubikey token ID separated by colons (same format as the passwd file) for
+each user you want to allow onto the system using a Yubikey.
+
+The mappings should look like this, one per line:
+
+ <first user name>:<Yubikey token ID1>:<Yubikey token ID2>:….
+ <second user name>:<Yubikey token ID3>:<Yubikey token ID4>:….
+
+Now add `authfile=/etc/yubikey_mappings` to your PAM configuration line, so it
+looks like:
+
+ auth sufficient pam_yubico.so id=[Your API Client ID] authfile=/etc/yubikey_mappings
+
+ 
+=== Individual authorization mapping by user
+Each user creates a `~/.yubico/authorized_yubikeys` file inside of their home
+directory and places the mapping in that file, the file must have only one
+line:
+
+
+ <user name>:<Yubikey token ID1>:<Yubikey token ID2>
+
+
+This is much the same concept as the SSH authorized_keys file.
+
+
+Obtaining the Yubikey token ID (a.k.a. public ID)
+-------------------------------------------------
+
+You can obtain the Yubikey token ID in several ways.  One is by
+removing the last 32 characters of any OTP (One Time Password)
+generated with your Yubikey.  Another is by using the
+http://demo.yubico.com/php-yubico/Modhex_Calculator.php[modhex calculator].
+
+Enter your Yubikey OTP and convert it, your Yubikey token ID is 12
+characters and listed as:
+
+   Modhex encoded: XXXXXXX
+
+Not sure what that last bit meant? Here is how to get a copy of your OTP.
+
+=== Fast way
+. Open a terminal
+. Press the YubiKey's button
+  It will output an OTP into the shell:
++
+[source, sh]
+------
+$ cccccccgklgcvnkcvnnegrnhgrjkhlkfhdkclfncvlgj
+bash: cccccccgklgcvnkcvnnegrnhgrjkhlkfhdkclfncvlgj: command not found
+------
++
+This can be pasted into the Modhex_Calculator page.
+
+=== Harder way
+This requires you to have the pam module enabled with 'debug' turned on. When
+prompted for the YubiKey press the button. The pam module will print out debug
+information including the OTP and ID of your token to the shell -- copy the ID
+into your config file and you should be up and going.
+
+------
+Yubikey for `youruser':
+[pam_yubico.c:pam_sm_authenticate(867)] conv returned 44 bytes
+[pam_yubico.c:pam_sm_authenticate(885)] Skipping first 0 bytes. Length is 44, token_id set to 12 and token OTP always 32.
+[pam_yubico.c:pam_sm_authenticate(892)] OTP: ccccccclabcabkhbdncicglfltnukadfoifadfhhhhfe ID: cccccclabcab
+------
+
+
+Yubico PAM module and SELinux.
+------------------------------
+Users with SELinux in enforcing mode (the default on Fedora 17+) may experience
+login problems with services including those validated via
+polkit-agent-helper-1, sshd and login.
+
+This is https://bugzilla.redhat.com/show_bug.cgi?id=841693#c3[documented in Red Hat bugzilla]
+including a work around for ssh (Equivalent files could be created for
+other services). Systems in 'permissive' mode will generate AVC warnings but
+authentication will succeed.
+
+To determine if you have SELinux enforcing or not run the `sestatus` command.
+
+Examples
+--------
+
+If you want to use the YubiKey to authenticate you on Linux console
+logins, add the following to the top of `/etc/pam.d/login`:
+
+   auth sufficient pam_yubico.so id=[Your API Client ID] debug
+
+OpenVPN and ActiveDirectory
+---------------------------
+
+create file '/etc/pam.d/openvpn':
+
+   auth  required  pam_yubico.so ldap_uri=ldap://ldap-srv debug id=[Your API Client ID] yubi_attr=pager
+      ldapdn=dc=ad,dc=next-audience,dc=net
+      ldap_filter=(&(sAMAccountName=%u)(memberOf=CN=mygroup,OU=DefaultUser,DC=adivser,DC=net))
+      ldap_bind_user=bind_user ldap_bind_password=bind_password try_first_pass
+   account required  pam_yubico.so
+
+create file 'openvpn.conf'
+
+   plugin openvpn-plugin-auth-pam.so openvpn
+
+
+Feedback
+--------
+
+If you want to discuss anything related to the Yubico PAM module,
+please e-mail the mailing list yubico-devel@googlegroups.com.
+

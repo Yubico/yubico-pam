@@ -1,0 +1,34 @@
+PAM configuration is somewhat complex, but a typical use-case is to
+require both a password and Yubikey to allow access.  This can be
+achieved by a PAM configuration like this:
+
+----
+auth requisite pam_yubico.so id=42
+auth required pam_unix.so use_first_pass
+----
+
+The first line makes pam_yubico check the OTP.  Use either a per-user
+file called `~/.yubico/authorized_yubikeys`, or a system wide file called
+`/etc/yubikey_mappings` to specify which Yubikeys that can be used to log
+in as specific users. See https://developers.yubico.com/yubico-pam[the README]
+for more information.
+
+The 'use_first_pass' on the next line says that the password the pam_unix
+module should check should be received from the earlier PAM modules
+and that the module should not query for passwords.
+
+Of course, if you use username/password verification from a SQL
+database or LDAP, you need to change the second line above.  But the
+module you use needs to support 'use_first_pass' for this to work.
+Most modules support this.
+
+Be sure to comment out any other 'auth' lines in your PAM configuration,
+unless you want those.  For example, Debian contains a
+'@include common-auth' which would confuse the configuration.
+
+To log in, you now need to enter both your Unix password and enter an
+OTP using your Yubikey. When prompted for the password, enter the Unix
+password first and then (without pressing enter) push the button on your
+Yubikey.
+
+If it doesn't work, enable debugging (see https://developers.yubico.com/yubico-pam[the README]) and try again.
