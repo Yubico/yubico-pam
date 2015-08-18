@@ -112,6 +112,7 @@ struct cfg
   const char *cainfo;
   const char *url;
   const char *urllist;
+  const char *authgroup;
   const char *ldapserver;
   const char *ldap_uri;
   const char *ldap_bind_user;
@@ -428,7 +429,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   char *userfile = NULL, *tmpfile = NULL;
   FILE *f = NULL;
   char buf[CR_RESPONSE_SIZE + 16], response_hex[CR_RESPONSE_SIZE * 2 + 1];
-  int ret, fd;
+  int ret, fd, result;
 
   unsigned int response_len = 0;
   YK_KEY *yk = NULL;
@@ -438,6 +439,19 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
 
   struct passwd *p;
   struct stat st;
+    
+  if (cfg->authgroup) {
+        
+    result = CheckGroup((char*)username,(char*)cfg->authgroup);
+        
+    if (result == 1) {
+        errstr = NULL;
+        errno = 0;
+        ret = PAM_SUCCESS;
+        goto out;
+    }
+        
+  }
 
   /* we must declare two sepparate privs structures as they can't be reused */
   PAM_MODUTIL_DEF_PRIVS(privs);
@@ -713,6 +727,8 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->ldapdn = argv[i] + 7;
       if (strncmp (argv[i], "user_attr=", 10) == 0)
 	cfg->user_attr = argv[i] + 10;
+      if (strncmp (argv[i], "authgroup=", 10) == 0)
+    cfg->authgroup = argv[i] + 10;
       if (strncmp (argv[i], "yubi_attr=", 10) == 0)
 	cfg->yubi_attr = argv[i] + 10;
       if (strncmp (argv[i], "yubi_attr_prefix=", 17) == 0)

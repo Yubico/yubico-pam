@@ -510,3 +510,51 @@ char *filter_printf(const char *filter, const char *user) {
   filter_result_len(filter, user, result);
   return result;
 }
+
+int CheckGroup(char *username, char *group) {
+    
+    int j, ngroups;
+    gid_t *groups;
+    struct passwd *pw;
+    struct group *gr;
+    
+    ngroups = 150;
+    
+    groups = malloc(ngroups * sizeof (gid_t));
+    if (groups == NULL) {
+        perror("malloc");
+        exit(EXIT_FAILURE);
+    }
+    
+    pw = getpwnam(username);
+    if (pw == NULL) {
+        perror("getpwnam");
+        exit(EXIT_SUCCESS);
+    }
+    
+    if (getgrouplist(username, pw->pw_gid, groups, &ngroups) == -1) {
+        exit(EXIT_FAILURE);
+    }
+    
+    for (j = 0; j < ngroups; j++) {
+        gr = getgrgid(groups[j]);
+        if (gr != NULL) {
+            int comparison = strcmp(gr->gr_name, group);
+            if (comparison == 0) {
+                // It's here... Return a 0 and clean up.
+                free(groups);
+                return 0;
+            } else {
+                // Not here... Move on to the next iteration.
+                continue;
+            }
+            
+        }
+    }
+    
+    // Group not found... Clean up and return 1
+    free (groups);
+    return 1;
+    
+}
+
