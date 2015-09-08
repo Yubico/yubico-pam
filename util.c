@@ -53,14 +53,13 @@
 #endif /* HAVE_CR */
 
 int
-get_user_cfgfile_path(const char *common_path, const char *filename, const char *username, char **fn)
+get_user_cfgfile_path(const char *common_path, const char *filename, const struct passwd *user, char **fn)
 {
   /* Getting file from user home directory, e.g. ~/.yubico/challenge, or
    * from a system wide directory.
    *
    * Format is hex(challenge):hex(response):slot num
    */
-  struct passwd *p;
   char *userfile;
   size_t len;
 
@@ -76,15 +75,11 @@ get_user_cfgfile_path(const char *common_path, const char *filename, const char 
 
   /* No common path provided. Construct path to user's ~/.yubico/filename */
 
-  p = getpwnam (username);
-  if (!p)
-    return 0;
-
-  len = strlen(p->pw_dir) + 9 + strlen(filename) + 1;
+  len = strlen(user->pw_dir) + 9 + strlen(filename) + 1;
   if ((userfile = malloc(len)) == NULL) {
     return 0;
   }
-  snprintf(userfile, len, "%s/.yubico/%s", p->pw_dir, filename);
+  snprintf(userfile, len, "%s/.yubico/%s", user->pw_dir, filename);
   *fn = userfile;
   return 1;
 }
@@ -288,7 +283,7 @@ int challenge_response(YK_KEY *yk, int slot,
 }
 
 int
-get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *username, char **fn)
+get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const struct passwd *user, char **fn)
 {
   /* Getting file from user home directory, i.e. ~/.yubico/challenge, or
    * from a system wide directory.
@@ -309,13 +304,13 @@ get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *usern
     if (! chalresp_path)
       filename = "challenge";
     else
-      filename = username;
+      filename = user->pw_name;
   } else {
     /* We have serial number */
     /* 0xffffffff == 4294967295 == 10 digits */
-    size_t len = strlen(chalresp_path == NULL ? "challenge" : username) + 1 + 10 + 1;
+    size_t len = strlen(chalresp_path == NULL ? "challenge" : user->pw_name) + 1 + 10 + 1;
     if ((ptr = malloc(len)) != NULL) {
-      int res = snprintf(ptr, len, "%s-%u", chalresp_path == NULL ? "challenge" : username, serial);
+      int res = snprintf(ptr, len, "%s-%u", chalresp_path == NULL ? "challenge" : user->pw_name, serial);
       filename = ptr;
       if (res < 0 || (unsigned long)res > len) {
 	/* Not enough space, strangely enough. */
@@ -328,7 +323,7 @@ get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const char *usern
   if (filename == NULL)
     return 0;
 
-  ret = get_user_cfgfile_path (chalresp_path, filename, username, fn);
+  ret = get_user_cfgfile_path (chalresp_path, filename, user, fn);
   if(ptr) {
     free(ptr);
   }

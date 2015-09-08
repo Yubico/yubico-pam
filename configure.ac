@@ -49,6 +49,7 @@ AC_CHECK_HEADERS([security/pam_modules.h security/_pam_macros.h security/pam_mod
 AC_CHECK_LIB([pam], [pam_start], [AC_SUBST([LIBPAM], ["-lpam"])])
 
 AC_SEARCH_LIBS([pam_modutil_drop_priv], ["pam"], [AC_DEFINE([HAVE_PAM_MODUTIL_DROP_PRIV], [1])])
+AC_SEARCH_LIBS([pam_modutil_getpwnam], ["pam"], [AC_DEFINE([HAVE_PAM_MODUTIL_GETPWNAM], [1])])
 
 AC_ARG_WITH([ldap],
             [AS_HELP_STRING([--without-ldap],

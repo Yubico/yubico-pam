@@ -36,15 +36,21 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include <pwd.h>
+
 #include "util.h"
 
 static void test_get_user_cfgfile_path(void) {
   char *file;
-  int ret = get_user_cfgfile_path("/foo/bar", "test", "root", &file);
+  struct passwd user;
+  int ret;
+  user.pw_name = "root";
+  user.pw_dir = "/root";
+  ret = get_user_cfgfile_path("/foo/bar", "test", &user, &file);
   assert(ret == 1);
   assert(strcmp(file, "/foo/bar/test") == 0);
   free(file);
-  ret = get_user_cfgfile_path(NULL, "test", "root", &file);
+  ret = get_user_cfgfile_path(NULL, "test", &user, &file);
   assert(ret == 1);
   assert(strcmp(file, "/root/.yubico/test") == 0);
   free(file);

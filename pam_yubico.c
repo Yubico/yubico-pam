@@ -158,7 +158,11 @@ authorize_user_token (struct cfg *cfg,
       struct passwd *p;
       PAM_MODUTIL_DEF_PRIVS(privs);
 
+#ifdef HAVE_PAM_MODUTIL_GETPWNAM
+      p = pam_modutil_getpwnam (pamh, username);
+#else
       p = getpwnam (username);
+#endif
       if (p == NULL) {
 	DBG (("getpwnam: %s", strerror(errno)));
 	return 0;
@@ -167,7 +171,7 @@ authorize_user_token (struct cfg *cfg,
       /* Getting file from user home directory
          ..... i.e. ~/.yubico/authorized_yubikeys
        */
-      if (! get_user_cfgfile_path (NULL, "authorized_yubikeys", username, &userfile)) {
+      if (! get_user_cfgfile_path (NULL, "authorized_yubikeys", p, &userfile)) {
 	D (("Failed figuring out per-user cfgfile"));
 	return 0;
       }
@@ -455,19 +459,22 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
     goto out;
   }
 
+#ifdef HAVE_PAM_MODUTIL_GETPWNAM
+  p = pam_modutil_getpwnam (pamh, username);
+#else
+  p = getpwnam (username);
+#endif
+  if (p == NULL) {
+      DBG (("getpwnam: %s", strerror(errno)));
+      goto out;
+  }
 
-  if (! get_user_challenge_file (yk, cfg->chalresp_path, username, &userfile)) {
+  if (! get_user_challenge_file (yk, cfg->chalresp_path, p, &userfile)) {
     DBG(("Failed getting user challenge file for user %s", username));
     goto out;
   }
 
   DBG(("Loading challenge from file %s", userfile));
-
-  p = getpwnam (username);
-  if (p == NULL) {
-      DBG (("getpwnam: %s", strerror(errno)));
-      goto out;
-  }
 
   /* Drop privileges before opening user file. */
   if (pam_modutil_drop_priv(pamh, &privs, p)) {
