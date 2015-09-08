@@ -74,10 +74,10 @@ EXTRA_DIST += tests/aux/ykval.pl tests/aux/ldap.pl tests/aux/authfile
 
 SUFFIXES = .1.txt .1 .8.txt .8
 .1.txt.1:
-	$(A2X) --format=manpage -a revdate="Version $(VERSION)" $<
+	$(A2X) -L --format=manpage -a revdate="Version $(VERSION)" $<
 
 .8.txt.8:
-	$(A2X) --format=manpage -a revdate="Version $(VERSION)" $<
+	$(A2X) -L --format=manpage -a revdate="Version $(VERSION)" $<
 
 
 if ENABLE_COV
