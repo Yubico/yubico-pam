@@ -37,7 +37,7 @@ libdir = $(PAMDIR)
 
 lib_LTLIBRARIES = pam_yubico.la
 
-pam_yubico_la_SOURCES = drop_privs.h drop_privs.c
+pam_yubico_la_SOURCES = drop_privs.h drop_privs.c groups.h groups.c
 # XXX add -Wl,-x too?  PAM documentation suggests it.
 pam_yubico_la_LIBADD = @LTLIBYUBIKEY@ @LTLIBYKCLIENT@ @LIBLDAP@ @LIBPAM@
 pam_yubico_la_LIBADD += libpam_util.la libpam_real.la

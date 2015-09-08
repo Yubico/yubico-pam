@@ -42,7 +42,9 @@
 #include <string.h>
 #include <pwd.h>
 
+
 #include "util.h"
+#include "groups.h"
 #include "drop_privs.h"
 
 #include <ykclient.h>
@@ -127,11 +129,6 @@ struct cfg
   const char *chalresp_path;
 };
 
-#define DEFAULT_SUPLEMENTARY_GROUPS (15)
-#define MAX_SUPLEMENTARY_GROUPS  (10000)
-
-static int set_supplementary_groups(const char *const username, const gid_t gid);	// not olny main group
-
 #ifdef DBG
 #undef DBG
 #endif
@@ -184,7 +181,7 @@ authorize_user_token (struct cfg *cfg,
 	goto free_out;
       }
 
-      if (set_supplementary_groups(username, p->pw_gid)) {
+      if (set_supplementary_groups(username, p->pw_gid, cfg->debug)) {
        DBG (("could not set supplementary groups"));
 	retval = 0;
 	goto free_out;
@@ -432,58 +429,6 @@ display_error(pam_handle_t *pamh, const char *message) {
 }
 #endif /* HAVE_CR */
 
-#define DEFAULT_SUPLEMENTARY_GROUPS (15)
-#define MAX_SUPLEMENTARY_GROUPS  (10000)
-int set_supplementary_groups(const char *const username, const gid_t gid)
-{
-	// set supplementary groups for user
-	// 	[in] username
-	// 	[in] gid mandatory group for user (it will be not setted)
-	//	Return value
-	//		0  - OK
-	//		-1 - Error
-
-	gid_t *groups = NULL;
-	int max_groups  = DEFAULT_SUPLEMENTARY_GROUPS, num_groups = 0;
-	do
-	{
-		groups = malloc(sizeof(gid_t)*max_groups);
-		if (groups == NULL)
-		{
-			D(("Can not allocate memory for supplementary groups: %s", strerror(errno)));
-			return -1;
-		}
-
-		int cur_groups = max_groups;
-		if (0 <= getgrouplist(username, gid, groups, &cur_groups))
-		{
-			num_groups = cur_groups;
-		}
-		else
-		{
-			max_groups *= 2;
-			max_groups = (max_groups<cur_groups)?cur_groups:max_groups;
-			free(groups);
-		}
-	} while (max_groups < MAX_SUPLEMENTARY_GROUPS && 0 == num_groups);
-
-	if (num_groups > 0)
-	{
-		if (setgroups(num_groups, groups))
-		{
-			D(("set supplementary groups error: %s", strerror(errno)));
-			num_groups = -1;
-		}
-	}
-	else if (num_groups < 0)
-	{
-		D(("Can not get groups for user %s", username));
-	}
-
-	free(groups);
-	return (num_groups>0)?0:-1;
-}
-
 #if HAVE_CR
 static int
 do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
@@ -538,7 +483,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
       goto out;
   }
 
-  if (set_supplementary_groups(username, p->pw_gid)) {
+  if (set_supplementary_groups(username, p->pw_gid, cfg->debug)) {
       DBG (("could not set supplementary groups"));
       goto out;
   }
@@ -651,7 +596,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
       goto out;
   }
 
-  if (set_supplementary_groups(username, p->pw_gid)) {
+  if (set_supplementary_groups(username, p->pw_gid, cfg->debug)) {
       DBG (("could not set supplementary groups"));
       goto out;
   }
