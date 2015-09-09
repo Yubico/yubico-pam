@@ -38,7 +38,6 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <pwd.h>
 #include <unistd.h>
 
 #include "util.h"

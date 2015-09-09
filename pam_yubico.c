@@ -40,7 +40,6 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
-#include <pwd.h>
 
 #include "util.h"
 #include "drop_privs.h"
