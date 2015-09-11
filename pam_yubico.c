@@ -475,10 +475,12 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
 
   DBG(("Loading challenge from file %s", userfile));
 
-  /* Drop privileges before opening user file. */
-  if (pam_modutil_drop_priv(pamh, &privs, p)) {
+  /* Drop privileges before opening user file (if we're not using system-wide dir). */
+  if (!cfg->chalresp_path) {
+    if (pam_modutil_drop_priv(pamh, &privs, p)) {
       DBG (("could not drop privileges"));
       goto out;
+    }
   }
 
   fd = open(userfile, O_RDONLY, 0);
@@ -515,9 +517,11 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   }
   f = NULL;
 
-  if (pam_modutil_regain_priv(pamh, &privs)) {
+  if (!cfg->chalresp_path) {
+    if (pam_modutil_regain_priv(pamh, &privs)) {
       DBG (("could not restore privileges"));
       goto out;
+    }
   }
 
   if (! challenge_response(yk, state.slot, state.challenge, state.challenge_len,
