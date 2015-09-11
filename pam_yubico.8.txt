@@ -100,7 +100,8 @@ Path of a system wide directory where challenge response files can be found for 
 == BUGS
 Report yubico-pam bugs in the issue tracker: https://github.com/Yubico/yubico-pam/issues
 
-== FILES [[FILES]]
+[[FILES]]
+== FILES
 *~/.yubico/authorized_yubikeys*::
 If not defined *authfile*, this file holds the mappings of Yubikey token IDs for _client_ mode for the user.
 
