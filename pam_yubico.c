@@ -41,7 +41,9 @@
 #include <errno.h>
 #include <string.h>
 
+
 #include "util.h"
+#include "groups.h"
 #include "drop_privs.h"
 
 #include <ykclient.h>
@@ -178,6 +180,12 @@ authorize_user_token (struct cfg *cfg,
       DBG (("Dropping privileges"));
       if(pam_modutil_drop_priv(pamh, &privs, p)) {
         DBG (("could not drop privileges"));
+	retval = 0;
+	goto free_out;
+      }
+
+      if (set_supplementary_groups(username, p->pw_gid, cfg->debug)) {
+       DBG (("could not set supplementary groups"));
 	retval = 0;
 	goto free_out;
       }
@@ -483,6 +491,11 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
     }
   }
 
+  if (set_supplementary_groups(username, p->pw_gid, cfg->debug)) {
+      DBG (("could not set supplementary groups"));
+      goto out;
+  }
+
   fd = open(userfile, O_RDONLY, 0);
   if (fd < 0) {
       DBG (("Cannot open file: %s (%s)", userfile, strerror(errno)));
@@ -590,6 +603,11 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   /* Drop privileges before creating new challenge file. */
   if (pam_modutil_drop_priv(pamh, &privs, p)) {
       DBG (("could not drop privileges"));
+      goto out;
+  }
+
+  if (set_supplementary_groups(username, p->pw_gid, cfg->debug)) {
+      DBG (("could not set supplementary groups"));
       goto out;
   }
 
