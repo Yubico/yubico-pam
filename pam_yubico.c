@@ -588,9 +588,11 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   /* point to the fresh privs structure.. */
   privs = privs2;
   /* Drop privileges before creating new challenge file. */
-  if (pam_modutil_drop_priv(pamh, &privs, p)) {
-      DBG (("could not drop privileges"));
-      goto out;
+  if (!cfg->chalresp_path) {
+    if (pam_modutil_drop_priv(pamh, &privs, p)) {
+        DBG (("could not drop privileges"));
+        goto out;
+    }
   }
 
   /* Write out the new file */
@@ -624,19 +626,15 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
     goto restpriv_out;
   }
 
-  if (pam_modutil_regain_priv(pamh, &privs)) {
-      DBG (("could not restore privileges"));
-      goto out;
-  }
-
   DBG(("Challenge-response success!"));
   errstr = NULL;
   errno = 0;
-  goto out;
 
 restpriv_out:
-  if (pam_modutil_regain_priv(pamh, &privs)) {
-      DBG (("could not restore privileges"));
+  if (!cfg->chalresp_path) {
+    if (pam_modutil_regain_priv(pamh, &privs)) {
+        DBG (("could not restore privileges"));
+    }
   }
 
  out:
