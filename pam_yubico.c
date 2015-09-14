@@ -790,7 +790,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
   int valid_token = 0;
   struct pam_conv *conv;
   const struct pam_message *pmsg[1];
-  struct pam_message msg[1] = {0};
+  struct pam_message msg[1] = {{0}};
   struct pam_response *resp = NULL;
   int nargs = 1;
   ykclient_t *ykc = NULL;
