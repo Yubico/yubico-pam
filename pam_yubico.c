@@ -227,7 +227,7 @@ authorize_user_token_ldap (struct cfg *cfg,
 #ifdef HAVE_LIBLDAP
   /* LDAPv2 is historical -- RFC3494. */
   int protocol = LDAP_VERSION3;
-  int yubi_attr_prefix_len = 0;
+  size_t yubi_attr_prefix_len = 0;
   LDAP *ld = NULL;
   LDAPMessage *result = NULL, *e;
   BerElement *ber;
