@@ -611,7 +611,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
       goto restpriv_out;
   }
 
-  if (! fchmod (fd, S_IRUSR | S_IWUSR)) {
+  if (fchmod (fd, S_IRUSR | S_IWUSR) != 0) {
       DBG (("could not set correct file permissions"));
       goto restpriv_out;
   }
