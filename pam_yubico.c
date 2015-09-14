@@ -1109,13 +1109,16 @@ done:
 }
 
 PAM_EXTERN int
-pam_sm_setcred (pam_handle_t * pamh, int flags, int argc, const char **argv)
+pam_sm_setcred (
+    pam_handle_t *pamh __attribute__((unused)), int flags __attribute__((unused)),
+    int argc __attribute__((unused)), const char *argv[] __attribute__((unused)))
 {
   return PAM_SUCCESS;
 }
 
 PAM_EXTERN int
-pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
+pam_sm_acct_mgmt(pam_handle_t *pamh, int flags __attribute__((unused)),
+    int argc __attribute__((unused)), const char **argv __attribute__((unused)))
 {
   int retval;
   int rc = pam_get_data(pamh, "yubico_setcred_return", (const void**)&retval);
@@ -1128,8 +1131,9 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 }
 
 PAM_EXTERN int
-pam_sm_open_session(pam_handle_t *pamh, int flags,
-	int argc, const char *argv[])
+pam_sm_open_session(
+    pam_handle_t *pamh __attribute__((unused)), int flags __attribute__((unused)),
+    int argc __attribute__((unused)), const char *argv[] __attribute__((unused)))
 {
 
   D(("pam_sm_open_session"));
@@ -1137,16 +1141,18 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 }
 
 PAM_EXTERN int
-pam_sm_close_session(pam_handle_t *pamh, int flags,
-	int argc, const char *argv[])
+pam_sm_close_session(
+    pam_handle_t *pamh __attribute__((unused)), int flags __attribute__((unused)),
+    int argc __attribute__((unused)), const char *argv[] __attribute__((unused)))
 {
   D(("pam_sm_close_session"));
   return (PAM_SUCCESS);
 }
 
 PAM_EXTERN int
-pam_sm_chauthtok(pam_handle_t *pamh, int flags,
-	int argc, const char *argv[])
+pam_sm_chauthtok(
+    pam_handle_t *pamh __attribute__((unused)), int flags __attribute__((unused)),
+    int argc __attribute__((unused)), const char *argv[] __attribute__((unused)))
 {
   D(("pam_sm_chauthtok"));
   return (PAM_SERVICE_ERR);
