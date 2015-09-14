@@ -235,7 +235,8 @@ authorize_user_token_ldap (struct cfg *cfg,
   char *attrs[2] = {NULL, NULL};
 
   struct berval **vals;
-  int i, rc;
+  int rc;
+  size_t i;
 
   char *filter = NULL;
   char *find = NULL;
