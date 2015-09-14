@@ -92,6 +92,8 @@
 #define MAX_TOKEN_ID_LEN 16u
 #define DEFAULT_TOKEN_ID_LEN 12u
 
+#define TMPFILE_SUFFIX ".XXXXXX"
+
 enum key_mode {
   CHRESP,
   CLIENT
@@ -596,15 +598,20 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   }
 
   /* Write out the new file */
-  tmpfile = malloc(strlen(userfile) + 1 + 4);
+  tmpfile = malloc(strlen(userfile) + 1 + strlen(TMPFILE_SUFFIX));
   if (! tmpfile)
     goto restpriv_out;
   strcpy(tmpfile, userfile);
-  strcat(tmpfile, ".tmp");
+  strcat(tmpfile, TMPFILE_SUFFIX);
 
-  fd = open(tmpfile, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+  fd = mkstemp(tmpfile);
   if (fd < 0) {
       DBG (("Cannot open file: %s (%s)", tmpfile, strerror(errno)));
+      goto restpriv_out;
+  }
+
+  if (! fchmod (fd, S_IRUSR | S_IWUSR)) {
+      DBG (("could not set correct file permissions"));
       goto restpriv_out;
   }
 
