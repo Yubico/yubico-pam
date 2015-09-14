@@ -637,6 +637,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   DBG(("Challenge-response success!"));
   errstr = NULL;
   errno = 0;
+  yk_errno = 0;
 
 restpriv_out:
   if (!cfg->chalresp_path) {
