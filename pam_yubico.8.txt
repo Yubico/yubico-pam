@@ -87,7 +87,7 @@ An ldap filter to use for attempting to find the correct object in LDAP. In this
 Ca certfile for the LDAP connection.
 
 *chalresp_path*=_path_::
-Path of a system wide directory where challenge response files can be found for users.
+Path of a system wide directory where challenge response files can be found for users. Default location is $HOME/.yubico/
 
 == EXAMPLES
 
@@ -96,6 +96,15 @@ Path of a system wide directory where challenge response files can be found for 
   auth required pam_yubico.so mode=challenge-response
 
   auth required pam_yubico.so id=16 ldap_uri=ldaps://ldap.example.com ldap_filter=(uid=%u) yubi_attr=yubiKeyId
+
+== FILES
+
+*$HOME/.yubico/authorized_yubikeys*::
+If *authfile* is not set this file is used for the mapping between YubiKey public id and in _client_ mode.
+
+*$HOME/.yubico/challenge*::
+*$HOME/.yubico/challenge-_serial_number_*::
+If *chalresp_path* is not set these files are used to hold next challenge and expected response for the user in _challenge-response_ mode. If *chalresp_path* is set the filename will be username instead of challenge.
 
 == BUGS
 Report yubico-pam bugs in the issue tracker: https://github.com/Yubico/yubico-pam/issues
