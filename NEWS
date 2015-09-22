@@ -1,6 +1,13 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
-* Version 2.20 (unreleased)
+* Version 2.20 (released 2015-09-22)
+
+** Add cainfo option to allow usage of a cabundle instead of path.
+
+** Support comments in authfile.
+
+** For challenge response with system-wide directory, write the files as root
+instead of the user.
 
 * Version 2.19 (released 2015-03-23)
 
