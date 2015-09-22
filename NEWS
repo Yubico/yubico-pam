@@ -1,5 +1,7 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
+* Version 2.21 (unreleased)
+
 * Version 2.20 (released 2015-09-22)
 
 ** Add cainfo option to allow usage of a cabundle instead of path.
