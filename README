@@ -129,7 +129,7 @@ live in your system) :
 mv /usr/local/lib/security/pam_yubico.so /lib/security/
 ----
 
-For more information, see the project Wiki page.
+For more information, see the project documentation.
 
 Supported PAM module parameters are:
 

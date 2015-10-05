@@ -60,13 +60,13 @@ privileges, this is a mandatory step here.
 === Installation of pam_yubico module ===
 
 Build instructions for pam_yubico are available in the README.
-(https://github.com/Yubico/yubico-pam/wiki/ReadMe)
+(https://developers.yubico.com/yubico-pam/)
 
 
 === Configuration of pam_yubico module === 
 
 Configuration instructions for pam_yubico are also available in the README.
-(https://github.com/Yubico/yubico-pam/wiki/ReadMe)
+(https://developers.yubico.com/yubico-pam/)
 
 NOTE: Make sure you set your system up for either central authorization mapping,
 or user level mapping, as this will control which users can connect to the
