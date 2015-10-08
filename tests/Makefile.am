@@ -30,14 +30,13 @@
 AM_LDFLAGS = -no-install
 AM_CFLAGS=-I$(srcdir)/.. $(WARN_CFLAGS)
 AM_CPPFLAGS = @YKPERS_CFLAGS@
-test_LDADD = ../pam_yubico.la
 util_test_LDADD = ../libpam_util.la
 pam_test_LDADD = ../libpam_real.la ../libpam_util.la @LTLIBYUBIKEY@ @LTLIBYKCLIENT@ @LIBLDAP@
 
 pam_test_CPPFLAGS = -DSRCDIR=\"$(srcdir)\"
 TESTS_ENVIRONMENT = export LDAPNOINIT=1;
 
-check_PROGRAMS = test util_test pam_test
+check_PROGRAMS = util_test pam_test
 TESTS = $(check_PROGRAMS)
 
 if ENABLE_COV
