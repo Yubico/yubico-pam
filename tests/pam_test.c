@@ -38,7 +38,14 @@
 #include <assert.h>
 
 #include <security/pam_appl.h>
+#ifdef HAVE_PAM_MODUTIL_DROP_PRIV
 #include <security/pam_modutil.h>
+#else
+#include <pwd.h>
+struct pam_modutil_privs {
+  int noop;
+};
+#endif
 
 #define YKVAL_PORT1 "17502"
 #define YKVAL_PORT2 "30559"
@@ -83,7 +90,11 @@ static const struct data *test_get_data(void *id) {
   return &_data[(long)id];
 }
 
+#ifdef OPENPAM
+const char * pam_strerror(const pam_handle_t *pamh, int errnum) {
+#else
 const char * pam_strerror(pam_handle_t *pamh, int errnum) {
+#endif
   fprintf(stderr, "in pam_strerror()\n");
   return "error";
 }
@@ -94,7 +105,16 @@ int pam_set_data(pam_handle_t *pamh, const char *module_data_name, void *data,
   return PAM_SUCCESS;
 }
 
+int pam_get_data(const pam_handle_t *pamh, const char *module_data_name, const void **data) {
+  fprintf(stderr, "in pam_get_data() %s\n", module_data_name);
+  return PAM_SUCCESS;
+}
+
+#ifdef OPENPAM
+int pam_get_user(pam_handle_t *pamh, const char **user, const char *prompt) {
+#else
 int pam_get_user(const pam_handle_t *pamh, const char **user, const char *prompt) {
+#endif
   fprintf(stderr, "in pam_get_user()\n");
   *user = test_get_data((void*)pamh)->user;
   return PAM_SUCCESS;
