@@ -300,7 +300,7 @@ authorize_user_token_ldap (struct cfg *cfg,
   if (cfg->user_attr && cfg->yubi_attr && cfg->ldapdn) {
     i = (strlen(cfg->user_attr) + strlen(cfg->ldapdn) + strlen(user) + 3) * sizeof(char);
     if ((find = malloc(i)) == NULL) {
-      DBG (("Failed allocating %i bytes", i));
+      DBG (("Failed allocating %zu bytes", i));
       retval = 0;
       goto done;
     }
