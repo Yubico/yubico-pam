@@ -160,6 +160,7 @@ if test "$gl_gcc_warnings" = yes; then
   gl_WARN_ADD([-fdiagnostics-show-option])
 fi
 
+gl_VALGRIND_TESTS
 
 AC_CONFIG_FILES(Makefile)
 AC_CONFIG_FILES(tests/Makefile)
