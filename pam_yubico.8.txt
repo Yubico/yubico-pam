@@ -50,6 +50,9 @@ This option should not be used, please use the urllist option instead.  Set the 
 *capath*=_path_::
 Specify the path where X509 certificates are stored. This is required if 'https' or 'ldaps' are used in 'url' and 'ldap_uri' respectively.
 
+*proxy*=_proxy_::
+Specify a proxy to connect to the validation server. Valid schemes are socks4://, socks4a://, socks5:// or socks5h://. Socks5h asks the proxy to do the dns resolving. If no scheme or port is specified HTTP proxy port 1080 will be used. E.g. socks5h://user:pass@10.10.0.1:1080
+
 *verbose_otp*::
 This argument is used to show the OTP (One Time Password) when it is entered, i.e. to enable terminal echo of entered characters.  You are advised to not use this, if you are using two factor authentication because that will display your password on the screen.  This requires the service using the PAM module to display custom fields.  For example, OpenSSH requires you to configure "ChallengeResponseAuthentication no".
 
