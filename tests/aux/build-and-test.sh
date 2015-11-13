@@ -1,6 +1,5 @@
 #!/bin/sh
 
-set -e
 set -x
 
 autoreconf -i
@@ -10,6 +9,7 @@ if [ "x$TRAVIS_OS_NAME" != "xosx" ]; then
     sudo apt-get update -qq || true
     sudo apt-get install -qq -y --no-install-recommends libykclient-dev libpam0g-dev libyubikey-dev asciidoc docbook-xml xsltproc libxml2-utils $EXTRA
 else
+    brew update
     brew install pkg-config
     brew install libtool
     brew install asciidoc
@@ -18,6 +18,8 @@ else
     brew install ykpers
     cpanp install Net::LDAP::Server
 fi
+
+set -e
 
 ./configure $CONFIGURE_ARGS $COVERAGE
 make check
