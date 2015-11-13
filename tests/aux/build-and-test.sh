@@ -1,6 +1,5 @@
 #!/bin/sh
 
-set -e
 set -x
 
 autoreconf -i
@@ -19,6 +18,8 @@ else
     brew install ykpers
     cpanp install Net::LDAP::Server
 fi
+
+set -e
 
 ./configure $CONFIGURE_ARGS $COVERAGE
 make check
