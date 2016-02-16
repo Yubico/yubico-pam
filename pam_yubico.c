@@ -407,11 +407,15 @@ display_error(pam_handle_t *pamh, const char *message) {
     return retval;
   }
 
+  if(!conv || !conv->conv){
+    D(("conv() function invalid"));
+    return PAM_CONV_ERR;
+  }
   pmsg[0] = &msg[0];
   msg[0].msg = (char *) message; /* on some systems, pam_message.msg isn't const */
   msg[0].msg_style = PAM_ERROR_MSG;
   retval = conv->conv(1, pmsg, &resp, conv->appdata_ptr);
-
+  
   if (retval != PAM_SUCCESS) {
     D(("conv returned error: %s", pam_strerror (pamh, retval)));
     return retval;
