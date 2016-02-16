@@ -74,7 +74,8 @@ static const char *ldap_cfg[] = {
   "ldapdn=ou=users,dc=example,dc=com",
   "user_attr=uid",
   "yubi_attr=yubiKeyId",
-  "debug"
+  "debug",
+  "fork"
 };
 
 static const char *ldap_cfg2[] = {
@@ -170,6 +171,7 @@ static int test_authenticate1(void) {
     "url=http://localhost:"YKVAL_PORT1"/wsapi/2/verify?id=%d&otp=%s",
     "authfile="AUTHFILE,
     "debug",
+    "fork"
   };
   return pam_sm_authenticate(0, 0, sizeof(cfg) / sizeof(char*), cfg);
 }
@@ -190,6 +192,7 @@ static int test_authenticate3(void) {
     "urllist=http://localhost:"YKVAL_PORT1"/wsapi/2/verify",
     "authfile="AUTHFILE,
     "debug",
+    "fork"
   };
   return pam_sm_authenticate(4, 0, sizeof(cfg) / sizeof(char*), cfg);
 }
@@ -209,7 +212,8 @@ static int test_fail_authenticate2(void) {
     "id=1",
     "urllist=http://localhost:"YKVAL_PORT2"/wsapi/2/verify;http://localhost:"YKVAL_PORT1"/wsapi/2/verify",
     "authfile="AUTHFILE,
-    "debug"
+    "debug",
+    "fork"
   };
   return pam_sm_authenticate(2, 0, sizeof(cfg) / sizeof(char*), cfg);
 }
