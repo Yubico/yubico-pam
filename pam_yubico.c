@@ -36,6 +36,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
@@ -127,6 +128,7 @@ struct cfg
   unsigned int token_id_length;
   enum key_mode mode;
   const char *chalresp_path;
+  int fork;
 };
 
 #ifdef DBG
@@ -745,6 +747,8 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->mode = CLIENT;
       if (strncmp (argv[i], "chalresp_path=", 14) == 0)
 	cfg->chalresp_path = argv[i] + 14;
+      if (strcmp (argv[i], "fork") == 0)
+	cfg->fork = 1;
     }
 
   if (cfg->debug)
@@ -779,6 +783,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
       D (("token_id_length=%d", cfg->token_id_length));
       D (("mode=%s", cfg->mode == CLIENT ? "client" : "chresp" ));
       D (("chalresp_path=%s", cfg->chalresp_path ? cfg->chalresp_path : "(null)"));
+      D (("fork=%d", cfg->fork));
     }
 }
 
@@ -808,6 +813,39 @@ pam_sm_authenticate (pam_handle_t * pamh,
   char *onlypasswd = NULL;
 
   parse_cfg (flags, argc, argv, cfg);
+
+  if (cfg->fork)
+  {
+    pid_t pid = fork();
+    if (pid < 0)
+    {
+      DBG (("fork failed!"));
+      return PAM_AUTHINFO_UNAVAIL;
+    }
+    if (pid > 0)
+    {
+      int status;
+      DBG (("parent waiting for status."));
+      waitpid(pid, &status, 0);
+      if (WIFEXITED(status))
+      {
+        retval = WEXITSTATUS(status);
+        DBG (("child exited normally with status %d", retval));
+      }
+      else if (WIFSIGNALED(status))
+      {
+        syslog (LOG_ERR, "Authentication process died on signal %d", WTERMSIG(status));
+        DBG (("child exited with signal %d", WTERMSIG(status)));
+        retval = PAM_AUTHINFO_UNAVAIL;
+      }
+      else
+      {
+        DBG (("child status unknown"));
+        retval = PAM_AUTHINFO_UNAVAIL;
+      }
+      return retval;
+    }
+  }
 
   DBG (("pam_yubico version: %s", VERSION));
 
@@ -1114,6 +1152,9 @@ done:
       free((char*)msg[0].msg);
     }
 
+  if(cfg->fork) {
+    exit(retval);
+  }
   return retval;
 }
 
