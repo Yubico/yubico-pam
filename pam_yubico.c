@@ -461,7 +461,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
     goto out;
   }
 
-  if (! check_firmware_version(yk, false, true)) {
+  if (! check_firmware_version(yk, cfg->debug, true)) {
     DBG(("YubiKey does not support Challenge-Response (version 2.2 required)"));
     goto out;
   }

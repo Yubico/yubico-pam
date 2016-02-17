@@ -206,10 +206,10 @@ check_firmware_version(YK_KEY *yk, bool verbose, bool quiet)
 	}
 
 	if (verbose) {
-		printf("Firmware version %d.%d.%d\n",
+		D(("YubiKey Firmware version: %d.%d.%d\n",
 		       ykds_version_major(st),
 		       ykds_version_minor(st),
-		       ykds_version_build(st));
+		       ykds_version_build(st)));
 		fflush(stdout);
 	}
 
