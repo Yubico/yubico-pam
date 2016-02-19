@@ -27,6 +27,7 @@ m4/lt~obsolete.m4
 missing
 pam_yubico-*.tar.gz
 pam_yubico-*.tar.gz.sig
+pam_yubico-*.pkg
 pam_yubico.8
 ykpamcfg.1
 drop_privs.lo
