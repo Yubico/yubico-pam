@@ -14,7 +14,7 @@ for a YubiKey with serial number API readout enabled, and
 The PAM module supports a system wide directory for these state files
 (in case the user's home directories are encrypted), but in a system
 wide directory, the 'challenge' part should be replaced with the
-username.  Example: `/var/yubico/challenges/alice-123456`.
+username.  Example: `/var/yubico/alice-123456`.
 
 To use the system-wide mode, you currently have to move the generated
 state files manually and configure the PAM module accordingly.
@@ -68,13 +68,13 @@ $ ykpamcfg -2 -v
 Stored initial challenge and expected response in '/home/alice/.yubico/challenge-123456'.
 $
 ------
-If your /home/user folder is encrypted you should move the challenge file in a different path (i.e. /etc/yubico) and then set the right permission for the user to create the files. To do this do as follow:
+If your /home/user folder is encrypted you should move the challenge file in a different path (i.e. /var/yubico) and then set the right permission for the user to create the files. To do this do as follow:
 
 ----
-$ mkdir /etc/yubico
-$ chmod +t /etc/yubico
-$ chmod 777 /etc/yubico
-$ mv /home/user/.yubico/challenge-####### /etc/yubico/username-#######
+$ mkdir /var/yubico
+$ chmod +t /var/yubico
+$ chmod 777 /var/yubico
+$ mv /home/user/.yubico/challenge-####### /var/yubico/username-#######
 ...
 It is important that you name the file with the username of the user that is going to use the Yubikey
 ----
@@ -84,7 +84,7 @@ Finally we tell the pam module where to look for the challenge file
 
 and edit the following line as follow:
 
- auth	required	pam_yubico.so mode=challenge-response chalresp_path=/etc/yubico
+ auth	required	pam_yubico.so mode=challenge-response chalresp_path=/var/yubico
 
 Then back to the PAM configuration step, first make sure you have a
 root terminal available to be able to disable YubiKey login in case of
