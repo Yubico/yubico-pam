@@ -80,7 +80,7 @@ Stored initial challenge and expected response in '/var/yubico/alice-123456'.
 $
 ----
 
-It is important that the file is namned with the name of the user that is going to be authenticated by this YubiKey.
+It is important that the file is named with the name of the user that is going to be authenticated by this YubiKey.
 
 Finally we tell the pam module where to look for the challenge file
 
