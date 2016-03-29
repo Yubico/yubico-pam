@@ -201,8 +201,7 @@ verbose_otp::
    authentication because that will display your password on the
    screen.
    This requires the service using the PAM module to
-   display custom fields.  For example, OpenSSH requires
-   you to configure `ChallengeResponseAuthentication no`.
+   display custom fields.  This option can not be used with OpenSSH.
 
 ldap_uri:: specify the LDAP server URI (e.g. ldap://localhost).
 
