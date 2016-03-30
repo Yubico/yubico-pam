@@ -452,7 +452,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   struct stat st;
     
   if(cfg->auth_group) {
-    result = do_check_group((char*)username,(char*)cfg->auth_group);
+    result = check_user_group((char*)username,(char*)cfg->auth_group);
     
     if(result == 1) {
       errstr = NULL;
