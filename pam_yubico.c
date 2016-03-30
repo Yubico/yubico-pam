@@ -109,6 +109,7 @@ struct cfg
   int try_first_pass;
   int use_first_pass;
   const char *auth_file;
+  const char *auth_group;
   const char *capath;
   const char *cainfo;
   const char *proxy;
@@ -439,7 +440,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   char *userfile = NULL, *tmpfile = NULL;
   FILE *f = NULL;
   char buf[CR_RESPONSE_SIZE + 16], response_hex[CR_RESPONSE_SIZE * 2 + 1];
-  int ret, fd;
+  int ret, fd, result;
 
   unsigned int response_len = 0;
   YK_KEY *yk = NULL;
@@ -449,6 +450,18 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
 
   struct passwd *p;
   struct stat st;
+    
+  if(cfg->auth_group) {
+    result = do_check_group((char*)username,(char*)cfg->auth_group);
+    
+    if(result == 1) {
+      errstr = NULL;
+      errno = 0;
+      ret = PAM_SUCCESS;
+      DBG(("User %s is not in group %s - skipping YubiKey requirement for login!", username, cfg->auth_group));
+      goto out;
+    }
+  }
 
   /* we must declare two sepparate privs structures as they can't be reused */
   PAM_MODUTIL_DEF_PRIVS(privs);
@@ -711,6 +724,8 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->use_first_pass = 1;
       if (strncmp (argv[i], "authfile=", 9) == 0)
 	cfg->auth_file = argv[i] + 9;
+      if (strncmp (argv[i], "authgroup=", 10) == 0)
+  cfg->auth_group = argv[i] + 10;
       if (strncmp (argv[i], "capath=", 7) == 0)
 	cfg->capath = argv[i] + 7;
       if (strncmp (argv[i], "cainfo=", 7) == 0)

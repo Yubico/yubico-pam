@@ -36,6 +36,8 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <grp.h>
+#include <string.h>
 #include <pwd.h>
 
 #if defined(DEBUG_PAM)
@@ -90,6 +92,7 @@ int write_chalresp_state(FILE *f, CR_STATE *state);
 
 int init_yubikey(YK_KEY **yk);
 int check_firmware_version(YK_KEY *yk, bool verbose, bool quiet);
+int do_check_group(char *username, char *group);
 int challenge_response(YK_KEY *yk, int slot,
 		       char *challenge, unsigned int len,
 		       bool hmac, bool may_block, bool verbose,
