@@ -42,3 +42,8 @@ Drop permissions before opening user files.
 
 Fredrik Thulin <fredrik@yubico.com>
 Maintainer alumni, helped on drop_privs.c, utils.c, and more.
+
+Jonathan "JonnyWhatshisface" Hall <jhall@futuresouth.us>
+Added groupauth PAM option
+Added ability to specify groupauth in challenge-response
+
