@@ -616,8 +616,12 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
       goto restpriv_out;
   }
 
-  if (fchmod (fd, S_IRUSR | S_IWUSR) != 0) {
+  if (fchmod (fd, st.st_mode) != 0) {
       DBG (("could not set correct file permissions"));
+      goto restpriv_out;
+  }
+  if (fchown (fd, st.st_uid, st.st_gid) != 0) {
+      DBG (("could not set correct file ownership"));
       goto restpriv_out;
   }
 
