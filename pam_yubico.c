@@ -157,16 +157,15 @@ authorize_user_token (struct cfg *cfg,
   else
     {
       char *userfile = NULL;
-      struct passwd *p;
+      struct passwd pass, *p;
+      char buf[1024];
+      size_t buflen = sizeof(buf);
+      int pwres;
       PAM_MODUTIL_DEF_PRIVS(privs);
 
-#ifdef HAVE_PAM_MODUTIL_GETPWNAM
-      p = pam_modutil_getpwnam (pamh, username);
-#else
-      p = getpwnam (username);
-#endif
+      pwres = getpwnam_r (username, &pass, buf, buflen, &p);
       if (p == NULL) {
-	DBG (("getpwnam: %s", strerror(errno)));
+	DBG (("getpwnam_r: %s", strerror(pwres)));
 	return 0;
       }
 
@@ -447,7 +446,11 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
 
   const char *errstr = NULL;
 
-  struct passwd *p;
+  struct passwd pass, *p;
+  char pwbuf[1024];
+  size_t pwbuflen = sizeof(pwbuf);
+  int pwres;
+
   struct stat st;
 
   /* we must declare two sepparate privs structures as they can't be reused */
@@ -466,13 +469,9 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
     goto out;
   }
 
-#ifdef HAVE_PAM_MODUTIL_GETPWNAM
-  p = pam_modutil_getpwnam (pamh, username);
-#else
-  p = getpwnam (username);
-#endif
+  pwres = getpwnam_r (username, &pass, pwbuf, pwbuflen, &p);
   if (p == NULL) {
-      DBG (("getpwnam: %s", strerror(errno)));
+      DBG (("getpwnam_r: %s", strerror(pwres)));
       goto out;
   }
 
