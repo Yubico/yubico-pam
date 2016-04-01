@@ -145,6 +145,7 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, u
   char *fn;
   struct passwd *p;
   FILE *f = NULL;
+  struct stat st;
 
   state.iterations = iterations;
   state.slot = slot;
@@ -162,7 +163,6 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, u
   */
   
   if (!output_dir){
-      struct stat st;
       char fullpath[256];
       snprintf(fullpath, 256,"%s/.yubico",p->pw_dir);
       
@@ -187,6 +187,11 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, u
 
   if (! get_user_challenge_file(yk, output_dir, p, &fn)) {
     fprintf (stderr, "Failed getting chalresp state filename\n");
+    goto out;
+  }
+
+  if (stat(fn, &st) == 0) {
+    fprintf(stderr, "File %s already exists, refusing to overwrite.\n", fn);
     goto out;
   }
 
@@ -239,6 +244,11 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, u
 
   if (! write_chalresp_state (f, &state))
     goto out;
+
+  if (! chmod (fn, S_IRUSR | S_IWUSR)) {
+    fprintf (stderr, "Failed setting permissions on new challenge file %s.\n", fn);
+    goto out;
+  }
 
   printf ("Stored initial challenge and expected response in '%s'.\n", fn);
 
