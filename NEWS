@@ -1,6 +1,12 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
-* Version 2.22 (unreleased)
+* Version 2.22 (released 2016-05-23)
+
+** Documentation improvements.
+
+** Retain ownership and permission of challenge files (issue #92).
+
+** Make dependency on yubico-c-client 2.15 clearer.
 
 * Version 2.21 (released 2016-02-19)
 
