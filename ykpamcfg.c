@@ -236,6 +236,8 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, u
   memcpy (state.response, buf, response_len);
   state.response_len = response_len;
 
+  umask(077);
+
   f = fopen (fn, "w");
   if (! f) {
     fprintf (stderr, "Failed opening '%s' for writing : %s\n", fn, strerror (errno));
@@ -244,11 +246,6 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, u
 
   if (! write_chalresp_state (f, &state))
     goto out;
-
-  if (! chmod (fn, S_IRUSR | S_IWUSR)) {
-    fprintf (stderr, "Failed setting permissions on new challenge file %s.\n", fn);
-    goto out;
-  }
 
   printf ("Stored initial challenge and expected response in '%s'.\n", fn);
 
