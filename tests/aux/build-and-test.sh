@@ -7,7 +7,7 @@ autoreconf -i
 if [ "x$TRAVIS_OS_NAME" != "xosx" ]; then
     sudo add-apt-repository -y ppa:yubico/stable
     sudo apt-get update -qq || true
-    sudo apt-get install -qq -y --no-install-recommends libykclient-dev libpam0g-dev libyubikey-dev asciidoc docbook-xml xsltproc libxml2-utils $EXTRA
+    sudo apt-get install -qq -y --no-install-recommends libykclient-dev libpam0g-dev libyubikey-dev asciidoc docbook-xsl xsltproc libxml2-utils $EXTRA
 else
     brew update
     brew install pkg-config
