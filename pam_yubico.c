@@ -988,16 +988,13 @@ pam_sm_authenticate (pam_handle_t * pamh,
     }
 
   password_len = strlen (password);
-  if (password_len < (cfg->token_id_length + TOKEN_OTP_LEN))
-    {
-      DBG (("OTP too short to be considered : %zu < %u", password_len, (cfg->token_id_length + TOKEN_OTP_LEN)));
-      retval = PAM_AUTH_ERR;
-      goto done;
-    }
 
   /* In case the input was systempassword+YubiKeyOTP, we want to skip over
      "systempassword" when copying the token_id and OTP to separate buffers */
-  skip_bytes = password_len - (cfg->token_id_length + TOKEN_OTP_LEN);
+  if(password_len > cfg->token_id_length + TOKEN_OTP_LEN)
+    {
+      skip_bytes = password_len - (cfg->token_id_length + TOKEN_OTP_LEN);
+    }
 
   DBG (("Skipping first %i bytes. Length is %zu, token_id set to %u and token OTP always %u.",
 	skip_bytes, password_len, cfg->token_id_length, TOKEN_OTP_LEN));
