@@ -357,7 +357,7 @@ authorize_user_token_ldap (struct cfg *cfg,
 		  /* Only values containing this prefix are considered. */
 		  if ((!cfg->yubi_attr_prefix || !strncmp (cfg->yubi_attr_prefix, vals[i]->bv_val, yubi_attr_prefix_len)))
 		    {
-		      if(!strncmp (token_id, vals[i]->bv_val + yubi_attr_prefix_len, strlen (token_id)))
+		      if(!strncmp (token_id, vals[i]->bv_val + yubi_attr_prefix_len, strlen (vals[i]->bv_val + yubi_attr_prefix_len)))
 		        {
 		          DBG (("Token Found :: %s", vals[i]->bv_val));
 		          retval = 1;
