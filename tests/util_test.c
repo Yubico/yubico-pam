@@ -92,6 +92,10 @@ static void test_check_user_token(void) {
   assert(ret == 1);
   ret = check_user_token(file, "foo2", "vvvvvvvvvvcc", 1);
   assert(ret == -1);
+  ret = check_user_token(file, "foo2", "", 1);
+  assert(ret == -1);
+  ret = check_user_token(file, "foo", "", 1);
+  assert(ret == -2);
   remove(file);
 }
 
