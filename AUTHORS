@@ -42,3 +42,7 @@ Drop permissions before opening user files.
 
 Fredrik Thulin <fredrik@yubico.com>
 Maintainer alumni, helped on drop_privs.c, utils.c, and more.
+
+Jonathan D. Hall <jhall@futuresouth.us>
+Added authgroup PAM module option for challenge-response
+

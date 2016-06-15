@@ -227,6 +227,28 @@ check_firmware_version(YK_KEY *yk, bool verbose, bool quiet)
 }
 
 int
+check_user_group(char *username, char *group)
+{
+  struct group *group_ptr;
+  char **group_member;
+  
+  if((group_ptr = getgrnam(group)) == NULL) {
+    // Group was not found... Return a fail
+    D(("Group %s does not exist... Skipping group verification and returning valid!\n",group));
+    return 1;
+  }
+  
+  for (group_member = group_ptr->gr_mem; *group_member != NULL; group_member++) {
+    if(strcmp(*group_member,username) == 0) {
+      // We found the user...
+      D(("User: %s is part of the Group: %s\n", username,group));
+      return 0;
+    }
+  }
+  return 1;
+}
+
+int
 init_yubikey(YK_KEY **yk)
 {
 	if (!yk_init())
