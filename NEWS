@@ -1,5 +1,7 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
+* Version 2.24 (unreleased)
+
 * Version 2.23 (released 2016-06-15)
 
 ** Fix an issue where a failure to set permissions was wrongly outputted.
