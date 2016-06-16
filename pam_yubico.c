@@ -357,7 +357,7 @@ authorize_user_token_ldap (struct cfg *cfg,
 		  /* Only values containing this prefix are considered. */
 		  if ((!cfg->yubi_attr_prefix || !strncmp (cfg->yubi_attr_prefix, vals[i]->bv_val, yubi_attr_prefix_len)))
 		    {
-		      if(!strncmp (token_id, vals[i]->bv_val + yubi_attr_prefix_len, strlen (token_id)))
+		      if(!strncmp (token_id, vals[i]->bv_val + yubi_attr_prefix_len, strlen (vals[i]->bv_val + yubi_attr_prefix_len)))
 		        {
 		          DBG (("Token Found :: %s", vals[i]->bv_val));
 		          retval = 1;
@@ -988,16 +988,13 @@ pam_sm_authenticate (pam_handle_t * pamh,
     }
 
   password_len = strlen (password);
-  if (password_len < (cfg->token_id_length + TOKEN_OTP_LEN))
-    {
-      DBG (("OTP too short to be considered : %zu < %u", password_len, (cfg->token_id_length + TOKEN_OTP_LEN)));
-      retval = PAM_AUTH_ERR;
-      goto done;
-    }
 
   /* In case the input was systempassword+YubiKeyOTP, we want to skip over
      "systempassword" when copying the token_id and OTP to separate buffers */
-  skip_bytes = password_len - (cfg->token_id_length + TOKEN_OTP_LEN);
+  if(password_len > cfg->token_id_length + TOKEN_OTP_LEN)
+    {
+      skip_bytes = password_len - (cfg->token_id_length + TOKEN_OTP_LEN);
+    }
 
   DBG (("Skipping first %i bytes. Length is %zu, token_id set to %u and token OTP always %u.",
 	skip_bytes, password_len, cfg->token_id_length, TOKEN_OTP_LEN));
@@ -1040,21 +1037,6 @@ pam_sm_authenticate (pam_handle_t * pamh,
 	ykclient_strerror (rc)));
   DBG (("ykclient url used: %s", ykclient_get_last_url(ykc)));
 
-  switch (rc)
-    {
-    case YKCLIENT_OK:
-      break;
-
-    case YKCLIENT_BAD_OTP:
-    case YKCLIENT_REPLAYED_OTP:
-      retval = PAM_AUTH_ERR;
-      goto done;
-
-    default:
-      retval = PAM_AUTHINFO_UNAVAIL;
-      goto done;
-    }
-
   /* authorize the user with supplied token id */
   if (cfg->ldapserver != NULL || cfg->ldap_uri != NULL)
     valid_token = authorize_user_token_ldap (cfg, user, otp_id);
@@ -1064,7 +1046,21 @@ pam_sm_authenticate (pam_handle_t * pamh,
   switch(valid_token)
     {
     case 1:
-      retval = PAM_SUCCESS;
+      switch (rc)
+      {
+        case YKCLIENT_OK:
+          retval = PAM_SUCCESS;
+          break;
+
+        case YKCLIENT_BAD_OTP:
+        case YKCLIENT_REPLAYED_OTP:
+          retval = PAM_AUTH_ERR;
+          break;
+
+        default:
+          retval = PAM_AUTHINFO_UNAVAIL;
+          break;
+      }
       break;
     case 0:
       DBG (("Internal error while validating user"));
