@@ -848,12 +848,12 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
   if (cfg->mode == CHRESP) {
 #if HAVE_CR
-    return do_challenge_response(pamh, cfg, user);
+    retval = do_challenge_response(pamh, cfg, user);
 #else
     DBG ("no support for challenge/response");
     retval = PAM_AUTH_ERR;
-    goto done;
 #endif
+    goto done;
   }
 
   if (cfg->try_first_pass || cfg->use_first_pass)
@@ -1134,6 +1134,11 @@ done:
       free((char*)msg[0].msg);
     }
 
+  if(cfg->debug_file != stderr && cfg->debug_file != stdout)
+    {
+      fclose(cfg->debug_file);
+    }
+
   return retval;
 }
 
@@ -1156,10 +1161,17 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
   parse_cfg (flags, argc, argv, cfg);
   if (rc == PAM_SUCCESS && retval == PAM_SUCCESS) {
     DBG ("pam_sm_acct_mgmt returing PAM_SUCCESS");
-    return PAM_SUCCESS;
+    retval = PAM_SUCCESS;
+  } else {
+    DBG ("pam_sm_acct_mgmt returing PAM_AUTH_ERR:%d", rc);
+    retval = PAM_AUTH_ERR;
   }
-  DBG ("pam_sm_acct_mgmt returing PAM_AUTH_ERR:%d", rc);
-  return PAM_AUTH_ERR;
+
+  if(cfg->debug_file != stderr && cfg->debug_file != stdout) {
+    fclose(cfg->debug_file);
+  }
+
+  return retval;
 }
 
 PAM_EXTERN int
