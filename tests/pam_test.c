@@ -64,6 +64,8 @@ static struct data {
   {"foo", "vvincrediblltrerdegkkrkkneieultcjdghrejjbckh"},
   {"foo", "vvincredibletrerdegkkrkkneieultcjdghrejjbckl"},
   {"test", "ccccccbchvthlivuitriujjifivbvtrjkjfirllluurj"},
+  {"foo", ""},
+  {"bar", ""},
 };
 
 
@@ -194,6 +196,26 @@ static int test_authenticate3(void) {
   return pam_sm_authenticate(4, 0, sizeof(cfg) / sizeof(char*), cfg);
 }
 
+static int test_authenticate4(void) {
+  const char *cfg[] = {
+    "id=1",
+    "urllist=http://localhost:"YKVAL_PORT1"/wsapi/2/verify;http://localhost:"YKVAL_PORT2"/wsapi/2/verify",
+    "authfile="AUTHFILE,
+    "debug",
+  };
+  return pam_sm_authenticate(5, 0, sizeof(cfg) / sizeof(char*), cfg);
+}
+
+static int test_authenticate5(void) {
+  const char *cfg[] = {
+    "id=1",
+    "urllist=http://localhost:"YKVAL_PORT1"/wsapi/2/verify;http://localhost:"YKVAL_PORT2"/wsapi/2/verify",
+    "authfile="AUTHFILE,
+    "debug",
+  };
+  return pam_sm_authenticate(6, 0, sizeof(cfg) / sizeof(char*), cfg);
+}
+
 static int test_fail_authenticate1(void) {
   const char *cfg[] = {
     "id=1",
@@ -244,6 +266,14 @@ static int test_authenticate_ldap3(void) {
   return pam_sm_authenticate(4, 0, sizeof(ldap_cfg2) / sizeof(char*), ldap_cfg2);
 }
 
+static int test_authenticate_ldap4(void) {
+  return pam_sm_authenticate(5, 0, sizeof(ldap_cfg) / sizeof(char*), ldap_cfg);
+}
+
+static int test_authenticate_ldap5(void) {
+  return pam_sm_authenticate(6, 0, sizeof(ldap_cfg) / sizeof(char*), ldap_cfg);
+}
+
 static pid_t run_mock(const char *port, const char *type) {
   pid_t pid = fork();
   if(pid == 0) {
@@ -287,6 +317,14 @@ int main(void) {
     ret = 6;
     goto out;
   }
+  if(test_authenticate4() != PAM_AUTH_ERR) {
+    ret = 7;
+    goto out;
+  }
+  if(test_authenticate5() != PAM_USER_UNKNOWN) {
+    ret = 8;
+    goto out;
+  }
 #ifdef HAVE_LIBLDAP
   if(test_authenticate_ldap1() != PAM_SUCCESS) {
     ret = 1001;
@@ -306,6 +344,14 @@ int main(void) {
   }
   if(test_authenticate_ldap3() != PAM_SUCCESS) {
     ret = 1005;
+    goto out;
+  }
+  if(test_authenticate_ldap4() != PAM_AUTH_ERR) {
+    ret = 1006;
+    goto out;
+  }
+  if(test_authenticate_ldap5() != PAM_USER_UNKNOWN) {
+    ret = 1007;
     goto out;
   }
 #endif
