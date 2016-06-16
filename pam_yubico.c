@@ -127,12 +127,13 @@ struct cfg
   unsigned int token_id_length;
   enum key_mode mode;
   const char *chalresp_path;
+  FILE *debug_file;
 };
 
 #ifdef DBG
 #undef DBG
 #endif
-#define DBG(x) if (cfg->debug) { D(x); }
+#define DBG(x...) if (cfg->debug) { D(cfg->debug_file, x); }
 
 /*
  * Authorize authenticated OTP_ID for login as USERNAME using
@@ -151,8 +152,8 @@ authorize_user_token (struct cfg *cfg,
       /* Administrator had configured the file and specified is name
          as an argument for this module.
        */
-      DBG (("Using system-wide auth_file %s", cfg->auth_file));
-      retval = check_user_token (cfg->auth_file, username, otp_id, cfg->debug);
+      DBG ("Using system-wide auth_file %s", cfg->auth_file);
+      retval = check_user_token (cfg->auth_file, username, otp_id, cfg->debug, cfg->debug_file);
     }
   else
     {
@@ -165,7 +166,7 @@ authorize_user_token (struct cfg *cfg,
 
       pwres = getpwnam_r (username, &pass, buf, buflen, &p);
       if (p == NULL) {
-	DBG (("getpwnam_r: %s", strerror(pwres)));
+	DBG ("getpwnam_r: %s", strerror(pwres));
 	return 0;
       }
 
@@ -173,18 +174,18 @@ authorize_user_token (struct cfg *cfg,
          ..... i.e. ~/.yubico/authorized_yubikeys
        */
       if (! get_user_cfgfile_path (NULL, "authorized_yubikeys", p, &userfile)) {
-	D (("Failed figuring out per-user cfgfile"));
+	DBG ("Failed figuring out per-user cfgfile");
 	return 0;
       }
 
-      DBG (("Dropping privileges"));
+      DBG ("Dropping privileges");
       if(pam_modutil_drop_priv(pamh, &privs, p)) {
-        DBG (("could not drop privileges"));
+        DBG ("could not drop privileges");
 	retval = 0;
 	goto free_out;
       }
 
-      retval = check_user_token (userfile, username, otp_id, cfg->debug);
+      retval = check_user_token (userfile, username, otp_id, cfg->debug, cfg->debug_file);
 
       if(pam_modutil_regain_priv(pamh, &privs)) {
         DBG (("could not restore privileges"));
@@ -259,7 +260,7 @@ authorize_user_token_ldap (struct cfg *cfg,
       rc = ldap_initialize (&ld, cfg->ldap_uri);
       if (rc != LDAP_SUCCESS)
 	{
-	  DBG (("ldap_initialize: %s", ldap_err2string (rc)));
+	  DBG ("ldap_initialize: %s", ldap_err2string (rc));
 	  retval = 0;
 	  goto done;
 	}
@@ -268,7 +269,7 @@ authorize_user_token_ldap (struct cfg *cfg,
     {
       if ((ld = ldap_init (cfg->ldapserver, PORT_NUMBER)) == NULL)
 	{
-	  DBG (("ldap_init"));
+	  DBG ("ldap_init");
 	  retval = 0;
 	  goto done;
 	}
@@ -283,16 +284,15 @@ authorize_user_token_ldap (struct cfg *cfg,
   }
   /* Bind anonymously to the LDAP server. */
   if (cfg->ldap_bind_user && cfg->ldap_bind_password) {
-    DBG (("try bind with: %s:[%s]", cfg->ldap_bind_user, cfg->ldap_bind_password));
+    DBG ("try bind with: %s:[%s]", cfg->ldap_bind_user, cfg->ldap_bind_password);
     rc = ldap_simple_bind_s (ld, cfg->ldap_bind_user, cfg->ldap_bind_password);
   } else {
-    DBG (("try bind anonymous"));
+    DBG ("try bind anonymous");
     rc = ldap_simple_bind_s (ld, NULL, NULL);
   }
   if (rc != LDAP_SUCCESS)
     {
-      DBG (("ldap_simple_bind_s: %s", ldap_err2string (rc)));
-      retval = 0;
+      DBG ("ldap_simple_bind_s: %s", ldap_err2string (rc));
       goto done;
     }
 
@@ -300,7 +300,7 @@ authorize_user_token_ldap (struct cfg *cfg,
   if (cfg->user_attr && cfg->yubi_attr && cfg->ldapdn) {
     i = (strlen(cfg->user_attr) + strlen(cfg->ldapdn) + strlen(user) + 3) * sizeof(char);
     if ((find = malloc(i)) == NULL) {
-      DBG (("Failed allocating %zu bytes", i));
+      DBG ("Failed allocating %zu bytes", i);
       retval = 0;
       goto done;
     }
@@ -315,15 +315,15 @@ authorize_user_token_ldap (struct cfg *cfg,
   }
   attrs[0] = (char *) cfg->yubi_attr;
 
-  DBG(("LDAP : look up object base='%s' filter='%s', ask for attribute '%s'", find,
-      filter ? filter:"(null)", cfg->yubi_attr));
+  DBG("LDAP : look up object base='%s' filter='%s', ask for attribute '%s'", find,
+      filter ? filter:"(null)", cfg->yubi_attr);
 
   /* Search for the entry. */
   if ((rc = ldap_search_ext_s (ld, find, scope,
 			       filter, attrs, 0, NULL, NULL, LDAP_NO_LIMIT,
 			       LDAP_NO_LIMIT, &result)) != LDAP_SUCCESS)
     {
-      DBG (("ldap_search_ext_s: %s", ldap_err2string (rc)));
+      DBG ("ldap_search_ext_s: %s", ldap_err2string (rc));
 
       retval = 0;
       goto done;
@@ -349,17 +349,17 @@ authorize_user_token_ldap (struct cfg *cfg,
 	      /* Compare each value for the attribute against the token id. */
 	      for (i = 0; vals[i] != NULL; i++)
 		{
-	          DBG(("LDAP : Found %i values - checking if any of them match '%s:%s:%s'",
+	          DBG("LDAP : Found %i values - checking if any of them match '%s:%s:%s'",
 		       ldap_count_values_len(vals),
 		       vals[i]->bv_val,
-		       cfg->yubi_attr_prefix ? cfg->yubi_attr_prefix : "", token_id));
+		       cfg->yubi_attr_prefix ? cfg->yubi_attr_prefix : "", token_id);
 
 		  /* Only values containing this prefix are considered. */
 		  if ((!cfg->yubi_attr_prefix || !strncmp (cfg->yubi_attr_prefix, vals[i]->bv_val, yubi_attr_prefix_len)))
 		    {
 		      if(!strncmp (token_id, vals[i]->bv_val + yubi_attr_prefix_len, strlen (token_id)))
 		        {
-		          DBG (("Token Found :: %s", vals[i]->bv_val));
+		          DBG ("Token Found :: %s", vals[i]->bv_val);
 		          retval = 1;
 		        }
 		    }
@@ -393,7 +393,7 @@ authorize_user_token_ldap (struct cfg *cfg,
 
 #if HAVE_CR
 static int
-display_error(pam_handle_t *pamh, const char *message) {
+display_error(pam_handle_t *pamh, const char *message, struct cfg *cfg) {
   struct pam_conv *conv;
   const struct pam_message *pmsg[1];
   struct pam_message msg[1];
@@ -402,12 +402,12 @@ display_error(pam_handle_t *pamh, const char *message) {
 
   retval = pam_get_item (pamh, PAM_CONV, (const void **) &conv);
   if (retval != PAM_SUCCESS) {
-    D(("get conv returned error: %s", pam_strerror (pamh, retval)));
+    DBG("get conv returned error: %s", pam_strerror (pamh, retval));
     return retval;
   }
 
   if(!conv || !conv->conv){
-    D(("conv() function invalid"));
+    DBG("conv() function invalid");
     return PAM_CONV_ERR;
   }
   pmsg[0] = &msg[0];
@@ -416,13 +416,13 @@ display_error(pam_handle_t *pamh, const char *message) {
   retval = conv->conv(1, pmsg, &resp, conv->appdata_ptr);
   
   if (retval != PAM_SUCCESS) {
-    D(("conv returned error: %s", pam_strerror (pamh, retval)));
+    DBG("conv returned error: %s", pam_strerror (pamh, retval));
     return retval;
   }
 
   if (resp)
     {
-      D(("conv returned: '%s'", resp->resp));
+      DBG("conv returned: '%s'", resp->resp);
       if (resp->resp)
         free (resp->resp);
       free (resp);
@@ -460,62 +460,62 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   ret = PAM_AUTH_ERR;
 
   if (! init_yubikey(&yk)) {
-    DBG(("Failed initializing YubiKey"));
+    DBG("Failed initializing YubiKey");
     goto out;
   }
 
-  if (! check_firmware_version(yk, cfg->debug, true)) {
-    DBG(("YubiKey does not support Challenge-Response (version 2.2 required)"));
+  if (! check_firmware_version(yk, cfg->debug, true, cfg->debug_file)) {
+    DBG("YubiKey does not support Challenge-Response (version 2.2 required)");
     goto out;
   }
 
   pwres = getpwnam_r (username, &pass, pwbuf, pwbuflen, &p);
   if (p == NULL) {
-      DBG (("getpwnam_r: %s", strerror(pwres)));
+      DBG ("getpwnam_r: %s", strerror(pwres));
       goto out;
   }
 
-  if (! get_user_challenge_file (yk, cfg->chalresp_path, p, &userfile)) {
-    DBG(("Failed getting user challenge file for user %s", username));
+  if (! get_user_challenge_file (yk, cfg->chalresp_path, p, &userfile, cfg->debug_file)) {
+    DBG("Failed getting user challenge file for user %s", username);
     goto out;
   }
 
-  DBG(("Loading challenge from file %s", userfile));
+  DBG("Loading challenge from file %s", userfile);
 
   /* Drop privileges before opening user file (if we're not using system-wide dir). */
   if (!cfg->chalresp_path) {
     if (pam_modutil_drop_priv(pamh, &privs, p)) {
-      DBG (("could not drop privileges"));
+      DBG ("could not drop privileges");
       goto out;
     }
   }
 
   fd = open(userfile, O_RDONLY, 0);
   if (fd < 0) {
-      DBG (("Cannot open file: %s (%s)", userfile, strerror(errno)));
+      DBG ("Cannot open file: %s (%s)", userfile, strerror(errno));
       goto restpriv_out;
   }
 
   if (fstat(fd, &st) < 0) {
-      DBG (("Cannot stat file: %s (%s)", userfile, strerror(errno)));
+      DBG ("Cannot stat file: %s (%s)", userfile, strerror(errno));
       close(fd);
       goto restpriv_out;
   }
 
   if (!S_ISREG(st.st_mode)) {
-      DBG (("%s is not a regular file", userfile));
+      DBG ("%s is not a regular file", userfile);
       close(fd);
       goto restpriv_out;
   }
 
   f = fdopen(fd, "r");
   if (f == NULL) {
-      DBG (("fdopen: %s", strerror(errno)));
+      DBG ("fdopen: %s", strerror(errno));
       close(fd);
       goto restpriv_out;
   }
 
-  if (! load_chalresp_state(f, &state, cfg->debug))
+  if (! load_chalresp_state(f, &state, cfg->debug, cfg->debug_file))
     goto restpriv_out;
 
   if (fclose(f) < 0) {
@@ -526,7 +526,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
 
   if (!cfg->chalresp_path) {
     if (pam_modutil_regain_priv(pamh, &privs)) {
-      DBG (("could not restore privileges"));
+      DBG ("could not restore privileges");
       goto out;
     }
   }
@@ -534,7 +534,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   if (! challenge_response(yk, state.slot, state.challenge, state.challenge_len,
 			   true, true, false,
 			   buf, sizeof(buf), &response_len)) {
-    DBG(("Challenge-response FAILED"));
+    DBG("Challenge-response FAILED");
     goto out;
   }
 
@@ -552,15 +552,15 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   if (memcmp(buf, state.response, state.response_len) == 0) {
     ret = PAM_SUCCESS;
   } else {
-    DBG(("Unexpected C/R response : %s", response_hex));
+    DBG("Unexpected C/R response : %s", response_hex);
     goto out;
   }
 
-  DBG(("Got the expected response, generating new challenge (%u bytes).", CR_CHALLENGE_SIZE));
+  DBG("Got the expected response, generating new challenge (%u bytes).", CR_CHALLENGE_SIZE);
 
   errstr = "Error generating new challenge, please check syslog or contact your system administrator";
   if (generate_random(state.challenge, sizeof(state.challenge))) {
-    DBG(("Failed generating new challenge!"));
+    DBG("Failed generating new challenge!");
     goto out;
   }
 
@@ -568,7 +568,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   if (! challenge_response(yk, state.slot, state.challenge, CR_CHALLENGE_SIZE,
 			   true, true, false,
 			   buf, sizeof(buf), &response_len)) {
-    DBG(("Second challenge-response FAILED"));
+    DBG("Second challenge-response FAILED");
     goto out;
   }
 
@@ -586,7 +586,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
    * Write the challenge and response we will expect the next time to the state file.
    */
   if (response_len > sizeof(state.response)) {
-    DBG(("Got too long response ??? (%u/%zu)", response_len, sizeof(state.response)));
+    DBG("Got too long response ??? (%u/%zu)", response_len, sizeof(state.response));
     goto out;
   }
   memcpy (state.response, buf, response_len);
@@ -597,7 +597,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   /* Drop privileges before creating new challenge file. */
   if (!cfg->chalresp_path) {
     if (pam_modutil_drop_priv(pamh, &privs, p)) {
-        DBG (("could not drop privileges"));
+        DBG ("could not drop privileges");
         goto out;
     }
   }
@@ -611,16 +611,16 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
 
   fd = mkstemp(tmpfile);
   if (fd < 0) {
-      DBG (("Cannot open file: %s (%s)", tmpfile, strerror(errno)));
+      DBG ("Cannot open file: %s (%s)", tmpfile, strerror(errno));
       goto restpriv_out;
   }
 
   if (fchmod (fd, st.st_mode) != 0) {
-      DBG (("could not set correct file permissions"));
+      DBG ("could not set correct file permissions");
       goto restpriv_out;
   }
   if (fchown (fd, st.st_uid, st.st_gid) != 0) {
-      DBG (("could not set correct file ownership"));
+      DBG ("could not set correct file ownership");
       goto restpriv_out;
   }
 
@@ -658,19 +658,19 @@ restpriv_out:
   if (yk_errno) {
     if (yk_errno == YK_EUSBERR) {
       syslog(LOG_ERR, "USB error: %s", yk_usb_strerror());
-      DBG(("USB error: %s", yk_usb_strerror()));
+      DBG("USB error: %s", yk_usb_strerror());
     } else {
       syslog(LOG_ERR, "Yubikey core error: %s", yk_strerror(yk_errno));
-      DBG(("Yubikey core error: %s", yk_strerror(yk_errno)));
+      DBG("Yubikey core error: %s", yk_strerror(yk_errno));
     }
   }
 
   if (errstr)
-    display_error(pamh, errstr);
+    display_error(pamh, errstr, cfg);
 
   if (errno) {
     syslog(LOG_ERR, "Challenge response failed: %s", strerror(errno));
-    DBG(("Challenge response failed: %s", strerror(errno)));
+    DBG("Challenge response failed: %s", strerror(errno));
   }
 
   if (yk)
@@ -695,6 +695,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
   cfg->client_id = 0;
   cfg->token_id_length = DEFAULT_TOKEN_ID_LEN;
   cfg->mode = CLIENT;
+  cfg->debug_file = stdout;
 
   for (i = 0; i < argc; i++)
     {
@@ -752,41 +753,53 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->mode = CLIENT;
       if (strncmp (argv[i], "chalresp_path=", 14) == 0)
 	cfg->chalresp_path = argv[i] + 14;
+      if (strncmp (argv[i], "debug_file=", 11) == 0)
+        {
+          if(strncmp (argv[i] + 11, "stderr", 6) == 0)
+            {
+              cfg->debug_file = stderr;
+            }
+          else
+            {
+              FILE *file = fopen(argv[1] + 11, "a+");
+              if(file)
+                {
+                  cfg->debug_file = file;
+                }
+            }
+        }
     }
 
-  if (cfg->debug)
-    {
-      D (("called."));
-      D (("flags %d argc %d", flags, argc));
-      for (i = 0; i < argc; i++)
-	D (("argv[%d]=%s", i, argv[i]));
-      D (("id=%u", cfg->client_id));
-      D (("key=%s", cfg->client_key ? cfg->client_key : "(null)"));
-      D (("debug=%d", cfg->debug));
-      D (("alwaysok=%d", cfg->alwaysok));
-      D (("verbose_otp=%d", cfg->verbose_otp));
-      D (("try_first_pass=%d", cfg->try_first_pass));
-      D (("use_first_pass=%d", cfg->use_first_pass));
-      D (("authfile=%s", cfg->auth_file ? cfg->auth_file : "(null)"));
-      D (("ldapserver=%s", cfg->ldapserver ? cfg->ldapserver : "(null)"));
-      D (("ldap_uri=%s", cfg->ldap_uri ? cfg->ldap_uri : "(null)"));
-      D (("ldap_bind_user=%s", cfg->ldap_bind_user ? cfg->ldap_bind_user : "(null)"));
-      D (("ldap_bind_password=%s", cfg->ldap_bind_password ? cfg->ldap_bind_password : "(null)"));
-      D (("ldap_filter=%s", cfg->ldap_filter ? cfg->ldap_filter : "(null)"));
-      D (("ldap_cacertfile=%s", cfg->ldap_cacertfile ? cfg->ldap_cacertfile : "(null)"));
-      D (("ldapdn=%s", cfg->ldapdn ? cfg->ldapdn : "(null)"));
-      D (("user_attr=%s", cfg->user_attr ? cfg->user_attr : "(null)"));
-      D (("yubi_attr=%s", cfg->yubi_attr ? cfg->yubi_attr : "(null)"));
-      D (("yubi_attr_prefix=%s", cfg->yubi_attr_prefix ? cfg->yubi_attr_prefix : "(null)"));
-      D (("url=%s", cfg->url ? cfg->url : "(null)"));
-      D (("urllist=%s", cfg->urllist ? cfg->urllist : "(null)"));
-      D (("capath=%s", cfg->capath ? cfg->capath : "(null)"));
-      D (("cainfo=%s", cfg->cainfo ? cfg->cainfo : "(null)"));
-      D (("proxy=%s", cfg->proxy ? cfg->proxy : "(null)"));
-      D (("token_id_length=%d", cfg->token_id_length));
-      D (("mode=%s", cfg->mode == CLIENT ? "client" : "chresp" ));
-      D (("chalresp_path=%s", cfg->chalresp_path ? cfg->chalresp_path : "(null)"));
-    }
+  DBG ("called.");
+  DBG ("flags %d argc %d", flags, argc);
+  for (i = 0; i < argc; i++)
+    DBG ("argv[%d]=%s", i, argv[i]);
+  DBG ("id=%u", cfg->client_id);
+  DBG ("key=%s", cfg->client_key ? cfg->client_key : "(null)");
+  DBG ("debug=%d", cfg->debug);
+  DBG ("alwaysok=%d", cfg->alwaysok);
+  DBG ("verbose_otp=%d", cfg->verbose_otp);
+  DBG ("try_first_pass=%d", cfg->try_first_pass);
+  DBG ("use_first_pass=%d", cfg->use_first_pass);
+  DBG ("authfile=%s", cfg->auth_file ? cfg->auth_file : "(null)");
+  DBG ("ldapserver=%s", cfg->ldapserver ? cfg->ldapserver : "(null)");
+  DBG ("ldap_uri=%s", cfg->ldap_uri ? cfg->ldap_uri : "(null)");
+  DBG ("ldap_bind_user=%s", cfg->ldap_bind_user ? cfg->ldap_bind_user : "(null)");
+  DBG ("ldap_bind_password=%s", cfg->ldap_bind_password ? cfg->ldap_bind_password : "(null)");
+  DBG ("ldap_filter=%s", cfg->ldap_filter ? cfg->ldap_filter : "(null)");
+  DBG ("ldap_cacertfile=%s", cfg->ldap_cacertfile ? cfg->ldap_cacertfile : "(null)");
+  DBG ("ldapdn=%s", cfg->ldapdn ? cfg->ldapdn : "(null)");
+  DBG ("user_attr=%s", cfg->user_attr ? cfg->user_attr : "(null)");
+  DBG ("yubi_attr=%s", cfg->yubi_attr ? cfg->yubi_attr : "(null)");
+  DBG ("yubi_attr_prefix=%s", cfg->yubi_attr_prefix ? cfg->yubi_attr_prefix : "(null)");
+  DBG ("url=%s", cfg->url ? cfg->url : "(null)");
+  DBG ("urllist=%s", cfg->urllist ? cfg->urllist : "(null)");
+  DBG ("capath=%s", cfg->capath ? cfg->capath : "(null)");
+  DBG ("cainfo=%s", cfg->cainfo ? cfg->cainfo : "(null)");
+  DBG ("proxy=%s", cfg->proxy ? cfg->proxy : "(null)");
+  DBG ("token_id_length=%d", cfg->token_id_length);
+  DBG ("mode=%s", cfg->mode == CLIENT ? "client" : "chresp" );
+  DBG ("chalresp_path=%s", cfg->chalresp_path ? cfg->chalresp_path : "(null)");
 }
 
 PAM_EXTERN int
@@ -816,11 +829,11 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
   parse_cfg (flags, argc, argv, cfg);
 
-  DBG (("pam_yubico version: %s", VERSION));
+  DBG ("pam_yubico version: %s", VERSION);
 
   if (cfg->token_id_length > MAX_TOKEN_ID_LEN)
   {
-    DBG (("configuration error: token_id_length too long. Maximum acceptable value : %u", MAX_TOKEN_ID_LEN));
+    DBG ("configuration error: token_id_length too long. Maximum acceptable value : %u", MAX_TOKEN_ID_LEN);
     retval = PAM_AUTHINFO_UNAVAIL;
     goto done;
   }
@@ -828,16 +841,16 @@ pam_sm_authenticate (pam_handle_t * pamh,
   retval = pam_get_user (pamh, &user, NULL);
   if (retval != PAM_SUCCESS)
     {
-      DBG (("get user returned error: %s", pam_strerror (pamh, retval)));
+      DBG ("get user returned error: %s", pam_strerror (pamh, retval));
       goto done;
     }
-  DBG (("get user returned: %s", user));
+  DBG ("get user returned: %s", user);
 
   if (cfg->mode == CHRESP) {
 #if HAVE_CR
     return do_challenge_response(pamh, cfg, user);
 #else
-    DBG (("no support for challenge/response"));
+    DBG ("no support for challenge/response");
     retval = PAM_AUTH_ERR;
     goto done;
 #endif
@@ -848,30 +861,30 @@ pam_sm_authenticate (pam_handle_t * pamh,
       retval = pam_get_item (pamh, PAM_AUTHTOK, (const void **) &password);
       if (retval != PAM_SUCCESS)
 	{
-	  DBG (("get password returned error: %s",
-	      pam_strerror (pamh, retval)));
+	  DBG ("get password returned error: %s",
+	      pam_strerror (pamh, retval));
 	  goto done;
 	}
-      DBG (("get password returned: %s", password));
+      DBG ("get password returned: %s", password);
     }
 
   if (cfg->use_first_pass && password == NULL)
     {
-      DBG (("use_first_pass set and no password, giving up"));
+      DBG ("use_first_pass set and no password, giving up");
       retval = PAM_AUTH_ERR;
       goto done;
     }
 
   if(ykclient_global_init() != YKCLIENT_OK)
     {
-      DBG (("Failed initializing ykclient library"));
+      DBG ("Failed initializing ykclient library");
       retval = PAM_AUTHINFO_UNAVAIL;
       goto done;
     }
   rc = ykclient_init (&ykc);
   if (rc != YKCLIENT_OK)
     {
-      DBG (("ykclient_init() failed (%d): %s", rc, ykclient_strerror (rc)));
+      DBG ("ykclient_init() failed (%d): %s", rc, ykclient_strerror (rc));
       retval = PAM_AUTHINFO_UNAVAIL;
       goto done;
     }
@@ -879,8 +892,8 @@ pam_sm_authenticate (pam_handle_t * pamh,
   rc = ykclient_set_client_b64 (ykc, cfg->client_id, cfg->client_key);
   if (rc != YKCLIENT_OK)
     {
-      DBG (("ykclient_set_client_b64() failed (%d): %s",
-	    rc, ykclient_strerror (rc)));
+      DBG ("ykclient_set_client_b64() failed (%d): %s",
+	    rc, ykclient_strerror (rc));
       retval = PAM_AUTHINFO_UNAVAIL;
       goto done;
     }
@@ -902,8 +915,8 @@ pam_sm_authenticate (pam_handle_t * pamh,
       rc = ykclient_set_url_template (ykc, cfg->url);
       if (rc != YKCLIENT_OK)
 	{
-	  DBG (("ykclient_set_url_template() failed (%d): %s",
-		rc, ykclient_strerror (rc)));
+	  DBG ("ykclient_set_url_template() failed (%d): %s",
+		rc, ykclient_strerror (rc));
 	  retval = PAM_AUTHINFO_UNAVAIL;
 	  goto done;
 	}
@@ -919,7 +932,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
 	{
 	  if(templates == 10)
 	    {
-	      DBG (("maximum 10 urls supported in list."));
+	      DBG ("maximum 10 urls supported in list.");
 	      retval = PAM_AUTHINFO_UNAVAIL;
 	      goto done;
 	    }
@@ -929,8 +942,8 @@ pam_sm_authenticate (pam_handle_t * pamh,
       rc = ykclient_set_url_bases (ykc, templates, (const char **)urls);
       if (rc != YKCLIENT_OK)
 	{
-	  DBG (("ykclient_set_url_bases() failed (%d): %s",
-		rc, ykclient_strerror (rc)));
+	  DBG ("ykclient_set_url_bases() failed (%d): %s",
+		rc, ykclient_strerror (rc));
 	  retval = PAM_AUTHINFO_UNAVAIL;
 	  goto done;
 	}
@@ -941,7 +954,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
       retval = pam_get_item (pamh, PAM_CONV, (const void **) &conv);
       if (retval != PAM_SUCCESS)
 	{
-	  DBG (("get conv returned error: %s", pam_strerror (pamh, retval)));
+	  DBG ("get conv returned error: %s", pam_strerror (pamh, retval));
 	  goto done;
 	}
 
@@ -971,18 +984,18 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
       if (retval != PAM_SUCCESS)
 	{
-	  DBG (("conv returned error: %s", pam_strerror (pamh, retval)));
+	  DBG ("conv returned error: %s", pam_strerror (pamh, retval));
 	  goto done;
 	}
 
       if (resp->resp == NULL)
 	{
-	  DBG (("conv returned NULL passwd?"));
+	  DBG ("conv returned NULL passwd?");
 	  retval = PAM_AUTH_ERR;
 	  goto done;
 	}
 
-      DBG (("conv returned %zu bytes", strlen(resp->resp)));
+      DBG ("conv returned %zu bytes", strlen(resp->resp));
 
       password = resp->resp;
     }
@@ -990,7 +1003,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
   password_len = strlen (password);
   if (password_len < (cfg->token_id_length + TOKEN_OTP_LEN))
     {
-      DBG (("OTP too short to be considered : %zu < %u", password_len, (cfg->token_id_length + TOKEN_OTP_LEN)));
+      DBG ("OTP too short to be considered : %zu < %u", password_len, (cfg->token_id_length + TOKEN_OTP_LEN));
       retval = PAM_AUTH_ERR;
       goto done;
     }
@@ -999,15 +1012,15 @@ pam_sm_authenticate (pam_handle_t * pamh,
      "systempassword" when copying the token_id and OTP to separate buffers */
   skip_bytes = password_len - (cfg->token_id_length + TOKEN_OTP_LEN);
 
-  DBG (("Skipping first %i bytes. Length is %zu, token_id set to %u and token OTP always %u.",
-	skip_bytes, password_len, cfg->token_id_length, TOKEN_OTP_LEN));
+  DBG ("Skipping first %i bytes. Length is %zu, token_id set to %u and token OTP always %u.",
+	skip_bytes, password_len, cfg->token_id_length, TOKEN_OTP_LEN);
 
   /* Copy full YubiKey output (public ID + OTP) into otp */
   strncpy (otp, password + skip_bytes, sizeof (otp) - 1);
   /* Copy only public ID into otp_id. Destination buffer is zeroed. */
   strncpy (otp_id, password + skip_bytes, cfg->token_id_length);
 
-  DBG (("OTP: %s ID: %s ", otp, otp_id));
+  DBG ("OTP: %s ID: %s ", otp, otp_id);
 
   /* user entered their system password followed by generated OTP? */
   if (password_len > TOKEN_OTP_LEN + cfg->token_id_length)
@@ -1021,13 +1034,13 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
       onlypasswd[password_len - (TOKEN_OTP_LEN + cfg->token_id_length)] = '\0';
 
-      DBG (("Extracted a probable system password entered before the OTP - "
-	    "setting item PAM_AUTHTOK"));
+      DBG ("Extracted a probable system password entered before the OTP - "
+	    "setting item PAM_AUTHTOK");
 
       retval = pam_set_item (pamh, PAM_AUTHTOK, onlypasswd);
       if (retval != PAM_SUCCESS)
 	{
-	  DBG (("set_item returned error: %s", pam_strerror (pamh, retval)));
+	  DBG ("set_item returned error: %s", pam_strerror (pamh, retval));
 	  goto done;
 	}
     }
@@ -1036,9 +1049,9 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
   rc = ykclient_request (ykc, otp);
 
-  DBG (("ykclient return value (%d): %s", rc,
-	ykclient_strerror (rc)));
-  DBG (("ykclient url used: %s", ykclient_get_last_url(ykc)));
+  DBG ("ykclient return value (%d): %s", rc,
+	ykclient_strerror (rc));
+  DBG ("ykclient url used: %s", ykclient_get_last_url(ykc));
 
   switch (rc)
     {
@@ -1067,19 +1080,19 @@ pam_sm_authenticate (pam_handle_t * pamh,
       retval = PAM_SUCCESS;
       break;
     case 0:
-      DBG (("Internal error while validating user"));
+      DBG ("Internal error while validating user");
       retval = PAM_AUTHINFO_UNAVAIL;
       break;
     case -1:
-      DBG (("Unauthorized token for this user"));
+      DBG ("Unauthorized token for this user");
       retval = PAM_AUTH_ERR;
       break;
     case -2:
-      DBG (("Unknown user"));
+      DBG ("Unknown user");
       retval = PAM_USER_UNKNOWN;
       break;
     default:
-      DBG (("Unhandled value for token-user validation"))
+      DBG ("Unhandled value for token-user validation");
       retval = PAM_AUTHINFO_UNAVAIL;
     }
 
@@ -1103,10 +1116,10 @@ done:
     }
   if (cfg->alwaysok && retval != PAM_SUCCESS)
     {
-      DBG (("alwaysok needed (otherwise return with %d)", retval));
+      DBG ("alwaysok needed (otherwise return with %d)", retval);
       retval = PAM_SUCCESS;
     }
-  DBG (("done. [%s]", pam_strerror (pamh, retval)));
+  DBG ("done. [%s]", pam_strerror (pamh, retval));
   pam_set_data (pamh, "yubico_setcred_return", (void*)(intptr_t)retval, NULL);
 
   if (resp)
@@ -1133,16 +1146,19 @@ pam_sm_setcred (
 }
 
 PAM_EXTERN int
-pam_sm_acct_mgmt(pam_handle_t *pamh, int flags __attribute__((unused)),
-    int argc __attribute__((unused)), const char **argv __attribute__((unused)))
+pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
+  struct cfg cfg_st;
+  struct cfg *cfg = &cfg_st; /* for DBG macro */
   int retval;
   int rc = pam_get_data(pamh, "yubico_setcred_return", (const void**)&retval);
+
+  parse_cfg (flags, argc, argv, cfg);
   if (rc == PAM_SUCCESS && retval == PAM_SUCCESS) {
-    D (("pam_sm_acct_mgmt returing PAM_SUCCESS"));
+    DBG ("pam_sm_acct_mgmt returing PAM_SUCCESS");
     return PAM_SUCCESS;
   }
-  D (("pam_sm_acct_mgmt returing PAM_AUTH_ERR:%d", rc));
+  DBG ("pam_sm_acct_mgmt returing PAM_AUTH_ERR:%d", rc);
   return PAM_AUTH_ERR;
 }
 
@@ -1152,7 +1168,6 @@ pam_sm_open_session(
     int argc __attribute__((unused)), const char *argv[] __attribute__((unused)))
 {
 
-  D(("pam_sm_open_session"));
   return (PAM_SUCCESS);
 }
 
@@ -1161,7 +1176,6 @@ pam_sm_close_session(
     pam_handle_t *pamh __attribute__((unused)), int flags __attribute__((unused)),
     int argc __attribute__((unused)), const char *argv[] __attribute__((unused)))
 {
-  D(("pam_sm_close_session"));
   return (PAM_SUCCESS);
 }
 
@@ -1170,7 +1184,6 @@ pam_sm_chauthtok(
     pam_handle_t *pamh __attribute__((unused)), int flags __attribute__((unused)),
     int argc __attribute__((unused)), const char *argv[] __attribute__((unused)))
 {
-  D(("pam_sm_chauthtok"));
   return (PAM_SERVICE_ERR);
 }
 

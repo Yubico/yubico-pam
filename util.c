@@ -97,7 +97,8 @@ int
 check_user_token (const char *authfile,
 		  const char *username,
 		  const char *otp_id,
-		  int verbose)
+		  int verbose,
+                  FILE *debug_file)
 {
   char buf[1024];
   char *s_user, *s_token;
@@ -109,20 +110,20 @@ check_user_token (const char *authfile,
   fd = open(authfile, O_RDONLY, 0);
   if (fd < 0) {
       if(verbose)
-	  D (("Cannot open file: %s (%s)", authfile, strerror(errno)));
+	  D (debug_file, "Cannot open file: %s (%s)", authfile, strerror(errno));
       return retval;
   }
 
   if (fstat(fd, &st) < 0) {
       if(verbose)
-	  D (("Cannot stat file: %s (%s)", authfile, strerror(errno)));
+	  D (debug_file, "Cannot stat file: %s (%s)", authfile, strerror(errno));
       close(fd);
       return retval;
   }
 
   if (!S_ISREG(st.st_mode)) {
       if(verbose)
-	  D (("%s is not a regular file", authfile));
+	  D (debug_file, "%s is not a regular file", authfile);
       close(fd);
       return retval;
   }
@@ -130,7 +131,7 @@ check_user_token (const char *authfile,
   opwfile = fdopen(fd, "r");
   if (opwfile == NULL) {
       if(verbose)
-	  D (("fdopen: %s", strerror(errno)));
+	  D (debug_file, "fdopen: %s", strerror(errno));
       close(fd);
       return retval;
   }
@@ -144,27 +145,26 @@ check_user_token (const char *authfile,
       if (buf[0] == '#') {
           /* This is a comment and we may skip it. */
           if(verbose)
-              D (("Skipping comment line: %s", buf));
+              D (debug_file, "Skipping comment line: %s", buf);
           continue;
       }
       if(verbose)
-	  D (("Authorization line: %s", buf));
+	  D (debug_file, "Authorization line: %s", buf);
       s_user = strtok_r (buf, ":", &saveptr);
       if (s_user && strcmp (username, s_user) == 0)
 	{
 	  if(verbose)
-	      D (("Matched user: %s", s_user));
+	      D (debug_file, "Matched user: %s", s_user);
       retval = -1; //We found at least one line for the user
 	  do
 	    {
 	      s_token = strtok_r (NULL, ":", &saveptr);
 	      if(verbose)
-		  D (("Authorization token: %s", s_token));
+		  D (debug_file, "Authorization token: %s", s_token);
 	      if (s_token && strcmp (otp_id, s_token) == 0)
 		{
 		  if(verbose)
-		      D (("Match user/token as %s/%s", username, otp_id));
-		  fclose (opwfile);
+		      D (debug_file, "Match user/token as %s/%s", username, otp_id);
 		  return 1;
 		}
 	    }
@@ -196,7 +196,7 @@ int generate_random(void *buf, int len)
 }
 
 int
-check_firmware_version(YK_KEY *yk, bool verbose, bool quiet)
+check_firmware_version(YK_KEY *yk, bool verbose, bool quiet, FILE *debug_file)
 {
 	YK_STATUS *st = ykds_alloc();
 
@@ -206,11 +206,10 @@ check_firmware_version(YK_KEY *yk, bool verbose, bool quiet)
 	}
 
 	if (verbose) {
-		D(("YubiKey Firmware version: %d.%d.%d\n",
+		D(debug_file, "YubiKey Firmware version: %d.%d.%d\n",
 		       ykds_version_major(st),
 		       ykds_version_minor(st),
-		       ykds_version_build(st)));
-		fflush(stdout);
+		       ykds_version_build(st));
 	}
 
 	if (ykds_version_major(st) < 2 ||
@@ -282,7 +281,7 @@ int challenge_response(YK_KEY *yk, int slot,
 }
 
 int
-get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const struct passwd *user, char **fn)
+get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const struct passwd *user, char **fn, FILE *debug_file)
 {
   /* Getting file from user home directory, i.e. ~/.yubico/challenge, or
    * from a system wide directory.
@@ -299,7 +298,7 @@ get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const struct pass
   int ret;
 
   if (! yk_get_serial(yk, 0, 0, &serial)) {
-    D (("Failed to read serial number (serial-api-visible disabled?)."));
+    D (debug_file, "Failed to read serial number (serial-api-visible disabled?).");
     if (! chalresp_path)
       filename = "challenge";
     else
@@ -330,7 +329,7 @@ get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const struct pass
 }
 
 int
-load_chalresp_state(FILE *f, CR_STATE *state, bool verbose)
+load_chalresp_state(FILE *f, CR_STATE *state, bool verbose, FILE *debug_file)
 {
   /*
    * Load the current challenge and expected response information from a file handle.
@@ -354,13 +353,13 @@ load_chalresp_state(FILE *f, CR_STATE *state, bool verbose)
   r = fscanf(f, "v2:%126[0-9a-z]:%40[0-9a-z]:%64[0-9a-z]:%d:%d", challenge_hex, response_hex, salt_hex, &iterations, &slot);
   if(r == 5) {
     if (! yubikey_hex_p(salt_hex)) {
-      D(("Invalid salt hex input : %s", salt_hex));
+      D(debug_file, "Invalid salt hex input : %s", salt_hex);
       goto out;
     }
 
     if(verbose) {
-      D(("Challenge: %s, hashed response: %s, salt: %s, iterations: %d, slot: %d",
-            challenge_hex, response_hex, salt_hex, iterations, slot));
+      D(debug_file, "Challenge: %s, hashed response: %s, salt: %s, iterations: %d, slot: %d",
+            challenge_hex, response_hex, salt_hex, iterations, slot);
     }
 
     yubikey_hex_decode(state->salt, salt_hex, sizeof(state->salt));
@@ -369,12 +368,12 @@ load_chalresp_state(FILE *f, CR_STATE *state, bool verbose)
     rewind(f);
     r = fscanf(f, "v1:%126[0-9a-z]:%40[0-9a-z]:%d", challenge_hex, response_hex, &slot);
     if (r != 3) {
-      D(("Could not parse contents of chalresp_state file (%i)", r));
+      D(debug_file, "Could not parse contents of chalresp_state file (%i)", r);
       goto out;
     }
 
     if (verbose) {
-      D(("Challenge: %s, expected response: %s, slot: %d", challenge_hex, response_hex, slot));
+      D(debug_file, "Challenge: %s, expected response: %s, slot: %d", challenge_hex, response_hex, slot);
     }
 
     iterations = CR_DEFAULT_ITERATIONS;
@@ -384,17 +383,17 @@ load_chalresp_state(FILE *f, CR_STATE *state, bool verbose)
 
 
   if (! yubikey_hex_p(challenge_hex)) {
-    D(("Invalid challenge hex input : %s", challenge_hex));
+    D(debug_file, "Invalid challenge hex input : %s", challenge_hex);
     goto out;
   }
 
   if (! yubikey_hex_p(response_hex)) {
-    D(("Invalid expected response hex input : %s", response_hex));
+    D(debug_file, "Invalid expected response hex input : %s", response_hex);
     goto out;
   }
 
   if (slot != 1 && slot != 2) {
-    D(("Invalid slot input : %i", slot));
+    D(debug_file, "Invalid slot input : %i", slot);
     goto out;
   }
 
