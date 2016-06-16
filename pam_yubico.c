@@ -777,6 +777,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
   DBG ("id=%u", cfg->client_id);
   DBG ("key=%s", cfg->client_key ? cfg->client_key : "(null)");
   DBG ("debug=%d", cfg->debug);
+  DBG ("debug_file=%d", fileno(cfg->debug_file));
   DBG ("alwaysok=%d", cfg->alwaysok);
   DBG ("verbose_otp=%d", cfg->verbose_otp);
   DBG ("try_first_pass=%d", cfg->try_first_pass);
