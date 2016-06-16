@@ -151,7 +151,9 @@ and the validation server.
 If you want to get one for use with the default YubiCloud
 service, go https://upgrade.yubico.com/getapikey[here].
 
-debug:: to enable debug output to stdout.
+debug:: to enable debug output.
+
+debug_file:: filename to write debug to, stdout is default.
 
 alwaysok::
 to enable all authentication attempts to succeed

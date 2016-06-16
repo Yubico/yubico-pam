@@ -74,27 +74,27 @@ static void test_check_user_token(void) {
   fprintf(handle, "foo2:cccccccccccc\n");
   fclose(handle);
 
-  ret = check_user_token(file, "foobar", "hhhvhvhdhbid", 1);
+  ret = check_user_token(file, "foobar", "hhhvhvhdhbid", 1, stdout);
   assert(ret == 1);
-  ret = check_user_token(file, "foobar", "hnhbhnhbhnhb", 1);
+  ret = check_user_token(file, "foobar", "hnhbhnhbhnhb", 1, stdout);
   assert(ret == 1);
-  ret = check_user_token(file, "foobar", "hnhbhnhbhnhc", 1);
+  ret = check_user_token(file, "foobar", "hnhbhnhbhnhc", 1, stdout);
   assert(ret == -1);
-  ret = check_user_token(file, "kaka", "hihbhdhrhbhj", 1);
+  ret = check_user_token(file, "kaka", "hihbhdhrhbhj", 1, stdout);
   assert(ret == 1);
-  ret = check_user_token(file, "bar", "hnhbhnhbhnhb", 1);
+  ret = check_user_token(file, "bar", "hnhbhnhbhnhb", 1, stdout);
   assert(ret == 1);
-  ret = check_user_token(file, "foo", "hdhrhbhjhvhu", 1);
+  ret = check_user_token(file, "foo", "hdhrhbhjhvhu", 1, stdout);
   assert(ret == -2);
-  ret = check_user_token(file, "foo2", "cccccccccccc", 1);
+  ret = check_user_token(file, "foo2", "cccccccccccc", 1, stdout);
   assert(ret == 1);
-  ret = check_user_token(file, "foo2", "vvvvvvvvvvvv", 1);
+  ret = check_user_token(file, "foo2", "vvvvvvvvvvvv", 1, stdout);
   assert(ret == 1);
-  ret = check_user_token(file, "foo2", "vvvvvvvvvvcc", 1);
+  ret = check_user_token(file, "foo2", "vvvvvvvvvvcc", 1, stdout);
   assert(ret == -1);
-  ret = check_user_token(file, "foo2", "", 1);
+  ret = check_user_token(file, "foo2", "", 1, stdout);
   assert(ret == -1);
-  ret = check_user_token(file, "foo", "", 1);
+  ret = check_user_token(file, "foo", "", 1, stdout);
   assert(ret == -2);
   remove(file);
 }
@@ -115,7 +115,7 @@ static void test_load_chalresp_state(void) {
   memset(&state, 0, sizeof(state));
   fprintf(file, "v2:%s:%s:%s:%d:%d\n", CHALLENGE1, RESPONSE1, SALT1, 1000, 2);
   rewind(file);
-  ret = load_chalresp_state(file, &state, true);
+  ret = load_chalresp_state(file, &state, true, stdout);
   assert(ret == 1);
   assert(state.iterations == 1000);
   assert(state.slot == 2);
@@ -127,7 +127,7 @@ static void test_load_chalresp_state(void) {
   memset(&state, 0, sizeof(state));
   fprintf(file, "v1:%s:%s:%d\n", CHALLENGE2, RESPONSE2, 1);
   rewind(file);
-  ret = load_chalresp_state(file, &state, true);
+  ret = load_chalresp_state(file, &state, true, stdout);
   assert(ret == 1);
   assert(state.iterations == CR_DEFAULT_ITERATIONS);
   assert(state.slot == 1);
@@ -139,7 +139,7 @@ static void test_load_chalresp_state(void) {
   /* slot 3 should fail.. */
   fprintf(file, "v2:%s:%s:%s:%d:%d\n", CHALLENGE1, RESPONSE1, SALT1, 1000, 3);
   rewind(file);
-  ret = load_chalresp_state(file, &state, true);
+  ret = load_chalresp_state(file, &state, true, stdout);
   assert(ret == 0);
   fclose(file);
 }

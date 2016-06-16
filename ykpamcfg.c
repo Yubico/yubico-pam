@@ -41,7 +41,6 @@
 
 #include <ykpers.h>
 
-#undef DEBUG_PAM
 #include "util.h"
 
 #define ACTION_ADD_HMAC_CHALRESP	"add_hmac_chalresp"
@@ -185,7 +184,7 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, u
       }
   }
 
-  if (! get_user_challenge_file(yk, output_dir, p, &fn)) {
+  if (! get_user_challenge_file(yk, output_dir, p, &fn, stdout)) {
     fprintf (stderr, "Failed getting chalresp state filename\n");
     goto out;
   }
@@ -294,7 +293,7 @@ main(int argc, char **argv)
     if (! init_yubikey (&yk))
       goto err;
 
-    if (! check_firmware_version(yk, verbose, false))
+    if (! check_firmware_version(yk, verbose, false, stdout))
       goto err;    
 
     if (! do_add_hmac_chalresp (yk, slot, verbose, output_dir, iterations, &exit_code))

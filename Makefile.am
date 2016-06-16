@@ -49,8 +49,6 @@ libpam_util_la_LIBADD = @LTLIBYUBIKEY@ @YKPERS_LIBS@
 
 libpam_real_la_SOURCES = pam_yubico.c
 
-DEFS = -DDEBUG_PAM -DPAM_DEBUG @DEFS@
-
 # The command line tools.
 
 if YKPERS

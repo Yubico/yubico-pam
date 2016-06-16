@@ -55,40 +55,40 @@ int pam_modutil_drop_priv(pam_handle_t *pamh, struct _ykpam_privs *privs, struct
     privs->saved_egid = getegid();
 
     if ((privs->saved_euid == pw->pw_uid) && (privs->saved_egid == pw->pw_gid)) {
-        D (("Privilges already dropped, pretend it is all right"));
+        D (privs->debug_file, "Privilges already dropped, pretend it is all right");
         return 0;
     }
 
     privs->saved_groups_length = getgroups(0, NULL);
     if (privs->saved_groups_length < 0) {
-        D (("getgroups: %s", strerror(errno)));
+        D (privs->debug_file, "getgroups: %s", strerror(errno));
         return -1;
     }
 
     if (privs->saved_groups_length > SAVED_GROUPS_MAX_LEN) {
-        D (("to many groups, limiting."));
+        D (privs->debug_file, "to many groups, limiting.");
         privs->saved_groups_length = SAVED_GROUPS_MAX_LEN;
     }
 
     if (privs->saved_groups_length > 0) {
         if (getgroups(privs->saved_groups_length, privs->saved_groups) < 0) {
-            D (("getgroups: %s", strerror(errno)));
+            D (privs->debug_file, "getgroups: %s", strerror(errno));
             goto free_out;
         }
     }
 
     if (initgroups(pw->pw_name, pw->pw_gid) < 0) {
-        D (("initgroups: %s", strerror(errno)));
+        D (privs->debug_file, "initgroups: %s", strerror(errno));
         goto free_out;
     }
 
     if (setegid(pw->pw_gid) < 0) {
-        D (("setegid: %s", strerror(errno)));
+        D (privs->debug_file, "setegid: %s", strerror(errno));
         goto free_out;
     }
 
     if (seteuid(pw->pw_uid) < 0) {
-        D (("seteuid: %s", strerror(errno)));
+        D (privs->debug_file, "seteuid: %s", strerror(errno));
         goto free_out;
     }
 
@@ -99,22 +99,22 @@ free_out:
 
 int pam_modutil_regain_priv(pam_handle_t *pamh, struct _ykpam_privs *privs) {
     if ((privs->saved_euid == geteuid()) && (privs->saved_egid == getegid())) {
-        D (("Privilges already as requested, pretend it is all right"));
+        D (privs->debug_file, "Privilges already as requested, pretend it is all right");
         return 0;
     }
 
     if (seteuid(privs->saved_euid) < 0) {
-        D (("seteuid: %s", strerror(errno)));
+        D (privs->debug_file, "seteuid: %s", strerror(errno));
         return -1;
     }
 
     if (setegid(privs->saved_egid) < 0) {
-        D (("setegid: %s", strerror(errno)));
+        D (privs->debug_file, "setegid: %s", strerror(errno));
         return -1;
     }
 
     if (setgroups(privs->saved_groups_length, privs->saved_groups) < 0) {
-        D (("setgroups: %s", strerror(errno)));
+        D (privs->debug_file, "setgroups: %s", strerror(errno));
         return -1;
     }
 
