@@ -761,7 +761,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
             }
           else
             {
-              FILE *file = fopen(argv[i] + 11, "a+");
+              FILE *file = fopen(argv[i] + 11, "a");
               if(file)
                 {
                   cfg->debug_file = file;
