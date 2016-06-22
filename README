@@ -153,7 +153,8 @@ service, go https://upgrade.yubico.com/getapikey[here].
 
 debug:: to enable debug output.
 
-debug_file:: filename to write debug to, stdout is default.
+debug_file:: filename to write debug to, file must exist and
+be a regular file. stdout is default.
 
 alwaysok::
 to enable all authentication attempts to succeed

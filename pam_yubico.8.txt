@@ -18,7 +18,7 @@ The module is for authentication of YubiKeys, either with online validation of O
 Turns on debugging.
 
 *debug_file*=_file_::
-File name to write debug to. Defaults to stdout.
+File name to write debug to, the file must exist and be a regular file.  Defaults to stdout.
 
 *mode=*[_client_|_challenge-response_]::
 Set the mode of operation, client for OTP validation and challenge-response for challenge-response validation, client is the default.

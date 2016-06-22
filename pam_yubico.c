@@ -755,16 +755,29 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->chalresp_path = argv[i] + 14;
       if (strncmp (argv[i], "debug_file=", 11) == 0)
         {
-          if(strncmp (argv[i] + 11, "stderr", 6) == 0)
+          const char *filename = argv[i] + 11;
+          if(strncmp (filename, "stdout", 6) == 0)
+            {
+              cfg->debug_file = stdout;
+            }
+          else if(strncmp (filename, "stderr", 6) == 0)
             {
               cfg->debug_file = stderr;
             }
           else
             {
-              FILE *file = fopen(argv[i] + 11, "a");
-              if(file)
+              struct stat st;
+              FILE *file;
+              if(lstat(filename, &st) == 0)
                 {
-                  cfg->debug_file = file;
+                  if(S_ISREG(st.st_mode))
+                    {
+                      file = fopen(filename, "a");
+                      if(file)
+                        {
+                          cfg->debug_file = file;
+                        }
+                    }
                 }
             }
         }
