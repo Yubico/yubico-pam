@@ -1,5 +1,5 @@
 /* Written by Simon Josefsson <simon@yubico.com>.
- * Copyright (c) 2006-2014 Yubico AB
+ * Copyright (c) 2006-2016 Yubico AB
  * Copyright (c) 2011 Tollef Fog Heen <tfheen@err.no>
  * All rights reserved.
  *
@@ -1170,10 +1170,10 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
   parse_cfg (flags, argc, argv, cfg);
   if (rc == PAM_SUCCESS && retval == PAM_SUCCESS) {
-    DBG ("pam_sm_acct_mgmt returing PAM_SUCCESS");
+    DBG ("pam_sm_acct_mgmt returning PAM_SUCCESS");
     retval = PAM_SUCCESS;
   } else {
-    DBG ("pam_sm_acct_mgmt returing PAM_AUTH_ERR:%d", rc);
+    DBG ("pam_sm_acct_mgmt returning PAM_AUTH_ERR:%d", rc);
     retval = PAM_AUTH_ERR;
   }
 
