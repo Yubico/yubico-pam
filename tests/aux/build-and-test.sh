@@ -13,6 +13,7 @@ else
     brew install pkg-config
     brew install libtool
     brew install asciidoc
+    brew install docbook-xsl
     brew install libyubikey
     brew install ykclient
     brew install ykpers
