@@ -18,6 +18,9 @@ else
     brew install ykclient
     brew install ykpers
     cpanp install Net::LDAP::Server
+
+    # this is required so asciidoc can find the xml catalog
+    export XML_CATALOG_FILES=/usr/local/etc/xml/catalog
 fi
 
 set -e
