@@ -1,5 +1,7 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
+* Version 2.25 (unreleased)
+
 * Version 2.24 (released 2016-11-25)
 
 ** Debug mode changed, allows file output with debug_file.
