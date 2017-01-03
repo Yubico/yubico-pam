@@ -46,6 +46,8 @@
 #define ACTION_ADD_HMAC_CHALRESP	"add_hmac_chalresp"
 #define ACTION_MAX_LEN			1024
 
+#define TMPFILE_SUFFIX			".XXXXXX"
+
 const char *usage =
   "Usage: ykpamcfg [options]\n"
   "\n"
@@ -55,7 +57,8 @@ const char *usage =
   "\t-2           Send challenge to slot 2.\n"
   "\t-A action    What to do.\n"
   "\t-p path      Specify an output path for the challenge file.\n"
-  "\t-i iters     Number of iterations to use for pbkdf2 (defaults to 10000)\n"
+  "\t-i iters     Number of iterations to use for pbkdf2 (defaults to 10000).\n"
+  "\t-u user      Specify a username to create for (defaults to current user).\n"
   "\n"
   "\t-v           Increase verbosity\n"
   "\t-V           Show version and exit\n"
@@ -67,7 +70,7 @@ const char *usage =
   "\n"
   "\n"
   ;
-const char *optstring = "12A:p:i:vVh";
+const char *optstring = "12A:p:i:u:vVh";
 
 static void
 report_yk_error(void)
@@ -90,7 +93,7 @@ static int
 parse_args(int argc, char **argv,
 	   int *slot, bool *verbose,
 	   char **action, char **output_dir,
-     unsigned int *iterations)
+	   unsigned int *iterations, char **username)
 {
   int c;
 
@@ -118,6 +121,9 @@ parse_args(int argc, char **argv,
 	}
       }
       break;
+    case 'u':
+      *username = optarg;
+      break;
     case 'v':
       *verbose = true;
       break;
@@ -135,25 +141,31 @@ parse_args(int argc, char **argv,
 }
 
 static int
-do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, unsigned int iterations, int *exit_code)
+do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, unsigned int iterations, char *username, int *exit_code)
 {
   char buf[CR_RESPONSE_SIZE + 16];
   CR_STATE state;
   int ret = 0;
   unsigned int response_len;
-  char *fn;
+  char *fn = NULL;
+  char *tmp_fn = NULL;
   struct passwd *p;
   FILE *f = NULL;
+  int fd;
   struct stat st;
 
   state.iterations = iterations;
   state.slot = slot;
   *exit_code = 1;
 
-  p = getpwuid (getuid ());
-  
+  if (username) {
+    p = getpwnam (username);
+  } else {
+    p = getpwuid (getuid ());
+  }
+
   if (! p) {
-    fprintf (stderr, "Who am I???");
+    fprintf (stderr, "User not found.\n");
     goto out;
   }
 
@@ -237,14 +249,50 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, u
 
   umask(077);
 
-  f = fopen (fn, "w");
-  if (! f) {
-    fprintf (stderr, "Failed opening '%s' for writing : %s\n", fn, strerror (errno));
+  tmp_fn = malloc(strlen(fn) + 1 + strlen(TMPFILE_SUFFIX));
+  if (! tmp_fn) {
+    fprintf (stderr, "Failed allocating memory.\n");
     goto out;
   }
 
-  if (! write_chalresp_state (f, &state))
+  strcpy(tmp_fn, fn);
+  strcat(tmp_fn, TMPFILE_SUFFIX);
+
+  fd = mkstemp(tmp_fn);
+  if (fd < 0) {
+    fprintf (stderr, "Failed opening temporary file '%s' (%s)\n", tmp_fn, strerror(errno));
     goto out;
+  }
+
+  if (username) {
+    if (fchown(fd, p->pw_uid, p->pw_gid) != 0) {
+      fprintf(stderr, "Failed changing ownership of '%s' to user '%s'\n", tmp_fn, username);
+      goto out;
+    }
+  }
+
+  f = fdopen (fd, "w");
+  if (! f) {
+    close(fd);
+    fprintf (stderr, "Failed opening '%s' for writing : %s\n", tmp_fn, strerror (errno));
+    goto out;
+  }
+
+  if (! write_chalresp_state (f, &state)) {
+    goto out;
+  }
+
+  if (fclose (f) < 0) {
+    fprintf(stderr, "Failed closing file '%s'\n", tmp_fn);
+    goto out;
+  }
+
+  f = NULL;
+
+  if (rename (tmp_fn, fn) != 0) {
+    fprintf(stderr, "Failed renaming '%s' to '%s'\n", tmp_fn, fn);
+    goto out;
+  }
 
   printf ("Stored initial challenge and expected response in '%s'.\n", fn);
 
@@ -254,6 +302,12 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, u
  out:
   if (f)
     fclose (f);
+
+  if (tmp_fn)
+    free (tmp_fn);
+
+  if (fn)
+    free (fn);
 
   return ret;
 }
@@ -272,6 +326,7 @@ main(int argc, char **argv)
   char *output_dir = NULL;
   int slot = 1;
   unsigned int iterations = CR_DEFAULT_ITERATIONS;
+  char *username = NULL;
 
   ykp_errno = 0;
   yk_errno = 0;
@@ -281,7 +336,7 @@ main(int argc, char **argv)
   if (! parse_args(argc, argv,
 		   &slot, &verbose,
 		   &ptr, &output_dir,
-       &iterations))
+		   &iterations, &username))
     goto err;
 
   exit_code = 1;
@@ -296,7 +351,7 @@ main(int argc, char **argv)
     if (! check_firmware_version(yk, verbose, false, stdout))
       goto err;    
 
-    if (! do_add_hmac_chalresp (yk, slot, verbose, output_dir, iterations, &exit_code))
+    if (! do_add_hmac_chalresp (yk, slot, verbose, output_dir, iterations, username, &exit_code))
       goto err;
   } else {
     fprintf (stderr, "Unknown action '%s'\n", action);

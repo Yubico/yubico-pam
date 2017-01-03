@@ -8,7 +8,7 @@ YKPAMCFG(1)
 ykpamcfg - Manage user settings for the Yubico PAM module
 
 == SYNOPSIS
-*ykmapcfg* [-1 | -2] [-A] [-p] [-i] [-v] [-V] [-h]
+*ykmapcfg* [-1 | -2] [-A] [-p] [-i] [-u] [-v] [-V] [-h]
 
 == OPTIONS
 *-1*::
@@ -25,6 +25,9 @@ specify output directory, default is ~/.yubico/
 
 *-i* _iterations_::
 number of iterations to use for pbkdf2 of expected response
+
+*-u* _username_::
+username to use for created file, defaults to current user
 
 *-v*::
 enable verbose mode.
