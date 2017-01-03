@@ -21,7 +21,7 @@ use slot 2.
 choose action to perform. See ACTIONS below.
 
 *-p* _path_::
-specify output file, default is ~/.yubico/challenge
+specify output directory, default is ~/.yubico/
 
 *-i* _iterations_::
 number of iterations to use for pbkdf2 of expected response
