@@ -68,16 +68,18 @@ $ ykpamcfg -2 -v
 Stored initial challenge and expected response in '/home/alice/.yubico/challenge-123456'.
 $
 ------
-If your /home/user folder is encrypted you should move the challenge file in a different path (i.e. /var/yubico) and then set the right permission for the user to create the files. To do this do as follow:
+From security perspective, it is generally a good idea to move the challenge file in a system-wide path that is only read- and writable by root. To do this do as follow:
 
 ----
-$ mkdir /var/yubico
-$ chmod +t /var/yubico
-$ chmod 777 /var/yubico
-$ ykpamcfg -2 -v -p /var/yubico
+$ sudo mkdir /var/yubico
+$ sudo chown root.root /var/yubico
+$ sudo chmod 700 /var/yubico
+$ ykpamcfg -2 -v
 ...
-Stored initial challenge and expected response in '/var/yubico/alice-123456'.
-$
+Stored initial challenge and expected response in '$HOME/.yubico/challenge-123456'.
+$ sudo mv ~/.yubico/challenge-123456 /var/yubico/alice-123456
+$ sudo chown root.root /var/yubico/alice-123456
+$ sudo chmod 600 /var/yubico/alice-123456
 ----
 
 It is important that the file is named with the name of the user that is going to be authenticated by this YubiKey.
