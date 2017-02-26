@@ -234,7 +234,7 @@ authorize_user_token_ldap (struct cfg *cfg,
   LDAP *ld = NULL;
   LDAPMessage *result = NULL, *e;
   BerElement *ber;
-  char *a;
+  char *attr_name;
   char *attrs[2] = {NULL, NULL};
 
   struct berval **vals;
@@ -338,20 +338,30 @@ authorize_user_token_ldap (struct cfg *cfg,
   else
     {
       /* Iterate through each returned attribute. */
-      for (a = ldap_first_attribute (ld, e, &ber);
-	   a != NULL; a = ldap_next_attribute (ld, e, ber))
+      for (attr_name = ldap_first_attribute (ld, e, &ber);
+	   attr_name != NULL; attr_name = ldap_next_attribute (ld, e, ber))
 	{
-	  if ((vals = ldap_get_values_len (ld, e, a)) != NULL)
+	  if (strcmp(attr_name, cfg->yubi_attr) != 0) {
+	      DBG("Ignored non-requested attribute: %s", attr_name);
+	      continue;
+	  }
+	  if ((vals = ldap_get_values_len (ld, e, attr_name)) != NULL)
 	    {
 	      yubi_attr_prefix_len = cfg->yubi_attr_prefix ? strlen(cfg->yubi_attr_prefix) : 0;
+
+	      DBG("LDAP : Found %i values for %s - checking if any of them match '%s:%s'",
+	          ldap_count_values_len(vals),
+	          attr_name,
+	          cfg->yubi_attr_prefix ? cfg->yubi_attr_prefix : "",
+	          token_id ? token_id : "(null)");
 
 	      /* Compare each value for the attribute against the token id. */
 	      for (i = 0; vals[i] != NULL; i++)
 		{
-	          DBG("LDAP : Found %i values - checking if any of them match '%s:%s:%s'",
-		       ldap_count_values_len(vals),
-		       vals[i]->bv_val,
-		       cfg->yubi_attr_prefix ? cfg->yubi_attr_prefix : "", token_id);
+		  DBG("LDAP : Checking value %i: %s:%s",
+		      i + 1,
+		      cfg->yubi_attr_prefix ? cfg->yubi_attr_prefix : "",
+		      vals[i]->bv_val);
 
 		  /* Only values containing this prefix are considered. */
 		  if ((!cfg->yubi_attr_prefix || !strncmp (cfg->yubi_attr_prefix, vals[i]->bv_val, yubi_attr_prefix_len)))
@@ -370,7 +380,7 @@ authorize_user_token_ldap (struct cfg *cfg,
 		}
 	      ldap_value_free_len (vals);
 	    }
-	  ldap_memfree (a);
+	  ldap_memfree (attr_name);
 	}
       if (ber != NULL)
 	  ber_free (ber, 0);
