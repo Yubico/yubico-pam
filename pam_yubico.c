@@ -1058,12 +1058,6 @@ pam_sm_authenticate (pam_handle_t * pamh,
   else
     password = NULL;
 
-  rc = ykclient_request (ykc, otp);
-
-  DBG ("ykclient return value (%d): %s", rc,
-	ykclient_strerror (rc));
-  DBG ("ykclient url used: %s", ykclient_get_last_url(ykc));
-
   /* authorize the user with supplied token id */
   if (cfg->ldapserver != NULL || cfg->ldap_uri != NULL)
     valid_token = authorize_user_token_ldap (cfg, user, otp_id);
@@ -1073,6 +1067,10 @@ pam_sm_authenticate (pam_handle_t * pamh,
   switch(valid_token)
     {
     case 1:
+      rc = ykclient_request (ykc, otp);
+      DBG ("ykclient return value (%d): %s", rc, ykclient_strerror (rc));
+      DBG ("ykclient url used: %s", ykclient_get_last_url(ykc));
+
       switch (rc)
       {
         case YKCLIENT_OK:
