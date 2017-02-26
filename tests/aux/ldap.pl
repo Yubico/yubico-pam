@@ -45,6 +45,7 @@ use constant RESULT_OK => {
 my %objects = (
   'base=uid=foo,ou=users,dc=example,dc=com' => {keys => ['vvincredible']},
   'base=uid=test,ou=users,dc=example,dc=com' => {keys => ['cccccccfhcbe', 'ccccccbchvth']},
+  'base=uid=nokeys,ou=users,dc=example,dc=com' => {keys => []},
   'sub:base=:(uid=test)' => {keys => ['cccccccfhcbe', 'ccccccbchvth'], dn => 'uid=test,out=users,dc=example,dc=com'},
 );
 

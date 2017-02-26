@@ -66,6 +66,7 @@ static struct data {
   {"test", "ccccccbchvthlivuitriujjifivbvtrjkjfirllluurj"},
   {"foo", ""},
   {"bar", ""},
+  {"nokeys", ""},
 };
 
 
@@ -274,6 +275,10 @@ static int test_authenticate_ldap5(void) {
   return pam_sm_authenticate(6, 0, sizeof(ldap_cfg) / sizeof(char*), ldap_cfg);
 }
 
+static int test_authenticate_ldap6(void) {
+  return pam_sm_authenticate(7, 0, sizeof(ldap_cfg) / sizeof(char*), ldap_cfg);
+}
+
 static pid_t run_mock(const char *port, const char *type) {
   pid_t pid = fork();
   if(pid == 0) {
@@ -352,6 +357,10 @@ int main(void) {
   }
   if(test_authenticate_ldap5() != PAM_USER_UNKNOWN) {
     ret = 1007;
+    goto out;
+  }
+  if(test_authenticate_ldap6() != PAM_USER_UNKNOWN) {
+    ret = 1008;
     goto out;
   }
 #endif
