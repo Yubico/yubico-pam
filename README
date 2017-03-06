@@ -171,6 +171,12 @@ stacked modules password and will never prompt the user - if no
 password is available or the password is not appropriate, the user
 will be denied access.
 
+nullok::
+If set, don't fail when there are no tokens declared for the user
+in the authorization mapping files or in LDAP.
+This can be used to make YubiKey authentication optional unless
+the user has associated tokens.
+
 urllist::
 List  of  URL  templates to be used. This is set by calling
 ykclient_set_url_bases. The list should be in the format :

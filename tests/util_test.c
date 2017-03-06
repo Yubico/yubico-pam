@@ -75,27 +75,27 @@ static void test_check_user_token(void) {
   fclose(handle);
 
   ret = check_user_token(file, "foobar", "hhhvhvhdhbid", 1, stdout);
-  assert(ret == 1);
+  assert(ret == AUTH_FOUND);
   ret = check_user_token(file, "foobar", "hnhbhnhbhnhb", 1, stdout);
-  assert(ret == 1);
+  assert(ret == AUTH_FOUND);
   ret = check_user_token(file, "foobar", "hnhbhnhbhnhc", 1, stdout);
-  assert(ret == -1);
+  assert(ret == AUTH_NOT_FOUND);
   ret = check_user_token(file, "kaka", "hihbhdhrhbhj", 1, stdout);
-  assert(ret == 1);
+  assert(ret == AUTH_FOUND);
   ret = check_user_token(file, "bar", "hnhbhnhbhnhb", 1, stdout);
-  assert(ret == 1);
+  assert(ret == AUTH_FOUND);
   ret = check_user_token(file, "foo", "hdhrhbhjhvhu", 1, stdout);
-  assert(ret == -2);
+  assert(ret == AUTH_NO_TOKENS);
   ret = check_user_token(file, "foo2", "cccccccccccc", 1, stdout);
-  assert(ret == 1);
+  assert(ret == AUTH_FOUND);
   ret = check_user_token(file, "foo2", "vvvvvvvvvvvv", 1, stdout);
-  assert(ret == 1);
+  assert(ret == AUTH_FOUND);
   ret = check_user_token(file, "foo2", "vvvvvvvvvvcc", 1, stdout);
-  assert(ret == -1);
+  assert(ret == AUTH_NOT_FOUND);
   ret = check_user_token(file, "foo2", "", 1, stdout);
-  assert(ret == -1);
+  assert(ret == AUTH_NOT_FOUND);
   ret = check_user_token(file, "foo", "", 1, stdout);
-  assert(ret == -2);
+  assert(ret == AUTH_NO_TOKENS);
   remove(file);
 }
 

@@ -85,8 +85,9 @@ get_user_cfgfile_path(const char *common_path, const char *filename, const struc
 
 
 /*
- * This function will look for users name with valid user token id. It
- * will returns -2 if the user is unknown, -1 if the token do not match the user line, 0 for internal failure and 1 for success.
+ * This function will look for users name with valid user token id.
+ *
+ * Returns one of AUTH_FOUND, AUTH_NOT_FOUND, AUTH_NO_TOKENS, AUTH_ERROR.
  *
  * File format is as follows:
  * <user-name>:<token_id>:<token_id>
@@ -102,7 +103,7 @@ check_user_token (const char *authfile,
 {
   char buf[1024];
   char *s_user, *s_token;
-  int retval = 0;
+  int retval = AUTH_ERROR;
   int fd;
   struct stat st;
   FILE *opwfile;
@@ -136,7 +137,7 @@ check_user_token (const char *authfile,
       return retval;
   }
 
-  retval = -2;
+  retval = AUTH_NO_TOKENS;
   while (fgets (buf, 1024, opwfile))
     {
       char *saveptr = NULL;
@@ -155,17 +156,17 @@ check_user_token (const char *authfile,
 	{
 	  if(verbose)
 	      D (debug_file, "Matched user: %s", s_user);
-      retval = -1; //We found at least one line for the user
+      retval = AUTH_NOT_FOUND; /* We found at least one line for the user */
 	  do
 	    {
 	      s_token = strtok_r (NULL, ":", &saveptr);
 	      if(verbose)
 		  D (debug_file, "Authorization token: %s", s_token);
-	      if (s_token && strcmp (otp_id, s_token) == 0)
+	      if (s_token && otp_id && strcmp (otp_id, s_token) == 0)
 		{
 		  if(verbose)
 		      D (debug_file, "Match user/token as %s/%s", username, otp_id);
-		  return 1;
+		  return AUTH_FOUND;
 		}
 	    }
 	  while (s_token != NULL);

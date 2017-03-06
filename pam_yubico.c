@@ -108,6 +108,7 @@ struct cfg
   int verbose_otp;
   int try_first_pass;
   int use_first_pass;
+  int nullok;
   const char *auth_file;
   const char *capath;
   const char *cainfo;
@@ -136,8 +137,9 @@ struct cfg
 #define DBG(x...) if (cfg->debug) { D(cfg->debug_file, x); }
 
 /*
- * Authorize authenticated OTP_ID for login as USERNAME using
- * AUTHFILE.  Return -2 if the user is unknown, -1 if the OTP_ID does not match,  0 on internal failures, otherwise success.
+ * Authorize authenticated OTP_ID for login as USERNAME using AUTHFILE.
+ *
+ * Returns one of AUTH_FOUND, AUTH_NOT_FOUND, AUTH_NO_TOKENS, AUTH_ERROR.
  */
 static int
 authorize_user_token (struct cfg *cfg,
@@ -145,7 +147,7 @@ authorize_user_token (struct cfg *cfg,
 		      const char *otp_id,
 		      pam_handle_t *pamh)
 {
-  int retval;
+  int retval = AUTH_ERROR;
 
   if (cfg->auth_file)
     {
@@ -167,7 +169,7 @@ authorize_user_token (struct cfg *cfg,
       pwres = getpwnam_r (username, &pass, buf, buflen, &p);
       if (p == NULL) {
 	DBG ("getpwnam_r: %s", strerror(pwres));
-	return 0;
+	return AUTH_ERROR;
       }
 
       /* Getting file from user home directory
@@ -175,21 +177,19 @@ authorize_user_token (struct cfg *cfg,
        */
       if (! get_user_cfgfile_path (NULL, "authorized_yubikeys", p, &userfile)) {
 	DBG ("Failed figuring out per-user cfgfile");
-	return 0;
+	return AUTH_ERROR;
       }
 
       DBG ("Dropping privileges");
       if(pam_modutil_drop_priv(pamh, &privs, p)) {
         DBG ("could not drop privileges");
-	retval = 0;
-	goto free_out;
+        goto free_out;
       }
 
       retval = check_user_token (userfile, username, otp_id, cfg->debug, cfg->debug_file);
 
       if(pam_modutil_regain_priv(pamh, &privs)) {
-        DBG (("could not restore privileges"));
-        retval = 0;
+        DBG ("could not restore privileges");
         goto free_out;
       }
 
@@ -202,7 +202,7 @@ free_out:
 
 /*
  * This function will look in ldap id the token correspond to the
- * requested user. It will returns 0 for failure and 1 for success.
+ * requested user.
  *
  * ldaps is only supported for ldap_uri based connections.
  * ldap_cacertfile usually needs to be set for this to work.
@@ -218,13 +218,15 @@ free_out:
  * If using ldap_uri, you can specify multiple failover hosts
  * eg.
  * ldap_uri=ldaps://host1.fqdn.example.com,ldaps://host2.fqdn.example.com
+ *
+ * Returns one of AUTH_FOUND, AUTH_NOT_FOUND, AUTH_NO_TOKENS, AUTH_ERROR.
  */
 static int
 authorize_user_token_ldap (struct cfg *cfg,
 			   const char *user,
 			   const char *token_id)
 {
-  int retval = 0;
+  int retval = AUTH_ERROR;
 #ifdef HAVE_LIBLDAP
   /* LDAPv2 is historical -- RFC3494. */
   int protocol = LDAP_VERSION3;
@@ -232,7 +234,7 @@ authorize_user_token_ldap (struct cfg *cfg,
   LDAP *ld = NULL;
   LDAPMessage *result = NULL, *e;
   BerElement *ber;
-  char *a;
+  char *attr_name;
   char *attrs[2] = {NULL, NULL};
 
   struct berval **vals;
@@ -261,7 +263,6 @@ authorize_user_token_ldap (struct cfg *cfg,
       if (rc != LDAP_SUCCESS)
 	{
 	  DBG ("ldap_initialize: %s", ldap_err2string (rc));
-	  retval = 0;
 	  goto done;
 	}
     }
@@ -270,7 +271,6 @@ authorize_user_token_ldap (struct cfg *cfg,
       if ((ld = ldap_init (cfg->ldapserver, PORT_NUMBER)) == NULL)
 	{
 	  DBG ("ldap_init");
-	  retval = 0;
 	  goto done;
 	}
     }
@@ -301,7 +301,6 @@ authorize_user_token_ldap (struct cfg *cfg,
     i = (strlen(cfg->user_attr) + strlen(cfg->ldapdn) + strlen(user) + 3) * sizeof(char);
     if ((find = malloc(i)) == NULL) {
       DBG ("Failed allocating %zu bytes", i);
-      retval = 0;
       goto done;
     }
     sprintf (find, "%s=%s,%s", cfg->user_attr, user, cfg->ldapdn);
@@ -325,48 +324,63 @@ authorize_user_token_ldap (struct cfg *cfg,
     {
       DBG ("ldap_search_ext_s: %s", ldap_err2string (rc));
 
-      retval = 0;
       goto done;
     }
+
+  /* Start looing for tokens */
+  retval = AUTH_NO_TOKENS;
 
   e = ldap_first_entry (ld, result);
   if (e == NULL)
     {
       DBG (("No result from LDAP search"));
-      retval = -2;
     }
   else
     {
-      retval = -1;
       /* Iterate through each returned attribute. */
-      for (a = ldap_first_attribute (ld, e, &ber);
-	   a != NULL; a = ldap_next_attribute (ld, e, ber))
+      for (attr_name = ldap_first_attribute (ld, e, &ber);
+	   attr_name != NULL; attr_name = ldap_next_attribute (ld, e, ber))
 	{
-	  if ((vals = ldap_get_values_len (ld, e, a)) != NULL)
+	  if (strcmp(attr_name, cfg->yubi_attr) != 0) {
+	      DBG("Ignored non-requested attribute: %s", attr_name);
+	      continue;
+	  }
+	  if ((vals = ldap_get_values_len (ld, e, attr_name)) != NULL)
 	    {
 	      yubi_attr_prefix_len = cfg->yubi_attr_prefix ? strlen(cfg->yubi_attr_prefix) : 0;
+
+	      DBG("LDAP : Found %i values for %s - checking if any of them match '%s:%s'",
+	          ldap_count_values_len(vals),
+	          attr_name,
+	          cfg->yubi_attr_prefix ? cfg->yubi_attr_prefix : "",
+	          token_id ? token_id : "(null)");
 
 	      /* Compare each value for the attribute against the token id. */
 	      for (i = 0; vals[i] != NULL; i++)
 		{
-	          DBG("LDAP : Found %i values - checking if any of them match '%s:%s:%s'",
-		       ldap_count_values_len(vals),
-		       vals[i]->bv_val,
-		       cfg->yubi_attr_prefix ? cfg->yubi_attr_prefix : "", token_id);
+		  DBG("LDAP : Checking value %i: %s:%s",
+		      i + 1,
+		      cfg->yubi_attr_prefix ? cfg->yubi_attr_prefix : "",
+		      vals[i]->bv_val);
 
 		  /* Only values containing this prefix are considered. */
 		  if ((!cfg->yubi_attr_prefix || !strncmp (cfg->yubi_attr_prefix, vals[i]->bv_val, yubi_attr_prefix_len)))
 		    {
-		      if(!strncmp (token_id, vals[i]->bv_val + yubi_attr_prefix_len, strlen (vals[i]->bv_val + yubi_attr_prefix_len)))
+		      /* We have found at least one possible token ID so change the default return value to AUTH_NOT_FOUND */
+		      if (retval == AUTH_NO_TOKENS)
+		        {
+		          retval = AUTH_NOT_FOUND;
+		        }
+		      if(token_id && !strncmp (token_id, vals[i]->bv_val + yubi_attr_prefix_len, strlen (vals[i]->bv_val + yubi_attr_prefix_len)))
 		        {
 		          DBG ("Token Found :: %s", vals[i]->bv_val);
-		          retval = 1;
+		          retval = AUTH_FOUND;
 		        }
 		    }
 		}
 	      ldap_value_free_len (vals);
 	    }
-	  ldap_memfree (a);
+	  ldap_memfree (attr_name);
 	}
       if (ber != NULL)
 	  ber_free (ber, 0);
@@ -713,6 +727,8 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->try_first_pass = 1;
       if (strcmp (argv[i], "use_first_pass") == 0)
 	cfg->use_first_pass = 1;
+      if (strcmp (argv[i], "nullok") == 0)
+	cfg->nullok = 1;
       if (strncmp (argv[i], "authfile=", 9) == 0)
 	cfg->auth_file = argv[i] + 9;
       if (strncmp (argv[i], "capath=", 7) == 0)
@@ -962,6 +978,37 @@ pam_sm_authenticate (pam_handle_t * pamh,
 	  goto done;
 	}
     }
+  /* check if the user has at least one associated token id */
+  /* we set otp_id to NULL so that no matches will ever be found
+   * but AUTH_NO_TOKENS will be returned if there are no tokens for the user */
+  if (cfg->ldapserver != NULL || cfg->ldap_uri != NULL)
+    valid_token = authorize_user_token_ldap (cfg, user, NULL);
+  else
+    valid_token = authorize_user_token (cfg, user, NULL, pamh);
+
+  switch(valid_token)
+    {
+    case AUTH_ERROR:
+      DBG ("Internal error while looking for user tokens");
+      retval = PAM_AUTHINFO_UNAVAIL;
+      goto done;
+    case AUTH_NOT_FOUND:
+      /* User has associated tokens, so continue */
+      DBG ("Tokens found for user");
+      break;
+    case AUTH_NO_TOKENS:
+      DBG ("No tokens found for user");
+      if (cfg->nullok) {
+        retval = PAM_IGNORE;
+      } else {
+        retval = PAM_USER_UNKNOWN;
+      }
+      goto done;
+    default:
+      DBG ("Unhandled value while looking for user tokens");
+      retval = PAM_AUTHINFO_UNAVAIL;
+      goto done;
+    }
 
   if (password == NULL)
     {
@@ -1058,12 +1105,6 @@ pam_sm_authenticate (pam_handle_t * pamh,
   else
     password = NULL;
 
-  rc = ykclient_request (ykc, otp);
-
-  DBG ("ykclient return value (%d): %s", rc,
-	ykclient_strerror (rc));
-  DBG ("ykclient url used: %s", ykclient_get_last_url(ykc));
-
   /* authorize the user with supplied token id */
   if (cfg->ldapserver != NULL || cfg->ldap_uri != NULL)
     valid_token = authorize_user_token_ldap (cfg, user, otp_id);
@@ -1072,7 +1113,12 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
   switch(valid_token)
     {
-    case 1:
+    case AUTH_FOUND:
+      DBG ("Token is associated to the user. Validating the OTP...");
+      rc = ykclient_request (ykc, otp);
+      DBG ("ykclient return value (%d): %s", rc, ykclient_strerror (rc));
+      DBG ("ykclient url used: %s", ykclient_get_last_url(ykc));
+
       switch (rc)
       {
         case YKCLIENT_OK:
@@ -1089,21 +1135,26 @@ pam_sm_authenticate (pam_handle_t * pamh,
           break;
       }
       break;
-    case 0:
-      DBG ("Internal error while validating user");
+    case AUTH_ERROR:
+      DBG ("Internal error while looking for user tokens");
       retval = PAM_AUTHINFO_UNAVAIL;
       break;
-    case -1:
+    case AUTH_NOT_FOUND:
       DBG ("Unauthorized token for this user");
       retval = PAM_AUTH_ERR;
       break;
-    case -2:
-      DBG ("Unknown user");
-      retval = PAM_USER_UNKNOWN;
+    case AUTH_NO_TOKENS:
+      DBG ("No tokens found for user");
+      if (cfg->nullok) {
+        retval = PAM_IGNORE;
+      } else {
+        retval = PAM_USER_UNKNOWN;
+      }
       break;
     default:
       DBG ("Unhandled value for token-user validation");
       retval = PAM_AUTHINFO_UNAVAIL;
+      break;
     }
 
 done:

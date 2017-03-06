@@ -44,6 +44,12 @@
   fprintf (file, "\n");							\
 } while (0)
 
+/* Return values for authorize_user_token and authorize_user_token_ldap */
+#define AUTH_NO_TOKENS -2 /* The user has no associated tokens */
+#define AUTH_ERROR      0 /* Internal error when looking up associated tokens */
+#define AUTH_FOUND      1 /* The requested token is associated to the user */
+#define AUTH_NOT_FOUND -1 /* The requested token is not associated to the user */
+
 int get_user_cfgfile_path(const char *common_path, const char *filename, const struct passwd *user, char **fn);
 int check_user_token(const char *authfile, const char *username, const char *otp_id, int verbose, FILE *debug_file);
 
