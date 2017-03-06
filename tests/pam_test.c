@@ -67,6 +67,9 @@ static struct data {
   {"foo", ""},
   {"bar", ""},
   {"nokeys", ""},
+  {"foo", "testpasswordvvincredibletrerdegkkrkkneieultcjdghrejjbckh"},
+  {"foo", "testpassword"},
+  {"bar", "testpassword"},
 };
 
 
@@ -143,10 +146,13 @@ static struct pam_conv pam_conversation = {
 };
 
 int pam_get_item(const pam_handle_t *pamh, int item_type, const void **item) {
-  fprintf(stderr, "in pam_get_item() %d\n", item_type);
-  if(item_type == 5) {
+  fprintf(stderr, "in pam_get_item() %d for %d\n", item_type, (int)pamh);
+  if(item_type == PAM_CONV) {
     pam_conversation.appdata_ptr = (void*)pamh;
     *item = &pam_conversation;
+  }
+  if(item_type == PAM_AUTHTOK && pamh >= 8) {
+    *item = (void*)_data[(int)pamh].otp;
   }
   return PAM_SUCCESS;
 }
@@ -247,6 +253,39 @@ static int test_fail_authenticate3(void) {
   return pam_sm_authenticate(3, 0, sizeof(cfg) / sizeof(char*), cfg);
 }
 
+static int test_firstpass_authenticate(void) {
+  const char *cfg[] = {
+    "id=1",
+    "urllist=http://localhost:"YKVAL_PORT2"/wsapi/2/verify;http://localhost:"YKVAL_PORT1"/wsapi/2/verify",
+    "authfile="AUTHFILE,
+    "use_first_pass",
+    "debug"
+  };
+  return pam_sm_authenticate(8, 0, sizeof(cfg) / sizeof(char*), cfg);
+}
+
+static int test_firstpass_fail(void) {
+  const char *cfg[] = {
+    "id=1",
+    "urllist=http://localhost:"YKVAL_PORT2"/wsapi/2/verify;http://localhost:"YKVAL_PORT1"/wsapi/2/verify",
+    "authfile="AUTHFILE,
+    "use_first_pass",
+    "debug"
+  };
+  return pam_sm_authenticate(9, 0, sizeof(cfg) / sizeof(char*), cfg);
+}
+
+static int test_firstpass_fail2(void) {
+  const char *cfg[] = {
+    "id=1",
+    "urllist=http://localhost:"YKVAL_PORT2"/wsapi/2/verify;http://localhost:"YKVAL_PORT1"/wsapi/2/verify",
+    "authfile="AUTHFILE,
+    "use_first_pass",
+    "debug"
+  };
+  return pam_sm_authenticate(10, 0, sizeof(cfg) / sizeof(char*), cfg);
+}
+
 static int test_authenticate_ldap1(void) {
   return pam_sm_authenticate(0, 0, sizeof(ldap_cfg) / sizeof(char*), ldap_cfg);
 }
@@ -328,6 +367,18 @@ int main(void) {
   }
   if(test_authenticate5() != PAM_USER_UNKNOWN) {
     ret = 8;
+    goto out;
+  }
+  if(test_firstpass_authenticate() != PAM_SUCCESS) {
+    ret = 9;
+    goto out;
+  }
+  if(test_firstpass_fail() != PAM_AUTH_ERR) {
+    ret = 10;
+    goto out;
+  }
+  if(test_firstpass_fail2() != PAM_USER_UNKNOWN) {
+    ret = 11;
     goto out;
   }
 #ifdef HAVE_LIBLDAP
