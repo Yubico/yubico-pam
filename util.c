@@ -38,6 +38,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <glob.h>
 #include <unistd.h>
 
 #include "util.h"
@@ -279,6 +280,66 @@ int challenge_response(YK_KEY *yk, int slot,
 
 
 	return 1;
+}
+
+int
+check_user_challenge_file(const char *chalresp_path, const struct passwd *user, FILE *debug_file)
+{
+  /*
+   * This function will look for users challenge files.
+   *
+   * Returns one of AUTH_FOUND, AUTH_NOT_FOUND, AUTH_ERROR
+   */
+  int len;
+  int r;
+  int ret = AUTH_NOT_FOUND;
+  char *userfile;
+  char *userfile_pattern;
+  glob_t userfile_glob;
+  const char *filename = NULL;
+
+  if (! chalresp_path) {
+    filename = "challenge";
+  } else {
+    filename = user->pw_name;
+  }
+
+  r = get_user_cfgfile_path(chalresp_path, filename, user, &userfile);
+  if (!r) {
+    ret = AUTH_ERROR;
+    goto out;
+  }
+
+  if (!access(userfile, F_OK)) {
+    ret = AUTH_FOUND;
+    goto clean_userfile;
+  }
+
+  len = strlen(userfile) + 2 + 1;
+  if ((userfile_pattern = malloc(len)) == NULL) {
+    goto clean_userfile;
+  }
+  snprintf(userfile_pattern, len, "%s-*", userfile);
+
+  r = glob(userfile_pattern, 0, NULL, &userfile_glob);
+  globfree(&userfile_glob);
+  switch (r) {
+    case 0:
+      ret = AUTH_FOUND;
+      goto clean_userfile_pattern;
+    case GLOB_NOMATCH:
+      break;
+    default:
+      ret = AUTH_ERROR;
+      goto clean_userfile_pattern;
+  }
+
+clean_userfile_pattern:
+  free(userfile_pattern);
+clean_userfile:
+  free(userfile);
+out:
+  return ret;
 }
 
 int
