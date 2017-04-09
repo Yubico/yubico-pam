@@ -293,8 +293,8 @@ check_user_challenge_file(const char *chalresp_path, const struct passwd *user, 
   int len;
   int r;
   int ret = AUTH_NOT_FOUND;
-  char *userfile;
-  char *userfile_pattern;
+  char *userfile = NULL;
+  char *userfile_pattern = NULL;
   glob_t userfile_glob;
   const char *filename = NULL;
 
@@ -312,12 +312,12 @@ check_user_challenge_file(const char *chalresp_path, const struct passwd *user, 
 
   if (!access(userfile, F_OK)) {
     ret = AUTH_FOUND;
-    goto clean_userfile;
+    goto out;
   }
 
   len = strlen(userfile) + 2 + 1;
   if ((userfile_pattern = malloc(len)) == NULL) {
-    goto clean_userfile;
+    goto out;
   }
   snprintf(userfile_pattern, len, "%s-*", userfile);
 
@@ -326,19 +326,17 @@ check_user_challenge_file(const char *chalresp_path, const struct passwd *user, 
   switch (r) {
     case 0:
       ret = AUTH_FOUND;
-      goto clean_userfile_pattern;
+      goto out;
     case GLOB_NOMATCH:
       break;
     default:
       ret = AUTH_ERROR;
-      goto clean_userfile_pattern;
+      goto out;
   }
 
-clean_userfile_pattern:
-  free(userfile_pattern);
-clean_userfile:
-  free(userfile);
 out:
+  free(userfile_pattern);
+  free(userfile);
   return ret;
 }
 
