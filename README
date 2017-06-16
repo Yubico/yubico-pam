@@ -5,6 +5,7 @@ into your existing user authentication infrastructure.  PAM is used by
 GNU/Linux, Solaris and Mac OS X for user authentication, and by other
 specialized applications such as NCSA MyProxy.
 
+IMPORTANT: This project is being rewritten and will only receive security updates.
 
 Status and Roadmap
 ------------------
