@@ -80,6 +80,7 @@ typedef struct chalresp_state CR_STATE;
 
 int generate_random(void *buf, int len);
 
+int check_user_challenge_file(const char *chalresp_path, const struct passwd *user, FILE *debug_file);
 int get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const struct passwd *user, char **fn, FILE *debug_file);
 
 int load_chalresp_state(FILE *f, CR_STATE *state, bool verbose, FILE *debug_file);

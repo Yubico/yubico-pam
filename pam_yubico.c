@@ -473,6 +473,35 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
 
   ret = PAM_AUTH_ERR;
 
+  pwres = getpwnam_r (username, &pass, pwbuf, pwbuflen, &p);
+  if (p == NULL) {
+      DBG ("getpwnam_r: %s", strerror(pwres));
+      goto out;
+  }
+
+  DBG("Checking for user challenge files");
+  switch(check_user_challenge_file(cfg->chalresp_path, p, cfg->debug_file)) {
+    case AUTH_FOUND:
+      DBG("Challenge files found");
+      break;
+    case AUTH_NOT_FOUND:
+      DBG("No challenge files found");
+      if (cfg->nullok) {
+        ret = PAM_IGNORE;
+      } else {
+        ret = PAM_USER_UNKNOWN;
+      }
+      goto out;
+    case AUTH_ERROR:
+      DBG ("Internal error while looking for user challenge files");
+      ret = PAM_AUTHINFO_UNAVAIL;
+      goto out;
+    default:
+      DBG ("Unhandled value while looking for user challenge files");
+      ret = PAM_AUTHINFO_UNAVAIL;
+      goto out;
+  }
+
   if (! init_yubikey(&yk)) {
     DBG("Failed initializing YubiKey");
     goto out;
@@ -481,12 +510,6 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   if (! check_firmware_version(yk, cfg->debug, true, cfg->debug_file)) {
     DBG("YubiKey does not support Challenge-Response (version 2.2 required)");
     goto out;
-  }
-
-  pwres = getpwnam_r (username, &pass, pwbuf, pwbuflen, &p);
-  if (p == NULL) {
-      DBG ("getpwnam_r: %s", strerror(pwres));
-      goto out;
   }
 
   if (! get_user_challenge_file (yk, cfg->chalresp_path, p, &userfile, cfg->debug_file)) {

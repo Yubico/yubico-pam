@@ -35,6 +35,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 #include <pwd.h>
 
@@ -144,6 +145,122 @@ static void test_load_chalresp_state(void) {
   fclose(file);
 }
 
+static void test_check_user_challenge_file(void) {
+  int ret;
+  char * tmpdir_path;
+  char * buf;
+  FILE * file;
+  struct passwd user;
+
+  buf = malloc(256);
+
+#define create_tmpdir_dir(path) \
+  strcpy(buf, tmpdir_path); \
+  strcat(buf, "/"); \
+  strcat(buf, path); \
+  mkdir(buf, 0755);
+
+#define remove_tmpdir_dir(path) \
+  strcpy(buf, tmpdir_path); \
+  strcat(buf, "/"); \
+  strcat(buf, path); \
+  rmdir(buf);
+
+#define create_tmpdir_file(path) \
+  strcpy(buf, tmpdir_path); \
+  strcat(buf, "/"); \
+  strcat(buf, path); \
+  file = fopen(buf, "w"); \
+  fclose(file);
+
+#define remove_tmpdir_file(path) \
+  strcpy(buf, tmpdir_path); \
+  strcat(buf, "/"); \
+  strcat(buf, path); \
+  unlink(buf);
+
+  /* create temporary directory */
+  tmpdir_path = tempnam(NULL, "pamtest");
+  assert(tmpdir_path != NULL);
+
+  ret = mkdir(tmpdir_path, 0755);
+  assert(ret == 0);
+
+  /* set user data */
+  user.pw_name = "tester";
+  user.pw_dir = tmpdir_path;
+
+  /* execute tests */
+  /* no asserts here as we have directory to remove */
+
+  int case_001_empty_chalresp_dir;
+  case_001_empty_chalresp_dir = check_user_challenge_file(tmpdir_path, &user, stdout);
+
+  int case_002_one_challenge_file;
+  create_tmpdir_file("tester");
+  case_002_one_challenge_file = check_user_challenge_file(tmpdir_path, &user, stdout);
+  remove_tmpdir_file("tester");
+
+  int case_003_multiple_challenge_files;
+  create_tmpdir_file("tester-001");
+  create_tmpdir_file("tester-002");
+  case_003_multiple_challenge_files = check_user_challenge_file(tmpdir_path, &user, stdout);
+  remove_tmpdir_file("tester-002");
+  remove_tmpdir_file("tester-001");
+
+  int case_004_other_users_files;
+  create_tmpdir_file("tester1");
+  create_tmpdir_file("tester1-001");
+  case_004_other_users_files = check_user_challenge_file(tmpdir_path, &user, stdout);
+  remove_tmpdir_file("tester1-001");
+  remove_tmpdir_file("tester1");
+
+  int case_005_no_chalresp_no_yubico;
+  case_005_no_chalresp_no_yubico = check_user_challenge_file(NULL, &user, stdout);
+
+  int case_006_no_chalresp_empty_yubico;
+  create_tmpdir_dir(".yubico");
+  case_006_no_chalresp_empty_yubico = check_user_challenge_file(NULL, &user, stdout);
+  remove_tmpdir_dir(".yubico");
+
+  int case_007_no_chalresp_one_challenge_file;
+  create_tmpdir_dir(".yubico");
+  create_tmpdir_file(".yubico/challenge");
+  case_007_no_chalresp_one_challenge_file = check_user_challenge_file(NULL, &user, stdout);
+  remove_tmpdir_file(".yubico/challenge");
+  remove_tmpdir_dir(".yubico");
+
+  int case_008_no_chalresp_multiple_challenge_files;
+  create_tmpdir_dir(".yubico");
+  create_tmpdir_file(".yubico/challenge-001");
+  create_tmpdir_file(".yubico/challenge-002");
+  case_008_no_chalresp_multiple_challenge_files = check_user_challenge_file(NULL, &user, stdout);
+  remove_tmpdir_file(".yubico/challenge-002");
+  remove_tmpdir_file(".yubico/challenge-001");
+  remove_tmpdir_dir(".yubico");
+
+  /* remove temporary directory */
+  ret = rmdir(tmpdir_path);
+  assert(ret == 0);
+  free(tmpdir_path);
+  free(buf);
+
+  /* check test results */
+  assert(case_001_empty_chalresp_dir == AUTH_NOT_FOUND);
+  assert(case_002_one_challenge_file == AUTH_FOUND);
+  assert(case_003_multiple_challenge_files == AUTH_FOUND);
+  assert(case_004_other_users_files == AUTH_NOT_FOUND);
+  assert(case_005_no_chalresp_no_yubico == AUTH_NOT_FOUND);
+  assert(case_006_no_chalresp_empty_yubico == AUTH_NOT_FOUND);
+  assert(case_007_no_chalresp_one_challenge_file == AUTH_FOUND);
+  assert(case_008_no_chalresp_multiple_challenge_files == AUTH_FOUND);
+
+#undef create_tmpdir_dir
+#undef remove_tmpdir_dir
+#undef create_tmpdir_file
+#undef remove_tmpdir_file
+}
+
 #endif /* HAVE_CR */
 
 static void test_filter_printf(void) {
@@ -171,6 +288,7 @@ int main (void) {
   test_check_user_token();
 #if HAVE_CR
   test_load_chalresp_state();
+  test_check_user_challenge_file();
 #endif /* HAVE_CR */
   return 0;
 }
