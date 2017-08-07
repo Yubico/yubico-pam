@@ -200,9 +200,9 @@ respectively.
 
 proxy::
 specify a proxy to connect to the validation server. Valid schemes are
-socks4://, socks4a://, socks5:// or socks5h://. Socks5h asks the proxy
-to do the dns resolving. If no scheme or port is specified HTTP proxy
-port 1080 will be used.
+http://, https://, socks4://, socks4a://, socks5:// or socks5h://.
+Socks5h asks the proxy to do the dns resolving. If no scheme or port is
+specified HTTP proxy port 1080 will be used.
 
 verbose_otp::
    This argument is used to show the OTP (One-Time Password) when it
