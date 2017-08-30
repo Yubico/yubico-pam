@@ -168,8 +168,12 @@ authorize_user_token (struct cfg *cfg,
 
       pwres = getpwnam_r (username, &pass, buf, buflen, &p);
       if (p == NULL) {
-	DBG ("getpwnam_r: %s", strerror(pwres));
-	return AUTH_ERROR;
+        if (pwres == 0) {
+          DBG ("User '%s' not found", username);
+        } else {
+          DBG ("getpwnam_r: %s", strerror(pwres));
+        }
+        return AUTH_ERROR;
       }
 
       /* Getting file from user home directory
@@ -475,7 +479,11 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
 
   pwres = getpwnam_r (username, &pass, pwbuf, pwbuflen, &p);
   if (p == NULL) {
-      DBG ("getpwnam_r: %s", strerror(pwres));
+      if (pwres == 0) {
+          DBG ("User '%s' not found", username);
+      } else {
+          DBG ("getpwnam_r: %s", strerror(pwres));
+      }
       goto out;
   }
 
