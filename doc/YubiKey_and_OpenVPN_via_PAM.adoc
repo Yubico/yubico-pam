@@ -7,14 +7,14 @@ The purpose of this document is to guide readers through the configuration steps
 
 Successful configuration of the Yubico PAM module to support two factor authentication for OpenVPN has the following prerequisites:
 
-Operating System:: 
-Any Unix operating system which supports 
+Operating System:: Any Unix operating system which supports
 http://www.kernel.org/pub/linux/libs/pam[PAM] (Pluggable Authentication Module)
 Complier:: http://gcc.gnu.org[GNU GCC complier]
-https://developers.yubico.com/yubico-pam[Yubico PAM Module]:: Version 1.8
-http://openvpn.net/index.php/downloads.html[OpenVPN]:: Version 2.0.9.
-http://freeradius.org/download.html[FreeRADIUS]: Version 1.1.7 or later.
-Pam_Radius:: Version 1.3.17.
+Software::
+https://developers.yubico.com/yubico-pam[Yubico PAM Module] +
+http://openvpn.net/index.php/downloads.html[OpenVPN] +
+http://freeradius.org/download.html[FreeRADIUS] +
+Pam_Radius
 
 == Configuration
 
