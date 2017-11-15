@@ -5,3 +5,7 @@ Based on a https://bugzilla.redhat.com/show_bug.cgi?id=841693[bugreport] in Red 
 To make a long story short, if you want to use a Yubikey on a system running Fedora 18 or higher (and probably RHEL7, eventually), you'll need to toggle the 'authlogin_yubikey' SELinux boolean, like so:
 
     setsebool -P authlogin_yubikey 1
+
+If you are using your own server via `urllist`/`url` in the pam conf file and using a non-standard http port, you will need to add that port to the `http_port_t` port list. For example, port `12345`:
+
+    semanage port -a -t http_port_t -p tcp 12345
