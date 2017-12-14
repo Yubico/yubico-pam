@@ -358,8 +358,7 @@ logins, add the following to the top of `/etc/pam.d/login`:
 
 OpenVPN and ActiveDirectory
 ---------------------------
-See Michael Ludvig's sample Active Directory schema extensions for YubiKey public ID attribute storage / association with a particular user account:
-link:https://github.com/mludvig/yubikey-ldap/tree/master/microsoft-schema
+See Michael Ludvig's sample Active Directory schema extensions for YubiKey public ID attribute storage / association with a particular user account:  https://github.com/mludvig/yubikey-ldap/tree/master/microsoft-schema
 
 create file '/etc/pam.d/openvpn':
 
