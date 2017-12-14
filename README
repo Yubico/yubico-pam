@@ -365,7 +365,7 @@ create file '/etc/pam.d/openvpn':
    auth  required  pam_yubico.so ldap_uri=ldap://contoso.com debug id=[Your API ID] yubi_attr=yubiKeyId
       ldapdn=DC=contoso,DC=com
       ldap_filter=(&(sAMAccountName=%u)(objectClass=user)(memberOf=CN=somegroup,DC=contoso,DC=com))
-      ldap_bind_user=CN=binduser,CN=Users,DC=contoso,DC=com ldap_bind_password=bind_password try_first_pass
+      [ldap_bind_user=CN=binduser,OU=Service Accounts,DC=contoso,DC=com] ldap_bind_password=bind_password try_first_pass
    account required  pam_yubico.so
 
 create file 'openvpn.conf'
