@@ -358,13 +358,14 @@ logins, add the following to the top of `/etc/pam.d/login`:
 
 OpenVPN and ActiveDirectory
 ---------------------------
+See Michael Ludvig's sample Active Directory schema extensions for YubiKey public ID attribute storage / association with a particular user account:  https://github.com/mludvig/yubikey-ldap/tree/master/microsoft-schema
 
 create file '/etc/pam.d/openvpn':
 
-   auth  required  pam_yubico.so ldap_uri=ldap://ldap-srv debug id=[Your API Client ID] yubi_attr=pager
-      ldapdn=dc=ad,dc=next-audience,dc=net
-      ldap_filter=(&(sAMAccountName=%u)(memberOf=CN=mygroup,OU=DefaultUser,DC=adivser,DC=net))
-      ldap_bind_user=bind_user ldap_bind_password=bind_password try_first_pass
+   auth  required  pam_yubico.so ldap_uri=ldap://contoso.com debug id=[Your API ID] yubi_attr=yubiKeyId
+      ldapdn=DC=contoso,DC=com
+      ldap_filter=(&(sAMAccountName=%u)(objectClass=user)(memberOf=CN=somegroup,DC=contoso,DC=com))
+      [ldap_bind_user=CN=binduser,OU=Service Accounts,DC=contoso,DC=com] ldap_bind_password=bind_password try_first_pass
    account required  pam_yubico.so
 
 create file 'openvpn.conf'
