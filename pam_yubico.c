@@ -842,6 +842,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
   DBG ("verbose_otp=%d", cfg->verbose_otp);
   DBG ("try_first_pass=%d", cfg->try_first_pass);
   DBG ("use_first_pass=%d", cfg->use_first_pass);
+  DBG ("nullok=%d", cfg->nullok);
   DBG ("authfile=%s", cfg->auth_file ? cfg->auth_file : "(null)");
   DBG ("ldapserver=%s", cfg->ldapserver ? cfg->ldapserver : "(null)");
   DBG ("ldap_uri=%s", cfg->ldap_uri ? cfg->ldap_uri : "(null)");
