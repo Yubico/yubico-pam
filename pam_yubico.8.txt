@@ -41,6 +41,9 @@ Before prompting the user for their password, the module first tries the previou
 *use_first_pass*::
 The argument use_first_pass forces the module to use a previous stacked modules password and will never prompt the user - if no password is available or the password is not appropriate, the user will be denied access.
 
+*nullok*::
+If set, don’t fail when there are no tokens declared for the user in the authorization mapping files or in LDAP. This can be used to make YubiKey authentication optional unless the user has associated tokens.
+
 *urllist*=_list_::
 List of URL templates to be used. This is set by calling ykclient_set_url_bases.
 The list should be in the format:
