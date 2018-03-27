@@ -1,6 +1,16 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
-* Version 2.25 (unreleased)
+* Version 2.25 (released 2018-03-27)
+
+** Documentation updates.
+
+** Only do OTP validation if it's a token that might be valid.
+
+** Return early in case user has no valid tokens.
+
+** Ldap, compare values only with yubi_attr attributes.
+
+** Add nullok parameter.
 
 * Version 2.24 (released 2016-11-25)
 
