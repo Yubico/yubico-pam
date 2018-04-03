@@ -167,6 +167,8 @@ check_user_token (const char *authfile,
 		{
 		  if(verbose)
 		      D (debug_file, "Match user/token as %s/%s", username, otp_id);
+
+		  fclose(opwfile);
 		  return AUTH_FOUND;
 		}
 	    }
