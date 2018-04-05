@@ -237,7 +237,7 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, u
 
   umask(077);
 
-  f = fopen (fn, "w");
+  f = fopen (fn, "we");
   if (! f) {
     fprintf (stderr, "Failed opening '%s' for writing : %s\n", fn, strerror (errno));
     goto out;

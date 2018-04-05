@@ -819,7 +819,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
                 {
                   if(S_ISREG(st.st_mode))
                     {
-                      file = fopen(filename, "a");
+                      file = fopen(filename, "ae");
                       if(file)
                         {
                           cfg->debug_file = file;
