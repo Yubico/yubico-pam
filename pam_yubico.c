@@ -654,7 +654,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   strcpy(tmpfile, userfile);
   strcat(tmpfile, TMPFILE_SUFFIX);
 
-  fd = mkstemp(tmpfile);
+  fd = mkostemp(tmpfile, O_CLOEXEC);
   if (fd < 0) {
       DBG ("Cannot open file: %s (%s)", tmpfile, strerror(errno));
       goto restpriv_out;
