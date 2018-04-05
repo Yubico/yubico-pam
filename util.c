@@ -109,7 +109,7 @@ check_user_token (const char *authfile,
   struct stat st;
   FILE *opwfile;
 
-  fd = open(authfile, O_RDONLY, 0);
+  fd = open(authfile, O_RDONLY | O_CLOEXEC, 0);
   if (fd < 0) {
       if(verbose)
 	  D (debug_file, "Cannot open file: %s (%s)", authfile, strerror(errno));
