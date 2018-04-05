@@ -535,7 +535,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
     }
   }
 
-  fd = open(userfile, O_RDONLY, 0);
+  fd = open(userfile, O_RDONLY | O_CLOEXEC, 0);
   if (fd < 0) {
       DBG ("Cannot open file: %s (%s)", userfile, strerror(errno));
       goto restpriv_out;
