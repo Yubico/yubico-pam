@@ -535,7 +535,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
     }
   }
 
-  fd = open(userfile, O_RDONLY, 0);
+  fd = open(userfile, O_RDONLY | O_CLOEXEC, 0);
   if (fd < 0) {
       DBG ("Cannot open file: %s (%s)", userfile, strerror(errno));
       goto restpriv_out;
@@ -654,7 +654,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   strcpy(tmpfile, userfile);
   strcat(tmpfile, TMPFILE_SUFFIX);
 
-  fd = mkstemp(tmpfile);
+  fd = mkostemp(tmpfile, O_CLOEXEC);
   if (fd < 0) {
       DBG ("Cannot open file: %s (%s)", tmpfile, strerror(errno));
       goto restpriv_out;
@@ -819,7 +819,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
                 {
                   if(S_ISREG(st.st_mode))
                     {
-                      file = fopen(filename, "a");
+                      file = fopen(filename, "ae");
                       if(file)
                         {
                           cfg->debug_file = file;
