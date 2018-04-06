@@ -745,7 +745,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
   for (i = 0; i < argc; i++)
     {
       if (strncmp (argv[i], "id=", 3) == 0)
-	sscanf (argv[i], "id=%d", &cfg->client_id);
+	sscanf (argv[i], "id=%u", &cfg->client_id);
       if (strncmp (argv[i], "key=", 4) == 0)
 	cfg->client_key = argv[i] + 4;
       if (strcmp (argv[i], "debug") == 0)
@@ -859,7 +859,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
   DBG ("capath=%s", cfg->capath ? cfg->capath : "(null)");
   DBG ("cainfo=%s", cfg->cainfo ? cfg->cainfo : "(null)");
   DBG ("proxy=%s", cfg->proxy ? cfg->proxy : "(null)");
-  DBG ("token_id_length=%d", cfg->token_id_length);
+  DBG ("token_id_length=%u", cfg->token_id_length);
   DBG ("mode=%s", cfg->mode == CLIENT ? "client" : "chresp" );
   DBG ("chalresp_path=%s", cfg->chalresp_path ? cfg->chalresp_path : "(null)");
 }
