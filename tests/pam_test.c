@@ -28,6 +28,7 @@
  */
 
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -146,13 +147,13 @@ static struct pam_conv pam_conversation = {
 };
 
 int pam_get_item(const pam_handle_t *pamh, int item_type, const void **item) {
-  fprintf(stderr, "in pam_get_item() %d for %d\n", item_type, (int)pamh);
+  fprintf(stderr, "in pam_get_item() %d for %d\n", item_type, (int)(uintptr_t)pamh);
   if(item_type == PAM_CONV) {
     pam_conversation.appdata_ptr = (void*)pamh;
     *item = &pam_conversation;
   }
-  if(item_type == PAM_AUTHTOK && pamh >= 8) {
-    *item = (void*)_data[(int)pamh].otp;
+  if(item_type == PAM_AUTHTOK && pamh >= (pam_handle_t*)8) {
+    *item = (void*)_data[(int)(uintptr_t)pamh].otp;
   }
   return PAM_SUCCESS;
 }
