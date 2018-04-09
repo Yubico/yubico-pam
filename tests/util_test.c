@@ -180,11 +180,9 @@ static void test_check_user_challenge_file(void) {
   unlink(buf);
 
   /* create temporary directory */
-  tmpdir_path = tempnam(NULL, "pamtest");
+  char template[] = "/tmp/pamtest.XXXXXX";
+  tmpdir_path = mkdtemp(template);
   assert(tmpdir_path != NULL);
-
-  ret = mkdir(tmpdir_path, 0755);
-  assert(ret == 0);
 
   /* set user data */
   user.pw_name = "tester";
@@ -242,7 +240,6 @@ static void test_check_user_challenge_file(void) {
   /* remove temporary directory */
   ret = rmdir(tmpdir_path);
   assert(ret == 0);
-  free(tmpdir_path);
   free(buf);
 
   /* check test results */
