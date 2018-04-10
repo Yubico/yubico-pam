@@ -419,7 +419,7 @@ load_chalresp_state(FILE *f, CR_STATE *state, bool verbose, FILE *debug_file)
    * 40 is twice the size of CR_RESPONSE_SIZE
    * (twice because we hex encode the challenge and response)
    */
-  r = fscanf(f, "v2:%126[0-9a-z]:%40[0-9a-z]:%64[0-9a-z]:%d:%d", challenge_hex, response_hex, salt_hex, &iterations, &slot);
+  r = fscanf(f, "v2:%126[0-9a-z]:%40[0-9a-z]:%64[0-9a-z]:%u:%d", challenge_hex, response_hex, salt_hex, &iterations, &slot);
   if(r == 5) {
     if (! yubikey_hex_p(salt_hex)) {
       D(debug_file, "Invalid salt hex input : %s", salt_hex);
@@ -427,7 +427,7 @@ load_chalresp_state(FILE *f, CR_STATE *state, bool verbose, FILE *debug_file)
     }
 
     if(verbose) {
-      D(debug_file, "Challenge: %s, hashed response: %s, salt: %s, iterations: %d, slot: %d",
+      D(debug_file, "Challenge: %s, hashed response: %s, salt: %s, iterations: %u, slot: %d",
             challenge_hex, response_hex, salt_hex, iterations, slot);
     }
 
