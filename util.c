@@ -187,8 +187,14 @@ int generate_random(void *buf, int len)
 {
 	FILE *u;
 	int res;
+	int fd;
 
-	u = fopen("/dev/urandom", "re");
+	fd = open("/dev/urandom", O_RDONLY | O_CLOEXEC);
+	if (fd < 0) {
+		return -1;
+	}
+
+	u = fdopen(fd, "r");
 	if (!u) {
 		return -1;
 	}

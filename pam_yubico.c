@@ -814,15 +814,20 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
           else
             {
               struct stat st;
+              int fd;
               FILE *file;
               if(lstat(filename, &st) == 0)
                 {
                   if(S_ISREG(st.st_mode))
                     {
-                      file = fopen(filename, "ae");
-                      if(file)
+                      fd = open(filename, O_WRONLY | O_CREAT | O_APPEND | O_CLOEXEC, S_IRUSR | S_IWUSR | S_IRGRP);
+                      if (fd >= 0)
                         {
-                          cfg->debug_file = file;
+                          file = fdopen(fd, "a");
+                          if (file)
+                            {
+                              cfg->debug_file = file;
+                            }
                         }
                     }
                 }
