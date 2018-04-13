@@ -109,7 +109,7 @@ check_user_token (const char *authfile,
   struct stat st;
   FILE *opwfile;
 
-  fd = open(authfile, O_RDONLY, 0);
+  fd = open(authfile, O_RDONLY | O_CLOEXEC, 0);
   if (fd < 0) {
       if(verbose)
 	  D (debug_file, "Cannot open file: %s (%s)", authfile, strerror(errno));
@@ -187,8 +187,14 @@ int generate_random(void *buf, int len)
 {
 	FILE *u;
 	int res;
+	int fd;
 
-	u = fopen("/dev/urandom", "r");
+	fd = open("/dev/urandom", O_RDONLY | O_CLOEXEC);
+	if (fd < 0) {
+		return -1;
+	}
+
+	u = fdopen(fd, "r");
 	if (!u) {
 		return -1;
 	}

@@ -38,6 +38,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <fcntl.h>
 
 #include <ykpers.h>
 
@@ -143,6 +144,7 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, u
   unsigned int response_len;
   char *fn;
   struct passwd *p;
+  int fd;
   FILE *f = NULL;
   struct stat st;
 
@@ -237,9 +239,14 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, u
 
   umask(077);
 
-  f = fopen (fn, "w");
-  if (! f) {
+  fd = open (fn, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, S_IRUSR | S_IWUSR);
+  if (fd < 0) {
     fprintf (stderr, "Failed opening '%s' for writing : %s\n", fn, strerror (errno));
+    goto out;
+  }
+  f = fdopen (fd, "w");
+  if (! f) {
+    fprintf (stderr, "fdopen: %s\n", strerror (errno));
     goto out;
   }
 
