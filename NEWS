@@ -1,6 +1,14 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
-* Version 2.26 (unreleased)
+* Version 2.26 (released 2018-04-20)
+
+** Make sure to close authfile (CVE-2018-9275).
+
+** Fix compiler warnings.
+
+** Open file descriptors with O_CLOEXEC.
+
+** Use mkostemp() instead of mkstemp().
 
 * Version 2.25 (released 2018-03-27)
 
