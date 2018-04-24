@@ -51,6 +51,7 @@
 #include <yubikey.h>
 /* for yubikey pbkdf2*/
 #include <ykpbkdf2.h>
+#include <ykpers-version.h>
 #endif /* HAVE_CR */
 
 /* Libtool defines PIC for shared objects */
@@ -915,6 +916,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
   if (cfg->mode == CHRESP) {
 #if HAVE_CR
+    DBG ("libykpers version: %s", ykpers_check_version(NULL));
     retval = do_challenge_response(pamh, cfg, user);
 #else
     DBG ("no support for challenge/response");
