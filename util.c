@@ -216,7 +216,7 @@ check_firmware_version(YK_KEY *yk, bool verbose, bool quiet, FILE *debug_file)
 	}
 
 	if (verbose) {
-		D(debug_file, "YubiKey Firmware version: %d.%d.%d\n",
+		D(debug_file, "YubiKey Firmware version: %d.%d.%d",
 		       ykds_version_major(st),
 		       ykds_version_minor(st),
 		       ykds_version_build(st));
