@@ -181,7 +181,7 @@ authorize_user_token (struct cfg *cfg,
          ..... i.e. ~/.yubico/authorized_yubikeys
        */
       if (! get_user_cfgfile_path (NULL, "authorized_yubikeys", p, &userfile)) {
-	DBG ("Failed figuring out per-user cfgfile");
+	DBG ("Failed to figure out per-user cfgfile");
 	return AUTH_ERROR;
       }
 
@@ -292,7 +292,7 @@ authorize_user_token_ldap (struct cfg *cfg,
     DBG ("try bind with: %s:[%s]", cfg->ldap_bind_user, cfg->ldap_bind_password);
     rc = ldap_simple_bind_s (ld, cfg->ldap_bind_user, cfg->ldap_bind_password);
   } else {
-    DBG ("try bind anonymous");
+    DBG ("try anonymous bind");
     rc = ldap_simple_bind_s (ld, NULL, NULL);
   }
   if (rc != LDAP_SUCCESS)
@@ -378,7 +378,7 @@ authorize_user_token_ldap (struct cfg *cfg,
 		        }
 		      if(token_id && !strncmp (token_id, vals[i]->bv_val + yubi_attr_prefix_len, strlen (vals[i]->bv_val + yubi_attr_prefix_len)))
 		        {
-		          DBG ("Token Found :: %s", vals[i]->bv_val);
+		          DBG ("Token found :: %s", vals[i]->bv_val);
 		          retval = AUTH_FOUND;
 		        }
 		    }
@@ -512,7 +512,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   }
 
   if (! init_yubikey(&yk)) {
-    DBG("Failed initializing YubiKey");
+    DBG("Failed to initialize YubiKey");
     goto out;
   }
 
@@ -522,7 +522,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   }
 
   if (! get_user_challenge_file (yk, cfg->chalresp_path, p, &userfile, cfg->debug_file)) {
-    DBG("Failed getting user challenge file for user %s", username);
+    DBG("Failed to get user challenge file for user %s", username);
     goto out;
   }
 
@@ -531,7 +531,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   /* Drop privileges before opening user file (if we're not using system-wide dir). */
   if (!cfg->chalresp_path) {
     if (pam_modutil_drop_priv(pamh, &privs, p)) {
-      DBG ("could not drop privileges");
+      DBG ("Could not drop privileges");
       goto out;
     }
   }
@@ -572,7 +572,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
 
   if (!cfg->chalresp_path) {
     if (pam_modutil_regain_priv(pamh, &privs)) {
-      DBG ("could not restore privileges");
+      DBG ("Could not restore privileges");
       goto out;
     }
   }
@@ -580,7 +580,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   if (! challenge_response(yk, state.slot, state.challenge, state.challenge_len,
 			   true, true, false,
 			   buf, sizeof(buf), &response_len)) {
-    DBG("Challenge-response FAILED");
+    DBG("Challenge-response failed");
     goto out;
   }
 
@@ -598,7 +598,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   if (memcmp(buf, state.response, state.response_len) == 0) {
     ret = PAM_SUCCESS;
   } else {
-    DBG("Unexpected C/R response : %s", response_hex);
+    DBG("Unexpected response: %s", response_hex);
     goto out;
   }
 
@@ -606,7 +606,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
 
   errstr = "Error generating new challenge, please check syslog or contact your system administrator";
   if (generate_random(state.challenge, sizeof(state.challenge))) {
-    DBG("Failed generating new challenge!");
+    DBG("Failed to generate new challenge!");
     goto out;
   }
 
@@ -614,7 +614,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   if (! challenge_response(yk, state.slot, state.challenge, CR_CHALLENGE_SIZE,
 			   true, true, false,
 			   buf, sizeof(buf), &response_len)) {
-    DBG("Second challenge-response FAILED");
+    DBG("Second challenge-response failed");
     goto out;
   }
 
@@ -643,7 +643,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   /* Drop privileges before creating new challenge file. */
   if (!cfg->chalresp_path) {
     if (pam_modutil_drop_priv(pamh, &privs, p)) {
-        DBG ("could not drop privileges");
+        DBG ("Could not drop privileges");
         goto out;
     }
   }
@@ -662,11 +662,11 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   }
 
   if (fchmod (fd, st.st_mode) != 0) {
-      DBG ("could not set correct file permissions");
+      DBG ("Could not set correct file permissions");
       goto restpriv_out;
   }
   if (fchown (fd, st.st_uid, st.st_gid) != 0) {
-      DBG ("could not set correct file ownership");
+      DBG ("Could not set correct file ownership");
       goto restpriv_out;
   }
 
@@ -696,7 +696,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
 restpriv_out:
   if (!cfg->chalresp_path) {
     if (pam_modutil_regain_priv(pamh, &privs)) {
-        DBG (("could not restore privileges"));
+        DBG (("Could not restore privileges"));
     }
   }
 
@@ -715,8 +715,8 @@ restpriv_out:
     display_error(pamh, errstr, cfg);
 
   if (errno) {
-    syslog(LOG_ERR, "Challenge response failed: %s", strerror(errno));
-    DBG("Challenge response failed: %s", strerror(errno));
+    syslog(LOG_ERR, "Challenge-response failed: %s", strerror(errno));
+    DBG("Challenge-response failed: %s", strerror(errno));
   }
 
   if (yk)
@@ -901,7 +901,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
   if (cfg->token_id_length > MAX_TOKEN_ID_LEN)
   {
-    DBG ("configuration error: token_id_length too long. Maximum acceptable value : %u", MAX_TOKEN_ID_LEN);
+    DBG ("Configuration error: token_id_length too long. Maximum acceptable value : %u", MAX_TOKEN_ID_LEN);
     retval = PAM_AUTHINFO_UNAVAIL;
     goto done;
   }
@@ -919,7 +919,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
     DBG ("libykpers version: %s", ykpers_check_version(NULL));
     retval = do_challenge_response(pamh, cfg, user);
 #else
-    DBG ("no support for challenge/response");
+    DBG ("no support for challenge-response");
     retval = PAM_AUTH_ERR;
 #endif
     goto done;
@@ -946,7 +946,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
   if(ykclient_global_init() != YKCLIENT_OK)
     {
-      DBG ("Failed initializing ykclient library");
+      DBG ("Failed to initlaize ykclient library");
       retval = PAM_AUTHINFO_UNAVAIL;
       goto done;
     }
@@ -1156,7 +1156,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
       DBG ("Token is associated to the user. Validating the OTP...");
       rc = ykclient_request (ykc, otp);
       DBG ("ykclient return value (%d): %s", rc, ykclient_strerror (rc));
-      DBG ("ykclient url used: %s", ykclient_get_last_url(ykc));
+      DBG ("ykclient URL used: %s", ykclient_get_last_url(ykc));
 
       switch (rc)
       {

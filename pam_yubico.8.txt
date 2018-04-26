@@ -96,7 +96,7 @@ An ldap filter to use for attempting to find the correct object in LDAP. In this
 Ca certfile for the LDAP connection.
 
 *chalresp_path*=_path_::
-Path of a system wide directory where challenge response files can be found for users. Default location is $HOME/.yubico/
+Path of a system wide directory where challenge-response files can be found for users. Default location is $HOME/.yubico/
 
 == EXAMPLES
 

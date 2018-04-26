@@ -56,7 +56,7 @@ const char *usage =
   "\t-2           Send challenge to slot 2.\n"
   "\t-A action    What to do.\n"
   "\t-p path      Specify an output path for the challenge file.\n"
-  "\t-i iters     Number of iterations to use for pbkdf2 (defaults to 10000)\n"
+  "\t-i iters     Number of iterations to use for PBKDF2 (defaults to 10000)\n"
   "\n"
   "\t-v           Increase verbosity\n"
   "\t-V           Show version and exit\n"
@@ -170,7 +170,7 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, u
       //check if directory exists     
       if (stat(fullpath,&st)!=0 ){     
 	if(mkdir(fullpath, S_IRWXU)==-1){
-	  fprintf(stderr, "Failed creating directory '%s' :%s\n",
+	  fprintf(stderr, "Failed to create directory '%s': %s\n",
 		  fullpath, strerror(errno));
 	}
 	if(verbose){
@@ -179,7 +179,7 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, u
       }
       else{
 	if(!S_ISDIR(st.st_mode)){
-	  fprintf(stderr, "Destination %s already exist and is not a directory.\n",
+	  fprintf(stderr, "Destination %s already exists and is not a directory.\n",
 		  fullpath);
 	  goto out;
 	  }
@@ -187,7 +187,7 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, u
   }
 
   if (! get_user_challenge_file(yk, output_dir, p, &fn, stdout)) {
-    fprintf (stderr, "Failed getting chalresp state filename\n");
+    fprintf (stderr, "Failed to get chalresp state filename\n");
     goto out;
   }
 
@@ -197,7 +197,7 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, u
   }
 
   if (generate_random(state.challenge, CR_CHALLENGE_SIZE)) {
-    fprintf (stderr, "FAILED getting %i bytes of random data\n", CR_CHALLENGE_SIZE);
+    fprintf (stderr, "Failed to get %i bytes of random data\n", CR_CHALLENGE_SIZE);
     goto out;
   }
   state.challenge_len = CR_CHALLENGE_SIZE;
@@ -215,7 +215,7 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, u
     char challenge[CR_CHALLENGE_SIZE];
 
     if (generate_random(challenge, CR_CHALLENGE_SIZE)) {
-      fprintf (stderr, "FAILED getting %i bytes of random data\n", CR_CHALLENGE_SIZE);
+      fprintf (stderr, "Failed to get %i bytes of random data\n", CR_CHALLENGE_SIZE);
       goto out;
     }
     if (! challenge_response(yk, state.slot, challenge, CR_CHALLENGE_SIZE,
@@ -224,7 +224,7 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, u
       goto out;
 
     if (memcmp(buf, buf2, response_len) == 0) {
-      fprintf (stderr, "FAILED YubiKey is outputting the same response for different challenges."
+      fprintf (stderr, "Failed: YubiKey is outputting the same response for different challenges."
           "Make sure you configure the key with the option HMAC_LT64.\n");
       goto out;
     }
@@ -241,7 +241,7 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, u
 
   fd = open (fn, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, S_IRUSR | S_IWUSR);
   if (fd < 0) {
-    fprintf (stderr, "Failed opening '%s' for writing : %s\n", fn, strerror (errno));
+    fprintf (stderr, "Failed to open '%s' for writing: %s\n", fn, strerror (errno));
     goto out;
   }
   f = fdopen (fd, "w");

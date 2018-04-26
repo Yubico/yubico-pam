@@ -47,7 +47,7 @@ To use the system-wide mode, you currently have to move the generated state file
 
 == EXAMPLES
 
-First, program a YubiKey for challenge response on Slot 2 :
+First, program a YubiKey for challenge-response on Slot 2:
 
   $ ykpersonalize -2 -ochal-resp -ochal-hmac -ohmac-lt64 -oserial-api-visible
   ...
