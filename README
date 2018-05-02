@@ -216,7 +216,6 @@ verbose_otp::
 
 ldap_uri:: specify the LDAP server URI (e.g. ldap://localhost).
 
-
 ldapserver::
 specify the LDAP server host (default LDAP port is used).
 _Deprecated.  Use "ldap_uri" instead._
@@ -224,6 +223,18 @@ _Deprecated.  Use "ldap_uri" instead._
 ldapdn::
 specify the dn where the users are stored
 (eg: ou=users,dc=domain,dc=com).
+
+ldap_bind_user::
+The user to attempt a LDAP bind as.
+
+ldap_bind_password::
+The password to use on LDAP bind.
+
+ldap_filter::
+An LDAP filter to use for attempting to find the correct object in LDAP. In this string `%u` will be replaced with the username.
+
+ldap_cacertfile::
+CA certifcate file for the LDAP connection.
 
 user_attr:: specify the LDAP attribute used to store user names (eg:cn).
 
