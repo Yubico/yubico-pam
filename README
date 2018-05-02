@@ -242,6 +242,13 @@ with HMAC-SHA-1 Challenge-Response configurations. See the
 man-page ykpamcfg(1) for further details on how to configure
 offline Challenge-Response validation.
 
+chalresp_path::
+Directory that is used to store the challenge files in case of a system-wide
+configuration (in contrast to challenge files being stored in a user's home
+directory). This location should be only readable and writable by root. Refer
+to `Authentication_Using_Challenge-Response.adoc` for more information about
+such a setup.
+
 If you are using "debug" you may find it useful to create a
 world-writable log file:
 
