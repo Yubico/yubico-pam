@@ -196,6 +196,9 @@ specify the path where X509 certificates are stored. This is
 required if 'https' or 'ldaps' are used in 'url' and 'ldap_uri'
 respectively.
 
+cainfo::
+Option to allow usage of a CA bundle instead of path.
+
 proxy::
 specify a proxy to connect to the validation server. Valid schemes are
 http://, https://, socks4://, socks4a://, socks5:// or socks5h://.
