@@ -26,7 +26,7 @@ fi
 set -e
 
 ./configure $CONFIGURE_ARGS $COVERAGE
-make check
+make check check-doc-dist
 if [ "x$COVERAGE" != "x" ]; then
     gem install coveralls-lcov
     coveralls-lcov coverage/app2.info
