@@ -56,7 +56,7 @@ int
 get_user_cfgfile_path(const char *common_path, const char *filename, const struct passwd *user, char **fn)
 {
   /* Getting file from user home directory, e.g. ~/.yubico/challenge, or
-   * from a system wide directory.
+   * from a system-wide directory.
    *
    * Format is hex(challenge):hex(response):slot num
    */
@@ -359,7 +359,7 @@ int
 get_user_challenge_file(YK_KEY *yk, const char *chalresp_path, const struct passwd *user, char **fn, FILE *debug_file)
 {
   /* Getting file from user home directory, i.e. ~/.yubico/challenge, or
-   * from a system wide directory.
+   * from a system-wide directory.
    */
 
   /* The challenge to use is located in a file in the user's home directory,

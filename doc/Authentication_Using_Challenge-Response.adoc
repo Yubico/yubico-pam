@@ -11,9 +11,9 @@ in the current user's home directory (`$HOME/.yubico/challenge-123456`
 for a YubiKey with serial number API readout enabled, and
 `$HOME/.yubico/challenge` for one without).
 
-The PAM module supports a system wide directory for these state files
-(in case the user's home directories are encrypted), but in a system
-wide directory, the 'challenge' part should be replaced with the
+The PAM module supports a system-wide directory for these state files
+(in case the user's home directories are encrypted), but in a system-wide
+directory, the 'challenge' part should be replaced with the
 username.  Example: `/var/yubico/alice-123456`.
 
 To use the system-wide mode, you currently have to move the generated
