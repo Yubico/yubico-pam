@@ -8,7 +8,7 @@ auth required pam_unix.so use_first_pass
 ----
 
 The first line makes pam_yubico check the OTP.  Use either a per-user
-file called `~/.yubico/authorized_yubikeys`, or a system wide file called
+file called `~/.yubico/authorized_yubikeys`, or a system-wide file called
 `/etc/yubikey_mappings` to specify which Yubikeys that can be used to log
 in as specific users. See https://developers.yubico.com/yubico-pam[the README]
 for more information.
