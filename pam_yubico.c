@@ -610,7 +610,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
     goto out;
   }
 
-  errstr = "Error communicating with Yubikey, please check syslog or contact your system administrator";
+  errstr = "Error communicating with YubiKey, please check syslog or contact your system administrator";
   if (! challenge_response(yk, state.slot, state.challenge, CR_CHALLENGE_SIZE,
 			   true, true, false,
 			   buf, sizeof(buf), &response_len)) {
@@ -676,7 +676,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
     goto restpriv_out;
   }
 
-  errstr = "Error updating Yubikey challenge, please check syslog or contact your system administrator";
+  errstr = "Error updating YubiKey challenge, please check syslog or contact your system administrator";
   if (! write_chalresp_state (f, &state))
     goto out;
   if (fclose(f) < 0) {
@@ -706,8 +706,8 @@ restpriv_out:
       syslog(LOG_ERR, "USB error: %s", yk_usb_strerror());
       DBG("USB error: %s", yk_usb_strerror());
     } else {
-      syslog(LOG_ERR, "Yubikey core error: %s", yk_strerror(yk_errno));
-      DBG("Yubikey core error: %s", yk_strerror(yk_errno));
+      syslog(LOG_ERR, "YubiKey core error: %s", yk_strerror(yk_errno));
+      DBG("YubiKey core error: %s", yk_strerror(yk_errno));
     }
   }
 
@@ -1102,7 +1102,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
   password_len = strlen (password);
 
-  /* In case the input was systempassword+YubiKeyOTP, we want to skip over
+  /* In case the input was systempassword+OTP, we want to skip over
      "systempassword" when copying the token_id and OTP to separate buffers */
   if(password_len > cfg->token_id_length + TOKEN_OTP_LEN)
     {

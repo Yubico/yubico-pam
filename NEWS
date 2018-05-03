@@ -268,7 +268,7 @@ forum.yubico.com.
 They work similar to other PAM modules, see README for more
 documentation.
 
-Upgrade notice: If you are relying on getting the Yubikey OTP from an
+Upgrade notice: If you are relying on getting the YubiKey OTP from an
 earlier PAM module, and no prompting by the pam_yubico module, you
 need to add "try_first_pass" to preserve the same behaviour.
 

@@ -1,5 +1,5 @@
 PAM configuration is somewhat complex, but a typical use-case is to
-require both a password and Yubikey to allow access.  This can be
+require both a password and YubiKey to allow access.  This can be
 achieved by a PAM configuration like this:
 
 ----
@@ -9,7 +9,7 @@ auth required pam_unix.so use_first_pass
 
 The first line makes pam_yubico check the OTP.  Use either a per-user
 file called `~/.yubico/authorized_yubikeys`, or a system-wide file called
-`/etc/yubikey_mappings` to specify which Yubikeys that can be used to log
+`/etc/yubikey_mappings` to specify which YubiKeys that can be used to log
 in as specific users. See https://developers.yubico.com/yubico-pam[the README]
 for more information.
 
@@ -27,8 +27,8 @@ unless you want those.  For example, Debian contains a
 '@include common-auth' which would confuse the configuration.
 
 To log in, you now need to enter both your Unix password and enter an
-OTP using your Yubikey. When prompted for the password, enter the Unix
+OTP using your YubiKey. When prompted for the password, enter the Unix
 password first and then (without pressing enter) push the button on your
-Yubikey.
+YubiKey.
 
 If it doesn't work, enable debugging (see https://developers.yubico.com/yubico-pam[the README]) and try again.

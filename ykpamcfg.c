@@ -74,14 +74,14 @@ static void
 report_yk_error(void)
 {
   if (ykp_errno)
-    fprintf(stderr, "Yubikey personalization error: %s\n",
+    fprintf(stderr, "YubiKey personalization error: %s\n",
 	    ykp_strerror(ykp_errno));
   if (yk_errno) {
     if (yk_errno == YK_EUSBERR) {
       fprintf(stderr, "USB error: %s\n",
 	      yk_usb_strerror());
     } else {
-      fprintf(stderr, "Yubikey core error: %s\n",
+      fprintf(stderr, "YubiKey core error: %s\n",
 	      yk_strerror(yk_errno));
     }
   }
