@@ -188,5 +188,5 @@ and if there is no YubiKey in the machine it will look like this:
 [pam_yubico.c:parse_cfg(743)] chalresp_path=(null)
 [pam_yubico.c:pam_sm_authenticate(775)] get user returned: jas
 [pam_yubico.c:do_challenge_response(478)] Failed initializing YubiKey
-[pam_yubico.c:do_challenge_response(640)] Yubikey core error: no yubikey present
+[pam_yubico.c:do_challenge_response(640)] YubiKey core error: no YubiKey present
 ----

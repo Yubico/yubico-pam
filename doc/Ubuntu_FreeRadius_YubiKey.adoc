@@ -231,7 +231,7 @@ PAM debug log:
 [pam_yubico.c:pam_sm_authenticate(452)] get user returned: alice
 [pam_yubico.c:pam_sm_authenticate(542)] conv returned: ccccccccltncdjjifceergtnukivgiujhgehgnkrfcef
 [pam_yubico.c:pam_sm_authenticate(558)] OTP: ccccccccltncdjjifceergtnukivgiujhgehgnkrfcef ID: ccccccccltnc 
-[pam_yubico.c:pam_sm_authenticate(583)] ykclient return value (2): Yubikey OTP was replayed (REPLAYED_OTP)
+[pam_yubico.c:pam_sm_authenticate(583)] ykclient return value (2): YubiKey OTP was replayed (REPLAYED_OTP)
 [pam_yubico.c:pam_sm_authenticate(625)] done. [Authentication failure]
 ------
 

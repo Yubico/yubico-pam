@@ -1,7 +1,7 @@
 == Yubico PAM module
 image:https://travis-ci.org/Yubico/yubico-pam.svg?branch=master["Build Status", link="https://travis-ci.org/Yubico/yubico-pam"]
 
-The Yubico PAM module provides an easy way to integrate the Yubikey
+The Yubico PAM module provides an easy way to integrate the YubiKey
 into your existing user authentication infrastructure.  PAM is used by
 GNU/Linux, Solaris and Mac OS X for user authentication, and by other
 specialized applications such as NCSA MyProxy.
@@ -136,7 +136,7 @@ Supported PAM module parameters are:
 [horizontal]
 authfile::
 To indicate the location of the file that holds the
-mappings of Yubikey token IDs to user names.
+mappings of YubiKey token IDs to user names.
 
 id:: 
 Your API Client ID in the Yubico validation server.
@@ -239,7 +239,7 @@ CA certifcate file for the LDAP connection.
 
 user_attr:: specify the LDAP attribute used to store user names (eg:cn).
 
-yubi_attr::  specify the LDAP attribute used to store the Yubikey ID.
+yubi_attr::  specify the LDAP attribute used to store the YubiKey ID.
 
 yubi_attr_prefix::
 specify the prefix of the LDAP attribute's value, in case
@@ -287,13 +287,13 @@ be used.
 
 === Central authorization mapping
 Create a `/etc/yubikey_mappings`, the file must contain a user name and the
-Yubikey token ID separated by colons (same format as the passwd file) for
-each user you want to allow onto the system using a Yubikey.
+YubiKey token ID separated by colons (same format as the passwd file) for
+each user you want to allow onto the system using a YubiKey.
 
 The mappings should look like this, one per line:
 
- <first user name>:<Yubikey token ID1>:<Yubikey token ID2>:….
- <second user name>:<Yubikey token ID3>:<Yubikey token ID4>:….
+ <first user name>:<YubiKey token ID1>:<YubiKey token ID2>:….
+ <second user name>:<YubiKey token ID3>:<YubiKey token ID4>:….
 
 Now add `authfile=/etc/yubikey_mappings` to your PAM configuration line, so it
 looks like:
@@ -307,21 +307,21 @@ directory and places the mapping in that file, the file must have only one
 line:
 
 
- <user name>:<Yubikey token ID1>:<Yubikey token ID2>
+ <user name>:<YubiKey token ID1>:<YubiKey token ID2>
 
 
 This is much the same concept as the SSH authorized_keys file.
 
 
-Obtaining the Yubikey token ID (a.k.a. public ID)
+Obtaining the YubiKey token ID (a.k.a. public ID)
 -------------------------------------------------
 
-You can obtain the Yubikey token ID in several ways.  One is by
+You can obtain the YubiKey token ID in several ways.  One is by
 removing the last 32 characters of any OTP (One Time Password)
-generated with your Yubikey.  Another is by using the
+generated with your YubiKey.  Another is by using the
 http://demo.yubico.com/php-yubico/Modhex_Calculator.php[modhex calculator].
 
-Enter your Yubikey OTP and convert it, your Yubikey token ID is 12
+Enter your YubiKey OTP and convert it, your YubiKey token ID is 12
 characters and listed as:
 
    Modhex encoded: XXXXXXX
@@ -348,7 +348,7 @@ information including the OTP and ID of your token to the shell -- copy the ID
 into your config file and you should be up and going.
 
 ------
-Yubikey for `youruser':
+YubiKey for `youruser':
 [pam_yubico.c:pam_sm_authenticate(867)] conv returned 44 bytes
 [pam_yubico.c:pam_sm_authenticate(885)] Skipping first 0 bytes. Length is 44, token_id set to 12 and token OTP always 32.
 [pam_yubico.c:pam_sm_authenticate(892)] OTP: ccccccclabcabkhbdncicglfltnukadfoifadfhhhhfe ID: cccccclabcab
@@ -382,7 +382,7 @@ See Michael Ludvig's sample Active Directory schema extensions for YubiKey publi
 
 create file '/etc/pam.d/openvpn':
 
-   auth  required  pam_yubico.so ldap_uri=ldap://contoso.com debug id=[Your API ID] yubi_attr=yubiKeyId
+   auth  required  pam_yubico.so ldap_uri=ldap://contoso.com debug id=[Your API ID] yubi_attr=YubiKeyID
       ldapdn=DC=contoso,DC=com
       ldap_filter=(&(sAMAccountName=%u)(objectClass=user)(memberOf=CN=somegroup,DC=contoso,DC=com))
       [ldap_bind_user=CN=binduser,OU=Service Accounts,DC=contoso,DC=com] ldap_bind_password=bind_password try_first_pass

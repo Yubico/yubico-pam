@@ -24,7 +24,7 @@ File name to write debug to, the file must exist and be a regular file. Defaults
 Mode of operation, client for OTP validation and challenge-response for challenge-response validation. Defaults to client.
 
 *authfile*=_file_::
-Location of the file that holds the mappings of Yubikey token IDs to user names. The format is username:first_public_id:second_public_id:... Default location of the file is $HOME/.yubico/authorized_yubikeys.
+Location of the file that holds the mappings of YubiKey token IDs to user names. The format is username:first_public_id:second_public_id:... Default location of the file is $HOME/.yubico/authorized_yubikeys.
 
 *id*=_id_::
 Your API client identity for the validation server.
@@ -78,7 +78,7 @@ The distinguished name (DN) where the users are stored (eg: ou=users,dc=domain,d
 The LDAP attribute used to store user names (eg:cn).
 
 *yubi_attr*=_attr_::
-The LDAP attribute used to store the Yubikey ID.
+The LDAP attribute used to store the YubiKey ID.
 
 *yubi_attr_prefix*=_prefix_::
 The prefix of the LDAP attribute's value, in case of a generic attribute, used to store several types of IDs.
