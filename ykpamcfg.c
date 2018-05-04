@@ -289,7 +289,7 @@ main(int argc, char **argv)
   ykp_errno = 0;
   yk_errno = 0;
 
-  strcpy (action, ACTION_ADD_HMAC_CHALRESP);
+  strncpy(action, ACTION_ADD_HMAC_CHALRESP, ACTION_MAX_LEN);
 
   if (! parse_args(argc, argv,
 		   &slot, &verbose,
