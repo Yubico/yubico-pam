@@ -170,7 +170,7 @@ Reported and patched by Nanakos Chrysostomos <nanakos@wired-net.gr>.
 * Version 2.7 (released 2011-06-07)
 
 ** Make dependency on libykpers optional.
-Use --without-cr to force it.  Reported by Jussi Sallinen <jussi@jus.si>.
+Use --without-cr to force it. Reported by Jussi Sallinen <jussi@jus.si>.
 
 * Version 2.6 (released 2011-04-11)
 
@@ -200,7 +200,7 @@ fraser.scott@gmail.com.
 
 * Version 2.5 (released 2010-09-10)
 
-** Wiki articles are now inclded in the archive.  Same license as code.
+** Wiki articles are now inclded in the archive. Same license as code.
 Reported by dmitrij.ledkov in Issue #30:
 <http://code.google.com/p/yubico-pam/issues/detail?id=30>.
 
@@ -229,7 +229,7 @@ Reported by multiple people in Issue #11:
 ** New keyword "ldap_uri" added.
 This keyword is preferred over the old "ldapserver" keyword, and
 allows you to specify a complete LDAP URI instead of only the hostname
-of your LDAP server.  Contributed by Zubrick.
+of your LDAP server. Contributed by Zubrick.
 
 ** Improved README.
 Contributed by Erinn Looney-Triggs <erinn.looneytriggs@gmail.com>.
@@ -259,7 +259,7 @@ See <http://code.google.com/p/yubico-c-client/>.
 Earlier string handling may have been incorrect for short strings.
 
 ** Don't pass integers via pam_set_data/pam_get_data.
-May solve problems on 64-bit platforms.  Based on patch from
+May solve problems on 64-bit platforms. Based on patch from
 forum.yubico.com.
 
 * Version 1.12 (released 2009-03-24)

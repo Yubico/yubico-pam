@@ -94,11 +94,11 @@ Make sure you set `id=16` to the correct API-id for the yubico validation server
 After the above configuration changes, whenever a user connects to the server
 using any ssh client, the PAM authentication interface will pass the control to
 Yubico PAM module. The Yubico PAM module first checks the presence of authfile
-argument in PAM configuration.  If authfile argument is present, it parses the
+argument in PAM configuration. If authfile argument is present, it parses the
 corresponding mapping file and  verifies the username with corresponding
 YubiKey token id as configured in the mapping file. If valid, the Yubico PAM
 module extracts the OTP string and sends it to the Yubico authentication server
-or else it reports failure.  If authfile argument is present but the mapping
+or else it reports failure. If authfile argument is present but the mapping
 file is not present at the provided path PAM module reports failure. After
 successful verification of OTP Yubico PAM module from the Yubico
 authentication server, a success code is returned.
@@ -223,7 +223,7 @@ configuration.
 We assume that you have 'root' and 'test' user configured to access SSH on your
 test environment with password 'secret' and 'pencil' respectively. 
  
-Use any standard SSH client for testing (We used SSH command line utility).   
+Use any standard SSH client for testing (We used SSH command line utility).
 
 Try to login to server with SSH client as configured user:
 

@@ -43,7 +43,7 @@ AS_VAR_POPDEF([gl_Warn])dnl
 #             [PROGRAM = AC_LANG_PROGRAM()])
 # ---------------------------------------------
 # Adds parameter to WARN_CFLAGS if the compiler supports it when
-# compiling PROGRAM.  For example, gl_WARN_ADD([-Wparentheses]).
+# compiling PROGRAM. For example, gl_WARN_ADD([-Wparentheses]).
 #
 # If VARIABLE is a variable name, AC_SUBST it.
 AC_DEFUN([gl_WARN_ADD],
