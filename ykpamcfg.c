@@ -105,7 +105,7 @@ parse_args(int argc, char **argv,
       *slot = 2;
       break;
     case 'A':
-      strncpy(*action, optarg, ACTION_MAX_LEN);
+      snprintf(*action, ACTION_MAX_LEN, "%s", optarg);
       break;
     case 'p':
       *output_dir = optarg;
