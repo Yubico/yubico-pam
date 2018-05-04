@@ -105,7 +105,10 @@ parse_args(int argc, char **argv,
       *slot = 2;
       break;
     case 'A':
-      snprintf(*action, ACTION_MAX_LEN, "%s", optarg);
+      if (snprintf(*action, ACTION_MAX_LEN, "%s", optarg) >= ACTION_MAX_LEN) {
+        fprintf(stderr, "action too long: %s\n", optarg);
+        exit(1);
+      }
       break;
     case 'p':
       *output_dir = optarg;
