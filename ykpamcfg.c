@@ -166,8 +166,13 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, u
   
   if (!output_dir){
       char fullpath[PATH_MAX];
-      snprintf(fullpath, PATH_MAX, "%s/.yubico", p->pw_dir);
-      
+      int i = snprintf(fullpath, PATH_MAX, "%s/.yubico", p->pw_dir);
+
+      if (i < 0 || i >= PATH_MAX) {
+        fprintf(stderr, "Failed to construct fullpath: %s\n", p->pw_dir);
+	goto out;
+      }
+
       //check if directory exists     
       if (stat(fullpath,&st)!=0 ){     
 	if(mkdir(fullpath, S_IRWXU)==-1){
