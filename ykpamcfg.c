@@ -39,6 +39,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <limits.h>
 
 #include <ykpers.h>
 
@@ -104,7 +105,10 @@ parse_args(int argc, char **argv,
       *slot = 2;
       break;
     case 'A':
-      strncpy(*action, optarg, ACTION_MAX_LEN);
+      if (snprintf(*action, ACTION_MAX_LEN, "%s", optarg) >= ACTION_MAX_LEN) {
+        fprintf(stderr, "action too long: %s\n", optarg);
+        exit(1);
+      }
       break;
     case 'p':
       *output_dir = optarg;
@@ -164,9 +168,14 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, u
   */
   
   if (!output_dir){
-      char fullpath[256];
-      snprintf(fullpath, 256,"%s/.yubico",p->pw_dir);
-      
+      char fullpath[PATH_MAX];
+      int i = snprintf(fullpath, PATH_MAX, "%s/.yubico", p->pw_dir);
+
+      if (i < 0 || i >= PATH_MAX) {
+        fprintf(stderr, "Failed to construct fullpath: %s\n", p->pw_dir);
+	goto out;
+      }
+
       //check if directory exists     
       if (stat(fullpath,&st)!=0 ){     
 	if(mkdir(fullpath, S_IRWXU)==-1){
@@ -283,7 +292,7 @@ main(int argc, char **argv)
   ykp_errno = 0;
   yk_errno = 0;
 
-  strcpy (action, ACTION_ADD_HMAC_CHALRESP);
+  strncpy(action, ACTION_ADD_HMAC_CHALRESP, ACTION_MAX_LEN);
 
   if (! parse_args(argc, argv,
 		   &slot, &verbose,
