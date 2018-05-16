@@ -273,6 +273,8 @@ touch /var/run/pam-debug.log
 chmod go+w /var/run/pam-debug.log
 ----
 
+NOTE: Please remember, physical access to systems often allows the circumvention of security controls. If an attacker has physical access to your system (such as a laptop left in a hotel room) and can boot into single user mode, they can disable yubico-pam in your system configuration.
+
 
 Authorization Mapping Files
 ---------------------------
