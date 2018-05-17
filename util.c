@@ -508,7 +508,10 @@ write_chalresp_state(FILE *f, CR_STATE *state)
     iterations = state->iterations;
   }
 
-  generate_random(salt, CR_SALT_SIZE);
+  if (generate_random(salt, CR_CHALLENGE_SIZE)) {
+    goto out;
+  }
+
   yk_pbkdf2(response_hex, salt, CR_SALT_SIZE, iterations,
       hash, CR_RESPONSE_SIZE, &prf_method);
 
