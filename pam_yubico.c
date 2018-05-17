@@ -308,7 +308,7 @@ authorize_user_token_ldap (struct cfg *cfg,
       DBG ("Failed allocating %zu bytes", i);
       goto done;
     }
-    sprintf (find, "%s=%s,%s", cfg->user_attr, user, cfg->ldapdn);
+    snprintf (find, i, "%s=%s,%s", cfg->user_attr, user, cfg->ldapdn);
     filter = NULL;
   } else if (cfg->ldapdn) {
     find = strdup(cfg->ldapdn); /* allow free later */
