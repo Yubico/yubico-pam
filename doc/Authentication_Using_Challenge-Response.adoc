@@ -14,7 +14,7 @@ for a YubiKey with serial number API readout enabled, and
 The PAM module supports a system-wide directory for these state files
 (in case the user's home directories are encrypted), but in a system-wide
 directory, the 'challenge' part should be replaced with the
-username.  Example: `/var/yubico/alice-123456`.
+username. Example: `/var/yubico/alice-123456`.
 
 To use the system-wide mode, you currently have to move the generated
 state files manually and configure the PAM module accordingly.
@@ -27,14 +27,14 @@ First install the package:
 $ sudo apt-get install libpam-yubico
 ------
 
-You will get a question about the PAM configuration line.  Enter this
+You will get a question about the PAM configuration line. Enter this
 line:
 
 ------
 mode=challenge-response
 ------
 
-The next question will be about which PAM modules to enable.  Don't
+The next question will be about which PAM modules to enable. Don't
 enable anything just yet, because you need to program your YubiKey
 first.
 
@@ -45,9 +45,9 @@ you may use this command:
 $ sudo dpkg-reconfigure libpam-yubico
 ------
 
-The next step is to add a challenge-response slot to your YubiKey.  If
+The next step is to add a challenge-response slot to your YubiKey. If
 you have a normal YubiKey with OTP functionality on the first slot,
-you could add Challenge-Response on the second slot.  You could have
+you could add Challenge-Response on the second slot. You could have
 CR on the first slot, if you want.
 
 First, program a YubiKey for challenge response on Slot 2:
@@ -126,7 +126,7 @@ and then create a log file:
 # chmod go+w /var/run/pam-debug.log
 ----
 
-and then tail the file.  For successful logins it should print
+and then tail the file. For successful logins it should print
 something like this:
 
 ----

@@ -176,7 +176,7 @@ if test "$with_gnu_ld" = yes; then
       # Samuel A. Falvo II <kc5tja@dolphin.openprojects.net> reports
       # that the semantics of dynamic libraries on AmigaOS, at least up
       # to version 4, is to share data among multiple programs linked
-      # with the same dynamic library.  Since this doesn't match the
+      # with the same dynamic library. Since this doesn't match the
       # behavior of shared libraries on other platforms, we cannot use
       # them.
       ld_shlibs=no

@@ -284,7 +284,7 @@ authorize_user_token_ldap (struct cfg *cfg,
   ldap_set_option (ld, LDAP_OPT_PROTOCOL_VERSION, &protocol);
 
   if (cfg->ldap_uri && cfg->ldap_cacertfile) {
-    /* Set CA CERTFILE.  This makes ldaps work when using ldap_uri */
+    /* Set CA CERTFILE. This makes ldaps work when using ldap_uri */
     ldap_set_option (0, LDAP_OPT_X_TLS_CACERTFILE, cfg->ldap_cacertfile);
   }
   /* Bind anonymously to the LDAP server. */

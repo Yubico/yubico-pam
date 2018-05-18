@@ -9,7 +9,7 @@ dnl From Simon Josefsson
 # gl_MANYWARN_COMPLEMENT(OUTVAR, LISTVAR, REMOVEVAR)
 # --------------------------------------------------
 # Copy LISTVAR to OUTVAR except for the entries in REMOVEVAR.
-# Elements separated by whitespace.  In set logic terms, the function
+# Elements separated by whitespace. In set logic terms, the function
 # does OUTVAR = LISTVAR \ REMOVEVAR.
 AC_DEFUN([gl_MANYWARN_COMPLEMENT],
 [

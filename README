@@ -2,7 +2,7 @@
 image:https://travis-ci.org/Yubico/yubico-pam.svg?branch=master["Build Status", link="https://travis-ci.org/Yubico/yubico-pam"]
 
 The Yubico PAM module provides an easy way to integrate the YubiKey
-into your existing user authentication infrastructure.  PAM is used by
+into your existing user authentication infrastructure. PAM is used by
 GNU/Linux, Solaris and Mac OS X for user authentication, and by other
 specialized applications such as NCSA MyProxy.
 
@@ -23,8 +23,8 @@ this dependency.
 The development community is co-ordinated via
 https://github.com/Yubico/yubico-pam[the GitHub project page].
 
-The project is licensed under a BSD license.  See the file COPYING for
-exact wording.  For any copyright year range specified as YYYY-ZZZZ in
+The project is licensed under a BSD license. See the file COPYING for
+exact wording. For any copyright year range specified as YYYY-ZZZZ in
 this package note that the range specifies every single year in that
 closed interval.
 
@@ -213,13 +213,13 @@ verbose_otp::
    authentication because that will display your password on the
    screen.
    This requires the service using the PAM module to
-   display custom fields.  This option can not be used with OpenSSH.
+   display custom fields. This option can not be used with OpenSSH.
 
 ldap_uri:: specify the LDAP server URI (e.g. ldap://localhost).
 
 ldapserver::
 specify the LDAP server host (default LDAP port is used).
-_Deprecated.  Use "ldap_uri" instead._
+_Deprecated. Use "ldap_uri" instead._
 
 ldapdn::
 specify the dn where the users are stored
@@ -318,9 +318,9 @@ This is much the same concept as the SSH authorized_keys file.
 Obtaining the YubiKey token ID (a.k.a. public ID)
 -------------------------------------------------
 
-You can obtain the YubiKey token ID in several ways.  One is by
+You can obtain the YubiKey token ID in several ways. One is by
 removing the last 32 characters of any OTP (One Time Password)
-generated with your YubiKey.  Another is by using the
+generated with your YubiKey. Another is by using the
 http://demo.yubico.com/php-yubico/Modhex_Calculator.php[modhex calculator].
 
 Enter your YubiKey OTP and convert it, your YubiKey token ID is 12

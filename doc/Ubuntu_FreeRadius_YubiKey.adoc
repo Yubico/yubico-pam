@@ -57,7 +57,7 @@ Install FreeRadius:
    /etc/init.d/freeradius stop
 ------
 
-Next we configure FreeRadius.  First add this to /etc/freeradius/users:
+Next we configure FreeRadius. First add this to /etc/freeradius/users:
 
 ------
    DEFAULT Auth-Type = pam

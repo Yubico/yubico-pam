@@ -69,7 +69,7 @@ Show the One-Time Password when it is entered, i.e. to enable terminal echo of e
 The LDAP server URI (e.g. ldap://localhost).
 
 *ldap_server*=_server_::
-The LDAP server host (default LDAP port is used). *Deprecated.  Use 'ldap_uri' instead.*
+The LDAP server host (default LDAP port is used). *Deprecated. Use 'ldap_uri' instead.*
 
 *ldapdn*=_dn_::
 The distinguished name (DN) where the users are stored (eg: ou=users,dc=domain,dc=com). If 'ldap_filter' is used this is the base from which the subtree search will be performed.
