@@ -95,6 +95,7 @@ parse_args(int argc, char **argv,
      unsigned int *iterations)
 {
   int c;
+  int i;
 
   while((c = getopt(argc, argv, optstring)) != -1) {
     switch (c) {
@@ -105,7 +106,8 @@ parse_args(int argc, char **argv,
       *slot = 2;
       break;
     case 'A':
-      if (snprintf(*action, ACTION_MAX_LEN, "%s", optarg) >= ACTION_MAX_LEN) {
+      i = snprintf(*action, ACTION_MAX_LEN, "%s", optarg);
+      if (i < 0 || i >= ACTION_MAX_LEN) {
         fprintf(stderr, "action too long: %s\n", optarg);
         exit(1);
       }

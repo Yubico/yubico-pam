@@ -62,13 +62,17 @@ get_user_cfgfile_path(const char *common_path, const char *filename, const struc
    */
   char *userfile;
   size_t len;
+  int i;
 
   if (common_path != NULL) {
     len = strlen(common_path) + 1 + strlen(filename) + 1;
     if ((userfile = malloc(len)) == NULL) {
       return 0;
     }
-    snprintf(userfile, len, "%s/%s", common_path, filename);
+    i = snprintf(userfile, len, "%s/%s", common_path, filename);
+    if (i < 0 || i >= len) {
+      return 0;
+    }
     *fn = userfile;
     return 1;
   }
@@ -79,7 +83,10 @@ get_user_cfgfile_path(const char *common_path, const char *filename, const struc
   if ((userfile = malloc(len)) == NULL) {
     return 0;
   }
-  snprintf(userfile, len, "%s/.yubico/%s", user->pw_dir, filename);
+  i = snprintf(userfile, len, "%s/.yubico/%s", user->pw_dir, filename);
+  if (i < 0 || i >= len) {
+    return 0;
+  }
   *fn = userfile;
   return 1;
 }
@@ -300,6 +307,7 @@ check_user_challenge_file(const char *chalresp_path, const struct passwd *user, 
    */
   size_t len;
   int r;
+  int i;
   int ret = AUTH_NOT_FOUND;
   char *userfile = NULL;
   char *userfile_pattern = NULL;
@@ -332,7 +340,14 @@ check_user_challenge_file(const char *chalresp_path, const struct passwd *user, 
     ret = AUTH_ERROR;
     goto out;
   }
-  snprintf(userfile_pattern, len, "%s-*", userfile);
+
+  i = snprintf(userfile_pattern, len, "%s-*", userfile);
+
+  if (i < 0 || i >= len) {
+    D (debug_file, "Failed to format string correctly");
+    ret = AUTH_ERROR;
+    goto out;
+  }
 
   r = glob(userfile_pattern, 0, NULL, &userfile_glob);
   globfree(&userfile_glob);
