@@ -245,6 +245,7 @@ authorize_user_token_ldap (struct cfg *cfg,
   struct berval **vals;
   int rc;
   size_t i;
+  int j;
 
   char *filter = NULL;
   char *find = NULL;
@@ -308,7 +309,7 @@ authorize_user_token_ldap (struct cfg *cfg,
       DBG ("Failed allocating %zu bytes", i);
       goto done;
     }
-    int j = snprintf (find, i, "%s=%s,%s", cfg->user_attr, user, cfg->ldapdn);
+    j = snprintf (find, i, "%s=%s,%s", cfg->user_attr, user, cfg->ldapdn);
     if (j < 0 || j >= i) {
       DBG ("Failed to format string");
       goto done;
