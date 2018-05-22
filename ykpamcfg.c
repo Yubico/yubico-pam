@@ -258,6 +258,7 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, u
   f = fdopen (fd, "w");
   if (! f) {
     fprintf (stderr, "fdopen: %s\n", strerror (errno));
+    close(fd);
     goto out;
   }
 

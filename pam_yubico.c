@@ -833,7 +833,9 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
                           if (file)
                             {
                               cfg->debug_file = file;
-                            }
+                            } else {
+			      close(fd);
+			    }
                         }
                     }
                 }

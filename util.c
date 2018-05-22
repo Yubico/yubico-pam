@@ -203,6 +203,7 @@ int generate_random(void *buf, int len)
 
 	u = fdopen(fd, "r");
 	if (!u) {
+		close(fd);
 		return -1;
 	}
 
