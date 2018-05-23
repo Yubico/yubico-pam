@@ -66,7 +66,7 @@ int pam_modutil_drop_priv(pam_handle_t *pamh, struct _ykpam_privs *privs, struct
     }
 
     if (privs->saved_groups_length > SAVED_GROUPS_MAX_LEN) {
-        D (privs->debug_file, "to many groups, limiting.");
+        D (privs->debug_file, "too many groups, limiting.");
         privs->saved_groups_length = SAVED_GROUPS_MAX_LEN;
     }
 
