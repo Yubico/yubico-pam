@@ -524,7 +524,7 @@ write_chalresp_state(FILE *f, CR_STATE *state)
     iterations = state->iterations;
   }
 
-  if (generate_random(salt, CR_CHALLENGE_SIZE)) {
+  if (generate_random(salt, CR_SALT_SIZE)) {
     goto out;
   }
 
