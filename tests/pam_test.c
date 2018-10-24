@@ -48,6 +48,10 @@ struct pam_modutil_privs {
 };
 #endif
 
+int
+pam_sm_authenticate (pam_handle_t * pamh,
+                     int flags, int argc, const char **argv);
+
 #define YKVAL_PORT1 "17502"
 #define YKVAL_PORT2 "30559"
 #define LDAP_PORT "52825"
@@ -181,7 +185,7 @@ static int test_authenticate1(void) {
     "authfile="AUTHFILE,
     "debug",
   };
-  return pam_sm_authenticate(0, 0, sizeof(cfg) / sizeof(char*), cfg);
+  return pam_sm_authenticate((pam_handle_t *)0, 0, sizeof(cfg) / sizeof(char*), cfg);
 }
 
 static int test_authenticate2(void) {
@@ -191,7 +195,7 @@ static int test_authenticate2(void) {
     "authfile="AUTHFILE,
     "debug",
   };
-  return pam_sm_authenticate(0, 0, sizeof(cfg) / sizeof(char*), cfg);
+  return pam_sm_authenticate((pam_handle_t *)0, 0, sizeof(cfg) / sizeof(char*), cfg);
 }
 
 static int test_authenticate3(void) {
@@ -201,7 +205,7 @@ static int test_authenticate3(void) {
     "authfile="AUTHFILE,
     "debug",
   };
-  return pam_sm_authenticate(4, 0, sizeof(cfg) / sizeof(char*), cfg);
+  return pam_sm_authenticate((pam_handle_t *)4, 0, sizeof(cfg) / sizeof(char*), cfg);
 }
 
 static int test_authenticate4(void) {
@@ -211,7 +215,7 @@ static int test_authenticate4(void) {
     "authfile="AUTHFILE,
     "debug",
   };
-  return pam_sm_authenticate(5, 0, sizeof(cfg) / sizeof(char*), cfg);
+  return pam_sm_authenticate((pam_handle_t *)5, 0, sizeof(cfg) / sizeof(char*), cfg);
 }
 
 static int test_authenticate5(void) {
@@ -221,7 +225,7 @@ static int test_authenticate5(void) {
     "authfile="AUTHFILE,
     "debug",
   };
-  return pam_sm_authenticate(6, 0, sizeof(cfg) / sizeof(char*), cfg);
+  return pam_sm_authenticate((pam_handle_t *)6, 0, sizeof(cfg) / sizeof(char*), cfg);
 }
 
 static int test_fail_authenticate1(void) {
@@ -231,7 +235,7 @@ static int test_fail_authenticate1(void) {
     "authfile="AUTHFILE,
     "debug"
   };
-  return pam_sm_authenticate(1, 0, sizeof(cfg) / sizeof(char*), cfg);
+  return pam_sm_authenticate((pam_handle_t *)1, 0, sizeof(cfg) / sizeof(char*), cfg);
 }
 
 static int test_fail_authenticate2(void) {
@@ -241,7 +245,7 @@ static int test_fail_authenticate2(void) {
     "authfile="AUTHFILE,
     "debug"
   };
-  return pam_sm_authenticate(2, 0, sizeof(cfg) / sizeof(char*), cfg);
+  return pam_sm_authenticate((pam_handle_t *)2, 0, sizeof(cfg) / sizeof(char*), cfg);
 }
 
 static int test_fail_authenticate3(void) {
@@ -251,7 +255,7 @@ static int test_fail_authenticate3(void) {
     "authfile="AUTHFILE,
     "debug"
   };
-  return pam_sm_authenticate(3, 0, sizeof(cfg) / sizeof(char*), cfg);
+  return pam_sm_authenticate((pam_handle_t *)3, 0, sizeof(cfg) / sizeof(char*), cfg);
 }
 
 static int test_firstpass_authenticate(void) {
@@ -262,7 +266,7 @@ static int test_firstpass_authenticate(void) {
     "use_first_pass",
     "debug"
   };
-  return pam_sm_authenticate(8, 0, sizeof(cfg) / sizeof(char*), cfg);
+  return pam_sm_authenticate((pam_handle_t *)8, 0, sizeof(cfg) / sizeof(char*), cfg);
 }
 
 static int test_firstpass_fail(void) {
@@ -273,7 +277,7 @@ static int test_firstpass_fail(void) {
     "use_first_pass",
     "debug"
   };
-  return pam_sm_authenticate(9, 0, sizeof(cfg) / sizeof(char*), cfg);
+  return pam_sm_authenticate((pam_handle_t *)9, 0, sizeof(cfg) / sizeof(char*), cfg);
 }
 
 static int test_firstpass_fail2(void) {
@@ -284,39 +288,39 @@ static int test_firstpass_fail2(void) {
     "use_first_pass",
     "debug"
   };
-  return pam_sm_authenticate(10, 0, sizeof(cfg) / sizeof(char*), cfg);
+  return pam_sm_authenticate((pam_handle_t *)10, 0, sizeof(cfg) / sizeof(char*), cfg);
 }
 
 static int test_authenticate_ldap1(void) {
-  return pam_sm_authenticate(0, 0, sizeof(ldap_cfg) / sizeof(char*), ldap_cfg);
+  return pam_sm_authenticate((pam_handle_t *)0, 0, sizeof(ldap_cfg) / sizeof(char*), ldap_cfg);
 }
 
 static int test_authenticate_ldap_fail1(void) {
-  return pam_sm_authenticate(1, 0, sizeof(ldap_cfg) / sizeof(char*), ldap_cfg);
+  return pam_sm_authenticate((pam_handle_t *)1, 0, sizeof(ldap_cfg) / sizeof(char*), ldap_cfg);
 }
 
 static int test_authenticate_ldap_fail2(void) {
-  return pam_sm_authenticate(2, 0, sizeof(ldap_cfg) / sizeof(char*), ldap_cfg);
+  return pam_sm_authenticate((pam_handle_t *)2, 0, sizeof(ldap_cfg) / sizeof(char*), ldap_cfg);
 }
 
 static int test_authenticate_ldap2(void) {
-  return pam_sm_authenticate(4, 0, sizeof(ldap_cfg) / sizeof(char*), ldap_cfg);
+  return pam_sm_authenticate((pam_handle_t *)4, 0, sizeof(ldap_cfg) / sizeof(char*), ldap_cfg);
 }
 
 static int test_authenticate_ldap3(void) {
-  return pam_sm_authenticate(4, 0, sizeof(ldap_cfg2) / sizeof(char*), ldap_cfg2);
+  return pam_sm_authenticate((pam_handle_t *)4, 0, sizeof(ldap_cfg2) / sizeof(char*), ldap_cfg2);
 }
 
 static int test_authenticate_ldap4(void) {
-  return pam_sm_authenticate(5, 0, sizeof(ldap_cfg) / sizeof(char*), ldap_cfg);
+  return pam_sm_authenticate((pam_handle_t *)5, 0, sizeof(ldap_cfg) / sizeof(char*), ldap_cfg);
 }
 
 static int test_authenticate_ldap5(void) {
-  return pam_sm_authenticate(6, 0, sizeof(ldap_cfg) / sizeof(char*), ldap_cfg);
+  return pam_sm_authenticate((pam_handle_t *)6, 0, sizeof(ldap_cfg) / sizeof(char*), ldap_cfg);
 }
 
 static int test_authenticate_ldap6(void) {
-  return pam_sm_authenticate(7, 0, sizeof(ldap_cfg) / sizeof(char*), ldap_cfg);
+  return pam_sm_authenticate((pam_handle_t *)7, 0, sizeof(ldap_cfg) / sizeof(char*), ldap_cfg);
 }
 
 static pid_t run_mock(const char *port, const char *type) {
