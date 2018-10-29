@@ -43,7 +43,7 @@ $ git clone https://github.com/Yubico/yubico-pam.git
 
 This will create the directory `yubico-pam`.
 
-Autoconf, automake, asciidoc and libtool must be installed to create a
+Autoconf, automake, libtool, asciidoc, xsltproc and docbook-xsl must be installed to create a
 compilable source tree.
 
 Generate the build system using:
