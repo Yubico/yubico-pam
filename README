@@ -177,6 +177,12 @@ in the authorization mapping files or in LDAP.
 This can be used to make YubiKey authentication optional unless
 the user has associated tokens.
 
+ldap_bind_as_user::
+If set, use the user logging in to bind to LDAP. This will use the
+password provided by the user via PAM. If this is set, ldapdn
+and uid_attr must also be set.  Enabling this will cause
+'ldap_bind_user' and 'ldap_bind_password' to be ignored
+
 urllist::
 List  of  URL  templates to be used. This is set by calling
 ykclient_set_url_bases. The list should be in the format :

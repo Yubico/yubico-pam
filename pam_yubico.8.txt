@@ -44,6 +44,9 @@ Forces the module to use a previous stacked modules password and will never prom
 *nullok*::
 Don’t fail when there are no tokens declared for the user in the authorization mapping files or in LDAP. This can be used to make YubiKey authentication optional unless the user has associated tokens.
 
+*ldap_bind_as_user*::
+Use the user logging in to bind to ldap. This will use the password provided by the user via PAM. If this is set, ldapdn and uid_attr must also be set.  Enabling this will cause ldap_bind_user and ldap_bind_password to be ignored.
+
 *urllist*=_list_::
 List of URL templates to be used. This is set by calling ykclient_set_url_bases.
 The list should be in the format:

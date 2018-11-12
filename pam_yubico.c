@@ -110,6 +110,7 @@ struct cfg
   int try_first_pass;
   int use_first_pass;
   int nullok;
+  int ldap_bind_as_user;
   const char *auth_file;
   const char *capath;
   const char *cainfo;
@@ -229,7 +230,8 @@ free_out:
 static int
 authorize_user_token_ldap (struct cfg *cfg,
 			   const char *user,
-			   const char *token_id)
+			   const char *token_id,
+			   pam_handle_t *pamh)
 {
   int retval = AUTH_ERROR;
 #ifdef HAVE_LIBLDAP
@@ -288,19 +290,6 @@ authorize_user_token_ldap (struct cfg *cfg,
     /* Set CA CERTFILE. This makes ldaps work when using ldap_uri */
     ldap_set_option (0, LDAP_OPT_X_TLS_CACERTFILE, cfg->ldap_cacertfile);
   }
-  /* Bind anonymously to the LDAP server. */
-  if (cfg->ldap_bind_user && cfg->ldap_bind_password) {
-    DBG ("try bind with: %s:[%s]", cfg->ldap_bind_user, cfg->ldap_bind_password);
-    rc = ldap_simple_bind_s (ld, cfg->ldap_bind_user, cfg->ldap_bind_password);
-  } else {
-    DBG ("try anonymous bind");
-    rc = ldap_simple_bind_s (ld, NULL, NULL);
-  }
-  if (rc != LDAP_SUCCESS)
-    {
-      DBG ("ldap_simple_bind_s: %s", ldap_err2string (rc));
-      goto done;
-    }
 
   /* Allocation of memory for search strings depending on input size */
   if (cfg->user_attr && cfg->yubi_attr && cfg->ldapdn) {
@@ -318,6 +307,32 @@ authorize_user_token_ldap (struct cfg *cfg,
   } else if (cfg->ldapdn) {
     find = strdup(cfg->ldapdn); /* allow free later */
   }
+
+  /* Bind to the LDAP server. */
+  if (cfg->ldap_bind_as_user && cfg->user_attr && cfg->yubi_attr && cfg->ldapdn) {
+    /* Bind as the user logging in with their password they provided to PAM */
+    const char *bind_password = NULL;
+    rc = pam_get_item (pamh, PAM_AUTHTOK, (const void **) &bind_password);
+    if (rc != PAM_SUCCESS) {
+      DBG ("pam_get_item failed to retrieve password: %s", pam_strerror (pamh, rc));
+      goto done;
+    }
+    DBG ("try bind as user with: %s", find);
+    rc = ldap_simple_bind_s (ld, find, bind_password);
+  } else if (cfg->ldap_bind_user && cfg->ldap_bind_password) {
+    /* Bind with a provided username and password */
+    DBG ("try bind with: %s:[%s]", cfg->ldap_bind_user, cfg->ldap_bind_password);
+    rc = ldap_simple_bind_s (ld, cfg->ldap_bind_user, cfg->ldap_bind_password);
+  } else {
+    DBG ("try anonymous bind");
+    rc = ldap_simple_bind_s (ld, NULL, NULL);
+  }
+  if (rc != LDAP_SUCCESS)
+    {
+      DBG ("ldap_simple_bind_s: %s", ldap_err2string (rc));
+      goto done;
+    }
+
   if (cfg->ldap_filter) {
     filter = filter_printf(cfg->ldap_filter, user);
     scope = LDAP_SCOPE_SUBTREE;
@@ -766,6 +781,8 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->use_first_pass = 1;
       if (strcmp (argv[i], "nullok") == 0)
 	cfg->nullok = 1;
+      if (strcmp (argv[i], "ldap_bind_as_user") == 0)
+	cfg->ldap_bind_as_user = 1;
       if (strncmp (argv[i], "authfile=", 9) == 0)
 	cfg->auth_file = argv[i] + 9;
       if (strncmp (argv[i], "capath=", 7) == 0)
@@ -856,6 +873,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
   DBG ("try_first_pass=%d", cfg->try_first_pass);
   DBG ("use_first_pass=%d", cfg->use_first_pass);
   DBG ("nullok=%d", cfg->nullok);
+  DBG ("ldap_bind_as_user=%d", cfg->ldap_bind_as_user);
   DBG ("authfile=%s", cfg->auth_file ? cfg->auth_file : "(null)");
   DBG ("ldapserver=%s", cfg->ldapserver ? cfg->ldapserver : "(null)");
   DBG ("ldap_uri=%s", cfg->ldap_uri ? cfg->ldap_uri : "(null)");
@@ -1028,7 +1046,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
   /* we set otp_id to NULL so that no matches will ever be found
    * but AUTH_NO_TOKENS will be returned if there are no tokens for the user */
   if (cfg->ldapserver != NULL || cfg->ldap_uri != NULL)
-    valid_token = authorize_user_token_ldap (cfg, user, NULL);
+    valid_token = authorize_user_token_ldap (cfg, user, NULL, pamh);
   else
     valid_token = authorize_user_token (cfg, user, NULL, pamh);
 
@@ -1153,7 +1171,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
   /* authorize the user with supplied token id */
   if (cfg->ldapserver != NULL || cfg->ldap_uri != NULL)
-    valid_token = authorize_user_token_ldap (cfg, user, otp_id);
+    valid_token = authorize_user_token_ldap (cfg, user, otp_id, pamh);
   else
     valid_token = authorize_user_token (cfg, user, otp_id, pamh);
 
