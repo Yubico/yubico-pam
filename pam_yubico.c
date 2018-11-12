@@ -110,6 +110,7 @@ struct cfg
   int try_first_pass;
   int use_first_pass;
   int nullok;
+  int ldap_starttls;
   int ldap_bind_as_user;
   const char *auth_file;
   const char *capath;
@@ -289,6 +290,14 @@ authorize_user_token_ldap (struct cfg *cfg,
   if (cfg->ldap_uri && cfg->ldap_cacertfile) {
     /* Set CA CERTFILE. This makes ldaps work when using ldap_uri */
     ldap_set_option (0, LDAP_OPT_X_TLS_CACERTFILE, cfg->ldap_cacertfile);
+  }
+
+  if (cfg->ldap_starttls) {
+    rc = ldap_start_tls_s (ld, NULL, NULL);
+    if (rc != LDAP_SUCCESS) {
+      DBG ("ldap_start_tls: %s", ldap_err2string (rc));
+      goto done;
+    }
   }
 
   /* Allocation of memory for search strings depending on input size */
@@ -781,6 +790,8 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->use_first_pass = 1;
       if (strcmp (argv[i], "nullok") == 0)
 	cfg->nullok = 1;
+      if (strcmp (argv[i], "ldap_starttls") == 0)
+	cfg->ldap_starttls = 1;
       if (strcmp (argv[i], "ldap_bind_as_user") == 0)
 	cfg->ldap_bind_as_user = 1;
       if (strncmp (argv[i], "authfile=", 9) == 0)
@@ -873,6 +884,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
   DBG ("try_first_pass=%d", cfg->try_first_pass);
   DBG ("use_first_pass=%d", cfg->use_first_pass);
   DBG ("nullok=%d", cfg->nullok);
+  DBG ("ldap_starttls=%d", cfg->ldap_starttls);
   DBG ("ldap_bind_as_user=%d", cfg->ldap_bind_as_user);
   DBG ("authfile=%s", cfg->auth_file ? cfg->auth_file : "(null)");
   DBG ("ldapserver=%s", cfg->ldapserver ? cfg->ldapserver : "(null)");

@@ -177,6 +177,11 @@ in the authorization mapping files or in LDAP.
 This can be used to make YubiKey authentication optional unless
 the user has associated tokens.
 
+ldap_starttls::
+If set, issue a STARTTLS command to the LDAP connection before
+attempting to bind to it. This is a common setup for servers
+that only listen on port 389 but still require TLS.
+
 ldap_bind_as_user::
 If set, use the user logging in to bind to LDAP. This will use the
 password provided by the user via PAM. If this is set, ldapdn

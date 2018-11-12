@@ -44,6 +44,9 @@ Forces the module to use a previous stacked modules password and will never prom
 *nullok*::
 Don’t fail when there are no tokens declared for the user in the authorization mapping files or in LDAP. This can be used to make YubiKey authentication optional unless the user has associated tokens.
 
+*ldap_starttls*::
+If set, issue a STARTTLS command to the LDAP connection before attempting to bind to it. This is a common setup for servers that only listen on port 389 but still require TLS.
+
 *ldap_bind_as_user*::
 Use the user logging in to bind to ldap. This will use the password provided by the user via PAM. If this is set, ldapdn and uid_attr must also be set.  Enabling this will cause ldap_bind_user and ldap_bind_password to be ignored.
 
