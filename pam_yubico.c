@@ -125,6 +125,8 @@ struct cfg
   const char *ldap_filter;
   const char *ldap_cacertfile;
   const char *ldapdn;
+  const char *ldap_clientcertfile;
+  const char *ldap_clientkeyfile;
   const char *user_attr;
   const char *yubi_attr;
   const char *yubi_attr_prefix;
@@ -290,6 +292,19 @@ authorize_user_token_ldap (struct cfg *cfg,
   if (cfg->ldap_uri && cfg->ldap_cacertfile) {
     /* Set CA CERTFILE. This makes ldaps work when using ldap_uri */
     ldap_set_option (0, LDAP_OPT_X_TLS_CACERTFILE, cfg->ldap_cacertfile);
+  }
+
+  if (cfg->ldap_clientcertfile && cfg->ldap_clientkeyfile) {
+    rc = ldap_set_option (NULL, LDAP_OPT_X_TLS_CERTFILE, cfg->ldap_clientcertfile);
+    if (rc != LDAP_SUCCESS) {
+      DBG ("tls_certfile: %s", ldap_err2string (rc));
+      goto done;
+    }
+    rc = ldap_set_option (NULL, LDAP_OPT_X_TLS_KEYFILE, cfg->ldap_clientkeyfile);
+    if (rc != LDAP_SUCCESS) {
+      DBG ("tls_keyfile: %s", ldap_err2string (rc));
+      goto done;
+    }
   }
 
   if (cfg->ldap_starttls) {
@@ -818,6 +833,10 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->ldap_filter = argv[i] + 12;
       if (strncmp (argv[i], "ldap_cacertfile=", 16) == 0)
         cfg->ldap_cacertfile = argv[i] + 16;
+      if (strncmp (argv[i], "ldap_clientcertfile=", 20) == 0)
+        cfg->ldap_clientcertfile = argv[i] + 20;
+      if (strncmp (argv[i], "ldap_clientkeyfile=", 19) == 0)
+        cfg->ldap_clientkeyfile = argv[i] + 19;
       if (strncmp (argv[i], "ldapdn=", 7) == 0)
 	cfg->ldapdn = argv[i] + 7;
       if (strncmp (argv[i], "user_attr=", 10) == 0)
@@ -894,6 +913,8 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
   DBG ("ldap_filter=%s", cfg->ldap_filter ? cfg->ldap_filter : "(null)");
   DBG ("ldap_cacertfile=%s", cfg->ldap_cacertfile ? cfg->ldap_cacertfile : "(null)");
   DBG ("ldapdn=%s", cfg->ldapdn ? cfg->ldapdn : "(null)");
+  DBG ("ldap_clientcertfile=%s", cfg->ldap_clientcertfile ? cfg->ldap_clientcertfile : "(null)");
+  DBG ("ldap_clientkeyfile=%s", cfg->ldap_clientkeyfile ? cfg->ldap_clientkeyfile : "(null)");
   DBG ("user_attr=%s", cfg->user_attr ? cfg->user_attr : "(null)");
   DBG ("yubi_attr=%s", cfg->yubi_attr ? cfg->yubi_attr : "(null)");
   DBG ("yubi_attr_prefix=%s", cfg->yubi_attr_prefix ? cfg->yubi_attr_prefix : "(null)");

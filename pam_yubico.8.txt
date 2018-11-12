@@ -80,6 +80,12 @@ The LDAP server host (default LDAP port is used). *Deprecated. Use 'ldap_uri' in
 *ldapdn*=_dn_::
 The distinguished name (DN) where the users are stored (eg: ou=users,dc=domain,dc=com). If 'ldap_filter' is used this is the base from which the subtree search will be performed.
 
+*ldap_clientcertfile*=_clientcertfile_::
+The path to a client cert file to use when talking to the LDAP server.  Note this requires 'ldap_clientkeyfile' to be set as well.
+
+*ldap_clientkeyfile*=_clientkeyfile_::
+The path to a key to be used with the client cert when talking to the LDAP server.  Note this requires 'ldap_clientcertfile' to be set as well.
+
 *user_attr*=_attr_::
 The LDAP attribute used to store user names (eg:cn).
 

@@ -236,6 +236,15 @@ ldapdn::
 specify the dn where the users are stored
 (eg: ou=users,dc=domain,dc=com).
 
+ldap_clientcertfile::
+The path to a client cert file to use when talking to the LDAP
+server.  Note this requires 'ldap_clientkeyfile' to be set as well.
+
+ldap_clientkeyfile::
+The path to a key to be used with the client cert when talking to
+the LDAP server.  Note this requires 'ldap_clientcertfile' to be
+set as well.
+
 ldap_bind_user::
 The user to attempt a LDAP bind as.
 
