@@ -171,6 +171,13 @@ stacked modules password and will never prompt the user - if no
 password is available or the password is not appropriate, the user
 will be denied access.
 
+always_prompt::
+If set, don't attempt to do a lookup to determine if the user has a
+YubiKey configured but instead prompt for one no matter what. This
+is useful in the case where ldap_bind_as_user is enabled but this
+module is being used to read the user's password (in a YubiKey+OTP
+auth scenario).
+
 nullok::
 If set, don't fail when there are no tokens declared for the user
 in the authorization mapping files or in LDAP.
