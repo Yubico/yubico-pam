@@ -111,6 +111,7 @@ struct cfg
   int verbose_otp;
   int try_first_pass;
   int use_first_pass;
+  int always_prompt;
   int nullok;
   int ldap_starttls;
   int ldap_bind_as_user;
@@ -805,6 +806,8 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->try_first_pass = 1;
       if (strcmp (argv[i], "use_first_pass") == 0)
 	cfg->use_first_pass = 1;
+      if (strcmp (argv[i], "always_prompt") == 0)
+	cfg->always_prompt = 1;
       if (strcmp (argv[i], "nullok") == 0)
 	cfg->nullok = 1;
       if (strcmp (argv[i], "ldap_starttls") == 0)
@@ -904,6 +907,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
   DBG ("verbose_otp=%d", cfg->verbose_otp);
   DBG ("try_first_pass=%d", cfg->try_first_pass);
   DBG ("use_first_pass=%d", cfg->use_first_pass);
+  DBG ("always_prompt=%d", cfg->always_prompt);
   DBG ("nullok=%d", cfg->nullok);
   DBG ("ldap_starttls=%d", cfg->ldap_starttls);
   DBG ("ldap_bind_as_user=%d", cfg->ldap_bind_as_user);
@@ -1080,34 +1084,36 @@ pam_sm_authenticate (pam_handle_t * pamh,
   /* check if the user has at least one associated token id */
   /* we set otp_id to NULL so that no matches will ever be found
    * but AUTH_NO_TOKENS will be returned if there are no tokens for the user */
-  if (cfg->ldapserver != NULL || cfg->ldap_uri != NULL)
-    valid_token = authorize_user_token_ldap (cfg, user, NULL, pamh);
-  else
-    valid_token = authorize_user_token (cfg, user, NULL, pamh);
+  if (!cfg->always_prompt) {
+    if (cfg->ldapserver != NULL || cfg->ldap_uri != NULL)
+      valid_token = authorize_user_token_ldap (cfg, user, NULL, pamh);
+    else
+      valid_token = authorize_user_token (cfg, user, NULL, pamh);
 
-  switch(valid_token)
-    {
-    case AUTH_ERROR:
-      DBG ("Internal error while looking for user tokens");
-      retval = PAM_AUTHINFO_UNAVAIL;
-      goto done;
-    case AUTH_NOT_FOUND:
-      /* User has associated tokens, so continue */
-      DBG ("Tokens found for user");
-      break;
-    case AUTH_NO_TOKENS:
-      DBG ("No tokens found for user");
-      if (cfg->nullok) {
-        retval = PAM_IGNORE;
-      } else {
-        retval = PAM_USER_UNKNOWN;
+    switch(valid_token)
+      {
+      case AUTH_ERROR:
+        DBG ("Internal error while looking for user tokens");
+        retval = PAM_AUTHINFO_UNAVAIL;
+        goto done;
+      case AUTH_NOT_FOUND:
+        /* User has associated tokens, so continue */
+        DBG ("Tokens found for user");
+        break;
+      case AUTH_NO_TOKENS:
+        DBG ("No tokens found for user");
+        if (cfg->nullok) {
+          retval = PAM_IGNORE;
+        } else {
+          retval = PAM_USER_UNKNOWN;
+        }
+        goto done;
+      default:
+        DBG ("Unhandled value while looking for user tokens");
+        retval = PAM_AUTHINFO_UNAVAIL;
+        goto done;
       }
-      goto done;
-    default:
-      DBG ("Unhandled value while looking for user tokens");
-      retval = PAM_AUTHINFO_UNAVAIL;
-      goto done;
-    }
+  }
 
   if (password == NULL)
     {
