@@ -678,6 +678,7 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
   /*
    * Write the challenge and response we will expect the next time to the state file.
    */
+  errstr = "Error updating YubiKey challenge, please check syslog or contact your system administrator";
   if (response_len > sizeof(state.response)) {
     DBG("Got too long response ??? (%u/%zu)", response_len, sizeof(state.response));
     goto out;
@@ -723,7 +724,6 @@ do_challenge_response(pam_handle_t *pamh, struct cfg *cfg, const char *username)
     goto restpriv_out;
   }
 
-  errstr = "Error updating YubiKey challenge, please check syslog or contact your system administrator";
   if (! write_chalresp_state (f, &state))
     goto out;
   if (fclose(f) < 0) {
