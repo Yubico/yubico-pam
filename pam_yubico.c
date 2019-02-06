@@ -1183,8 +1183,6 @@ pam_sm_authenticate (pam_handle_t * pamh,
   /* Copy only public ID into otp_id. Destination buffer is zeroed. */
   strncpy (otp_id, password + skip_bytes, cfg->token_id_length);
 
-  DBG ("OTP: %s ID: %s ", otp, otp_id);
-
   /* user entered their system password followed by generated OTP? */
   if (password_len > TOKEN_OTP_LEN + cfg->token_id_length)
     {
@@ -1219,6 +1217,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
   switch(valid_token)
     {
     case AUTH_FOUND:
+      DBG ("OTP: %s ID: %s ", otp, otp_id);
       DBG ("Token is associated to the user. Validating the OTP...");
       rc = ykclient_request (ykc, otp);
       DBG ("ykclient return value (%d): %s", rc, ykclient_strerror (rc));
