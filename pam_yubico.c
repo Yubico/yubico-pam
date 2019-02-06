@@ -1,5 +1,5 @@
 /* Written by Simon Josefsson <simon@yubico.com>.
- * Copyright (c) 2006-2016 Yubico AB
+ * Copyright (c) 2006-2019 Yubico AB
  * Copyright (c) 2011 Tollef Fog Heen <tfheen@err.no>
  * All rights reserved.
  *
@@ -45,6 +45,7 @@
 
 #include "util.h"
 #include "drop_privs.h"
+#include "ykbzero.h"
 
 #include <ykclient.h>
 
@@ -998,7 +999,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
 	      pam_strerror (pamh, retval));
 	  goto done;
 	}
-      DBG ("get password returned: %s", password);
+      DBG ("get password returned: /* not logged */");
     }
 
   if (cfg->use_first_pass && password == NULL)
@@ -1263,7 +1264,12 @@ pam_sm_authenticate (pam_handle_t * pamh,
 
 done:
   if (onlypasswd)
-    free(onlypasswd);
+    {
+      insecure_memzero(onlypasswd, strlen(onlypasswd));
+      free(onlypasswd);
+    }
+  insecure_memzero(otp, sizeof(otp));
+  insecure_memzero(otp_id, sizeof(otp_id));
   if (templates > 0)
     {
       size_t i;
