@@ -145,6 +145,13 @@ struct cfg
 #endif
 #define DBG(x...) if (cfg->debug) { D(cfg->debug_file, x); }
 
+/* Helper to free memory used by pam_set_data */
+static void
+setcred_free (pam_handle_t *pamh, void *ptr, int err)
+{
+  free (ptr);
+}
+
 /*
  * Authorize authenticated OTP_ID for login as USERNAME using AUTHFILE.
  *
@@ -1291,7 +1298,21 @@ done:
       retval = PAM_SUCCESS;
     }
   DBG ("done. [%s]", pam_strerror (pamh, retval));
-  pam_set_data (pamh, "yubico_setcred_return", (void*)(intptr_t)retval, NULL);
+
+  int* pretval = malloc (sizeof(int));
+  if (pretval)
+    {
+      *pretval = retval;
+      if (pam_set_data (pamh, "yubico_setcred_return", (void*)pretval,
+	   setcred_free) != PAM_SUCCESS)
+        {
+          DBG ("pam_set_data failed setting setcred_return: %d", retval);
+        }
+    }
+  else
+    {
+	DBG ("Failed allocating memory for setcred_return status");
+    }
 
   if (resp)
     {
@@ -1326,11 +1347,12 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
   struct cfg cfg_st;
   struct cfg *cfg = &cfg_st; /* for DBG macro */
-  int retval;
-  int rc = pam_get_data(pamh, "yubico_setcred_return", (const void**)&retval);
+  int retval = PAM_AUTH_ERR;
+  const void *pretval = NULL;
+  int rc = pam_get_data (pamh, "yubico_setcred_return", &pretval);
 
   parse_cfg (flags, argc, argv, cfg);
-  if (rc == PAM_SUCCESS && retval == PAM_SUCCESS) {
+  if (rc == PAM_SUCCESS && pretval && *(const int *)pretval == PAM_SUCCESS) {
     DBG ("pam_sm_acct_mgmt returning PAM_SUCCESS");
     retval = PAM_SUCCESS;
   } else {
