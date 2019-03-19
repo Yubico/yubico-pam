@@ -71,6 +71,7 @@ get_user_cfgfile_path(const char *common_path, const char *filename, const struc
     }
     i = snprintf(userfile, len, "%s/%s", common_path, filename);
     if (i < 0 || i >= len) {
+      free(userfile);
       return 0;
     }
     *fn = userfile;
@@ -85,6 +86,7 @@ get_user_cfgfile_path(const char *common_path, const char *filename, const struc
   }
   i = snprintf(userfile, len, "%s/.yubico/%s", user->pw_dir, filename);
   if (i < 0 || i >= len) {
+    free(userfile);
     return 0;
   }
   *fn = userfile;
