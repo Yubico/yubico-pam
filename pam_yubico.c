@@ -790,6 +790,9 @@ restpriv_out:
 static void
 parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 {
+  struct stat st;
+  FILE *file = NULL;
+  int fd = -1;
   int i;
 
   memset (cfg, 0, sizeof(struct cfg));
@@ -879,24 +882,15 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
             }
           else
             {
-              struct stat st;
-              int fd;
-              FILE *file;
-              if(lstat(filename, &st) == 0)
+              fd = open(filename, O_WRONLY | O_APPEND | O_CLOEXEC | O_NOFOLLOW | O_NOCTTY);
+              if (fd >= 0 && (fstat(fd, &st) == 0) && S_ISREG(st.st_mode))
                 {
-                  if(S_ISREG(st.st_mode))
+                  file = fdopen(fd, "a");
+                  if(file != NULL)
                     {
-                      fd = open(filename, O_WRONLY | O_CREAT | O_APPEND | O_CLOEXEC, S_IRUSR | S_IWUSR | S_IRGRP);
-                      if (fd >= 0)
-                        {
-                          file = fdopen(fd, "a");
-                          if (file)
-                            {
-                              cfg->debug_file = file;
-                            } else {
-			      close(fd);
-			    }
-                        }
+                      cfg->debug_file = file;
+                      file = NULL;
+                      fd = -1;
                     }
                 }
             }
@@ -940,6 +934,12 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
   DBG ("token_id_length=%u", cfg->token_id_length);
   DBG ("mode=%s", cfg->mode == CLIENT ? "client" : "chresp" );
   DBG ("chalresp_path=%s", cfg->chalresp_path ? cfg->chalresp_path : "(null)");
+
+  if (fd != -1)
+    close(fd);
+
+  if (file != NULL)
+    fclose(file);
 }
 
 PAM_EXTERN int
