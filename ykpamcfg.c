@@ -250,7 +250,7 @@ do_add_hmac_chalresp(YK_KEY *yk, uint8_t slot, bool verbose, char *output_dir, u
 
   umask(077);
 
-  fd = open (fn, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, S_IRUSR | S_IWUSR);
+  fd = open (fn, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC | O_NOFOLLOW | O_NOCTTY, S_IRUSR | S_IWUSR);
   if (fd < 0) {
     fprintf (stderr, "Failed to open '%s' for writing: %s\n", fn, strerror (errno));
     goto out;
