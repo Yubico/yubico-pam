@@ -181,6 +181,7 @@ authorize_user_token (struct cfg *cfg,
       size_t buflen = sizeof(buf);
       int pwres;
       PAM_MODUTIL_DEF_PRIVS(privs);
+      struct stat st;
 
       pwres = getpwnam_r (username, &pass, buf, buflen, &p);
       if (p == NULL) {
@@ -206,7 +207,11 @@ authorize_user_token (struct cfg *cfg,
         goto free_out;
       }
 
-      retval = check_user_token (userfile, username, otp_id, cfg->debug, cfg->debug_file);
+      if (stat (userfile, &st) != 0 && errno == ENOENT) {
+        retval = AUTH_NO_TOKENS;
+      } else {
+        retval = check_user_token (userfile, username, otp_id, cfg->debug, cfg->debug_file);
+      }
 
       if(pam_modutil_regain_priv(pamh, &privs)) {
         DBG ("could not restore privileges");
