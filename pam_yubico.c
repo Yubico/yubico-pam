@@ -207,7 +207,7 @@ authorize_user_token (struct cfg *cfg,
         goto free_out;
       }
 
-      if (stat (userfile, &st) != 0 && errno == ENOENT) {
+      if (lstat (userfile, &st) != 0 && errno == ENOENT) {
         retval = AUTH_NO_TOKENS;
       } else {
         retval = check_user_token (userfile, username, otp_id, cfg->debug, cfg->debug_file);
