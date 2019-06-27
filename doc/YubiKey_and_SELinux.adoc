@@ -17,3 +17,7 @@ If you are using your own server via `urllist`/`url` in the pam conf file and us
 By default, SELinux prevents sshd from opening local files other than SSH configuration files. If you would like to debug this module using `debug` and `debug_file` parameters, you may need to temporarily relax your SELinux confinement:
 
     setenforce permissive
+
+Don't forget to re-enable SELinux once you're done:
+
+    setenforce enforcing
