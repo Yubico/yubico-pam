@@ -66,7 +66,7 @@ dist_man8_MANS = pam_yubico.8
 DISTCLEANFILES = $(dist_man1_MANS) $(dist_man8_MANS)
 
 MANSOURCES = pam_yubico.8.txt ykpamcfg.1.txt
-EXTRA_DIST = doc/Authentication_Using_Challenge-Response.adoc doc/MacOS_X_Challenge-Response.adoc doc/Two_Factor_PAM_Configuration.adoc doc/Ubuntu_FreeRadius_YubiKey.adoc doc/YubiKey_and_FreeRADIUS_1FA_via_PAM.adoc doc/YubiKey_and_FreeRADIUS_via_PAM.adoc doc/YubiKey_and_OpenVPN_via_PAM.adoc doc/YubiKey_and_Radius_via_PAM.adoc doc/YubiKey_and_SELinux_on_Fedora_18_and_up.adoc doc/YubiKey_and_SSH_via_PAM.adoc
+EXTRA_DIST = doc/Authentication_Using_Challenge-Response.adoc doc/MacOS_X_Challenge-Response.adoc doc/Two_Factor_PAM_Configuration.adoc doc/Ubuntu_FreeRadius_YubiKey.adoc doc/YubiKey_and_FreeRADIUS_1FA_via_PAM.adoc doc/YubiKey_and_FreeRADIUS_via_PAM.adoc doc/YubiKey_and_OpenVPN_via_PAM.adoc doc/YubiKey_and_Radius_via_PAM.adoc doc/YubiKey_and_SELinux.adoc doc/YubiKey_and_SSH_via_PAM.adoc
 EXTRA_DIST += $(MANSOURCES)
 EXTRA_DIST += tests/aux/ykval.pl tests/aux/ldap.pl tests/aux/authfile
 
