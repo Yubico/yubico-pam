@@ -436,7 +436,7 @@ authorize_user_token_ldap (struct cfg *cfg,
 		        {
 		          retval = AUTH_NOT_FOUND;
 		        }
-		      if(token_id && !strncmp (token_id, vals[i]->bv_val + yubi_attr_prefix_len, strlen (vals[i]->bv_val + yubi_attr_prefix_len)))
+		      if(token_id && !strncmp(token_id, vals[i]->bv_val + yubi_attr_prefix_len, cfg->token_id_length))
 		        {
 		          DBG ("Token found :: %s", vals[i]->bv_val);
 		          retval = AUTH_FOUND;
@@ -493,7 +493,7 @@ display_error(pam_handle_t *pamh, const char *message, struct cfg *cfg) {
   msg[0].msg = (char *) message; /* on some systems, pam_message.msg isn't const */
   msg[0].msg_style = PAM_ERROR_MSG;
   retval = conv->conv(1, pmsg, &resp, conv->appdata_ptr);
-  
+
   if (retval != PAM_SUCCESS) {
     DBG("conv returned error: %s", pam_strerror (pamh, retval));
     return retval;
