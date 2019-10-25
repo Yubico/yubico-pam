@@ -55,7 +55,7 @@ int pam_modutil_drop_priv(pam_handle_t *pamh, struct _ykpam_privs *privs, struct
     privs->saved_egid = getegid();
 
     if ((privs->saved_euid == pw->pw_uid) && (privs->saved_egid == pw->pw_gid)) {
-        D (privs->debug_file, "Privilges already dropped, pretend it is all right");
+        D (privs->debug_file, "Privileges already dropped, pretend it is all right");
         return 0;
     }
 
