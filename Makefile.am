@@ -58,6 +58,7 @@ endif
 ykpamcfg_SOURCES = ykpamcfg.c
 ykpamcfg_LDADD = libpam_util.la
 
+if ENABLE_DOC
 if YKPERS
 dist_man1_MANS = ykpamcfg.1
 endif
@@ -77,6 +78,8 @@ SUFFIXES = .1.txt .1 .8.txt .8
 .8.txt.8:
 	$(A2X) -L --format=manpage -a revdate="Version $(VERSION)" $<
 
+
+endif
 
 if ENABLE_COV
 AM_CFLAGS += --coverage

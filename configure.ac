@@ -50,6 +50,14 @@ AC_CHECK_LIB([pam], [pam_start], [AC_SUBST([LIBPAM], ["-lpam"])])
 
 AC_SEARCH_LIBS([pam_modutil_drop_priv], ["pam"], [AC_DEFINE([HAVE_PAM_MODUTIL_DROP_PRIV], [1])])
 
+# --disable-documentation
+AC_ARG_ENABLE([documentation],
+	      [AS_HELP_STRING([--disable-documentation],
+			     [do not build documentation])],
+			     [enable_doc="${enableval}" ],
+			     [enable_doc="yes"])
+AM_CONDITIONAL(ENABLE_DOC, test "$enable_doc" != "no")
+
 AC_ARG_WITH([ldap],
             [AS_HELP_STRING([--without-ldap],
               [disable support for ldap])],
