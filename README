@@ -218,6 +218,10 @@ respectively.
 cainfo::
 Option to allow usage of a CA bundle instead of path.
 
+prompt::
+Specifies the prompt that PAM should display when prompting for the 
+OTP token. If not specified "YubiKey for `%s': " is used.
+
 proxy::
 specify a proxy to connect to the validation server. Valid schemes are
 http://, https://, socks4://, socks4a://, socks5:// or socks5h://.
