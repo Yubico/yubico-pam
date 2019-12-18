@@ -120,6 +120,7 @@ struct cfg
   const char *capath;
   const char *cainfo;
   const char *proxy;
+  const char *prompt;
   const char *url;
   const char *urllist;
   const char *ldapserver;
@@ -838,6 +839,8 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
         cfg->cainfo = argv[i] + 7;
       if (strncmp (argv[i], "proxy=", 6) == 0)
 	cfg->proxy = argv[i] + 6;
+      if (strncmp (argv[i], "prompt=", 7) == 0)
+	cfg->prompt = argv[i] + 7;
       if (strncmp (argv[i], "url=", 4) == 0)
 	cfg->url = argv[i] + 4;
       if (strncmp (argv[i], "urllist=", 8) == 0)
@@ -935,6 +938,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
   DBG ("urllist=%s", cfg->urllist ? cfg->urllist : "(null)");
   DBG ("capath=%s", cfg->capath ? cfg->capath : "(null)");
   DBG ("cainfo=%s", cfg->cainfo ? cfg->cainfo : "(null)");
+  DBG ("prompt=%s", cfg->prompt ? cfg->prompt : "(null)");
   DBG ("proxy=%s", cfg->proxy ? cfg->proxy : "(null)");
   DBG ("token_id_length=%u", cfg->token_id_length);
   DBG ("mode=%s", cfg->mode == CLIENT ? "client" : "chresp" );
@@ -1140,7 +1144,12 @@ pam_sm_authenticate (pam_handle_t * pamh,
       pmsg[0] = &msg[0];
       {
 #define QUERY_TEMPLATE "YubiKey for `%s': "
-	size_t len = strlen (QUERY_TEMPLATE) + strlen (user);
+	size_t len = strlen (user);
+	if (cfg->prompt != NULL) {
+		len += strlen (cfg->prompt);
+	} else {
+		len += strlen (QUERY_TEMPLATE);
+	}
 	int wrote;
 
 	msg[0].msg = malloc (len);
@@ -1150,7 +1159,11 @@ pam_sm_authenticate (pam_handle_t * pamh,
 	    goto done;
 	  }
 
-	wrote = snprintf ((char *) msg[0].msg, len, QUERY_TEMPLATE, user);
+	if (cfg->prompt != NULL) {
+		wrote = snprintf ((char *) msg[0].msg, len, cfg->prompt, user);
+	} else {
+		wrote = snprintf ((char *) msg[0].msg, len, QUERY_TEMPLATE, user);
+	}
 	if (wrote < 0 || wrote >= len)
 	  {
 	    retval = PAM_BUF_ERR;
