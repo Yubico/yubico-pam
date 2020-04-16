@@ -54,7 +54,8 @@ warn "YKVAL mockup started on $port";
 while(1) {
   my $clientsocket = $socket->accept();
   my $clientdata = <$clientsocket>;
-  my $ret = "h=ZrU7UfjwazJVf5ay1P/oC3XCQlI=\n";
+  my $ret = "HTTP/1.1 200 OK\n\n";
+  $ret .= "h=ZrU7UfjwazJVf5ay1P/oC3XCQlI=\n";
 
   if($clientdata =~ m/nonce=([a-zA-Z0-9]+).*otp=([cbdefghijklnrtuv]+)/) {
     my $nonce = $1;
@@ -71,6 +72,6 @@ while(1) {
   } else {
     $ret .= "status=MISSING_PARAMETER";
   }
-  print $clientsocket "\n$ret\n";
+  print $clientsocket "$ret\n";
   close $clientsocket;
 }
