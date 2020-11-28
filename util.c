@@ -95,26 +95,25 @@ get_user_cfgfile_path(const char *common_path, const char *filename, const struc
   return 1;
 }
 
-
 /*
- * This function will look for users name with valid user token id.
+ * This function will look for users name with valid user token id, in a database Mysql
  *
  * Returns one of AUTH_FOUND, AUTH_NOT_FOUND, AUTH_NO_TOKENS, AUTH_ERROR.
  *
- * File format is as follows:
- * <user-name>:<token_id>:<token_id>
- * <user-name>:<token_id>
  *
  */
 int
-check_user_token (const char *authfile,
-		  const char *username,
-		  const char *otp_id,
-		  int verbose,
-                  FILE *debug_file)
+check_user_token_mysql (const char *mysql_server,
+    const char *mysql_user,
+    const char *mysql_password,
+    const char *mysql_database,
+		const char *username,
+		const char *otp_id,
+		int verbose,
+    FILE *debug_file)
 {
-  char buf[1024];
   char *s_user, *s_token;
+  //DEFAULT !
   int retval = AUTH_ERROR;
   int fd;
   struct stat st;
@@ -124,25 +123,26 @@ check_user_token (const char *authfile,
   //Check Mysql Librairie
   if (mysql_library_init(0, NULL, NULL)) {
     if(verbose)
-	  D (debug_file, "could not initialize MySQL client library\n");
+	D (debug_file, "could not initialize MySQL client library\n");
+    return retval;
   }
 
   con = mysql_init(con);
 
   if (!con) {
     if(verbose)
-	  D (debug_file, "out of memorys\n");
+	D (debug_file, "out of memorys\n");
+    return retval;
   }
 
-  mysql_options(con, MYSQL_READ_DEFAULT_FILE, (void *)"./mariadb.cnf");
-
-  if (mysql_real_connect(con, "database", "otp", "otp",
-          "otp", 0, NULL, 0) == NULL)
+  if (mysql_real_connect(con,"database","otp","otp","otp", 0, NULL, 0) == NULL)
   {
     if(verbose)
-	  D (debug_file, "Connection failed ...\n");
+	D (debug_file, "Connection failed ...\n");
+    return retval;
   }
  
+  retval = AUTH_NO_TOKENS;
   mysql_query(con, "SELECT * FROM radcheck");
   MYSQL_RES *result = mysql_store_result(con);
   int num_fields = mysql_num_fields(result);
@@ -160,6 +160,33 @@ check_user_token (const char *authfile,
   mysql_close(con);
   mysql_library_end();
 
+  return retval;
+}
+
+/*
+ * This function will look for users name with valid user token id.
+ *
+ * Returns one of AUTH_FOUND, AUTH_NOT_FOUND, AUTH_NO_TOKENS, AUTH_ERROR.
+ *
+ * File format is as follows:
+ * <user-name>:<token_id>:<token_id>
+ * <user-name>:<token_id>
+ *
+ */
+int
+check_user_token (const char *authfile,
+		  const char *username,
+		  const char *otp_id,
+		  int verbose,
+      FILE *debug_file)
+{
+  char buf[1024];
+  char *s_user, *s_token;
+  int retval = AUTH_ERROR;
+  int fd;
+  struct stat st;
+  FILE *opwfile;
+  
   fd = open(authfile, O_RDONLY | O_CLOEXEC, 0);
   if (fd < 0) {
       if(verbose)
@@ -194,7 +221,7 @@ check_user_token (const char *authfile,
     {
       char *saveptr = NULL;
       if (buf[strlen (buf) - 1] == '\n')
-	buf[strlen (buf) - 1] = '\0';
+	      buf[strlen (buf) - 1] = '\0';
       if (buf[0] == '#') {
           /* This is a comment and we may skip it. */
           if(verbose)

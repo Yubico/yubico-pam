@@ -51,6 +51,7 @@
 #define AUTH_NOT_FOUND -1 /* The requested token is not associated to the user */
 
 int get_user_cfgfile_path(const char *common_path, const char *filename, const struct passwd *user, char **fn);
+int check_user_token_mysql(const char *mysql_server,const char *mysql_user,const char *mysql_password,const char *mysql_database,const char *username,const char *otp_id,int verbose,FILE *debug_file);
 int check_user_token(const char *authfile, const char *username, const char *otp_id, int verbose, FILE *debug_file);
 
 #if HAVE_CR
