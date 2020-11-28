@@ -8,7 +8,7 @@ on:
 env:
   SCAN_IMG:
     yubico-yes-docker-local.jfrog.io/static-code-analysis/c:v1
-  COMPILE_DEPS: "libykclient-dev libykpers-1-dev libyubikey-dev"
+  COMPILE_DEPS: "libykclient-dev libykpers-1-dev libyubikey-dev libmysqlclient-dev"
 
 jobs:
   build:

@@ -52,6 +52,10 @@
 #include <ykdef.h>
 #endif /* HAVE_CR */
 
+#ifdef HAVE_MYSQL
+#include <mysql.h>
+#endif
+
 int
 get_user_cfgfile_path(const char *common_path, const char *filename, const struct passwd *user, char **fn)
 {
@@ -93,6 +97,195 @@ get_user_cfgfile_path(const char *common_path, const char *filename, const struc
   return 1;
 }
 
+#ifdef HAVE_MYSQL
+/*
+ * This function will look for users name with valid user token id, in a database Mysql
+ *
+ * Returns one of AUTH_FOUND, AUTH_NOT_FOUND, AUTH_NO_TOKENS, AUTH_ERROR.
+ *
+ * Need database with this table structure:
+ *
+ * CREATE TABLE IF NOT EXISTS  `otp`.`yubikey_mappings`(
+ *   `otp_id` VARCHAR(12) NOT NULL ,
+ *   `username` VARCHAR(64) NOT NULL ,
+ *   PRIMARY KEY  (`otp_id`(12))
+ *  );
+ *
+ */
+int
+check_user_token_mysql(const char *mysql_server,
+      const char *mysql_user,
+      const char *mysql_password,
+      const char *mysql_database,
+      const char *username,
+      const char *otp_id,
+      int verbose,
+      FILE *debug_file)
+{
+
+  int retval = AUTH_ERROR;
+  int fd;
+  struct stat st;
+  FILE *opwfile;
+  MYSQL *con = NULL;
+  MYSQL_STMT *stmt;
+  MYSQL_BIND ps_params[2];
+  MYSQL_BIND bind[1];
+  long unsigned int str_username;
+  long unsigned int str_otp;
+  long unsigned int length;
+  int int_data;
+  int row_count;
+  bool is_null;
+  bool error;
+
+  if(mysql_library_init(0, NULL, NULL)){
+    if(verbose){
+      D (debug_file, "could not initialize MySQL client library");
+    }
+
+    return retval;
+  }
+
+  con = mysql_init(con);
+  if(!con) {
+    if(verbose)
+	  D (debug_file, "out of memorys");
+    return retval;
+  }
+
+  if(mysql_real_connect(con, mysql_server,mysql_user,mysql_password,mysql_database, 0, NULL, 0) == NULL)
+  {
+    if(verbose)
+	  D (debug_file, "Connection failed ...");
+    return retval;
+  }
+
+  stmt = mysql_stmt_init(con);
+  if(!stmt)
+  {
+    if(verbose)
+    D (debug_file, "Connection failed ... 2");
+    return retval;
+  }
+
+  const char *sql = "SELECT count(username) FROM yubikey_mappings WHERE username = ?;";
+  const char *sql2 = "SELECT count(username) FROM yubikey_mappings WHERE username = ? and otp_id = ?;";
+
+  if(otp_id == NULL)
+  {
+    if(mysql_stmt_prepare(stmt, sql, strlen(sql)))
+    {
+      if(verbose)
+	    D (debug_file, "mysql_stmt_prepare() failed %s", mysql_stmt_error(stmt));
+      return retval;
+    }
+  }else{
+    if(mysql_stmt_prepare(stmt, sql2, strlen(sql2)))
+    {
+      if(verbose)
+	    D (debug_file, "mysql_stmt_prepare() failed %s", mysql_stmt_error(stmt));
+      return retval;
+    }
+  }
+
+  str_username = strlen(username);
+  memset(ps_params, 0, sizeof(ps_params));
+  ps_params[0].buffer_type = MYSQL_TYPE_STRING;
+  ps_params[0].buffer = (char *)username;
+  ps_params[0].buffer_length = str_username;
+  ps_params[0].length = &str_username;
+  ps_params[0].is_null = 0;
+
+  if(otp_id != NULL)
+  {
+    str_otp= strlen(otp_id);
+    ps_params[1].buffer_type = MYSQL_TYPE_STRING;
+    ps_params[1].buffer = (char *)otp_id;
+    ps_params[1].buffer_length = str_otp;
+    ps_params[1].length = &str_otp;
+    ps_params[1].is_null = 0;
+  }
+
+  if(mysql_stmt_bind_param(stmt, ps_params))
+  {
+    if(verbose)
+    D (debug_file, "mysql_stmt_bind_param() failed %s", mysql_stmt_error(stmt));
+    return retval;
+  }
+
+  if(mysql_stmt_execute(stmt))
+  {
+    if(verbose)
+    D (debug_file, "mysql_stmt_execute() failed %s", mysql_stmt_error(stmt));
+    return retval;
+  }
+
+  memset(bind, 0, sizeof(bind));
+  bind[0].buffer_type = MYSQL_TYPE_LONG;
+  bind[0].buffer = (char *)&int_data;
+  bind[0].length = &length;
+  bind[0].is_null = &is_null;
+  bind[0].error = &error;
+
+  if(mysql_stmt_bind_result(stmt, bind))
+  {
+    if(verbose)
+    D (debug_file, "mysql_stmt_bind_result() failed %s", mysql_stmt_error(stmt));
+  }
+
+  if(mysql_stmt_store_result(stmt))
+  {
+    if(verbose)
+    D (debug_file, "mysql_stmt_store_result() failed %s", mysql_stmt_error(stmt));
+    return retval;
+  }
+
+  while(!mysql_stmt_fetch(stmt))
+  {
+    if(is_null)
+    {
+      D (debug_file, "mysql_stmt_fetch() failed");
+    }
+    else
+    {
+      if(otp_id != NULL){
+        if(int_data)
+        {
+          return AUTH_FOUND;
+        }
+        else
+        {
+          return AUTH_NOT_FOUND;
+        }
+      }
+      else if(otp_id == NULL)
+      {
+        if(int_data)
+        {
+          return AUTH_NOT_FOUND;
+        }
+        else
+        {
+          return AUTH_NO_TOKENS;
+        }
+      }
+    }
+  }
+
+  if(mysql_stmt_close(stmt))
+  {
+    if(verbose)
+    D (debug_file, "mysql_stmt_close() failed %s", mysql_stmt_error(stmt));
+    return retval;
+  }
+
+  mysql_close(con);
+  mysql_library_end();
+
+  return retval;
+}
+#endif
 
 /*
  * This function will look for users name with valid user token id.

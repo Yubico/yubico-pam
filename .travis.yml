@@ -1,4 +1,3 @@
-sudo: required
 language: c
 os:
   - linux
@@ -7,13 +6,14 @@ compiler:
   - gcc
   - clang
 env:
-  - CONFIGURE_ARGS="" EXTRA="libldap2-dev libykpers-1-dev libnet-ldap-server-perl"
-  - CONFIGURE_ARGS="--without-ldap" EXTRA="libykpers-1-dev"
-  - CONFIGURE_ARGS="--without-cr" EXTRA="libldap2-dev libnet-ldap-server-perl"
-  - CONFIGURE_ARGS="--without-ldap --without-cr"
+  - CONFIGURE_ARGS="" EXTRA="libldap2-dev libykpers-1-dev libnet-ldap-server-perl libmysqlclient-dev"
+  - CONFIGURE_ARGS="--without-ldap" EXTRA="libykpers-1-dev libmysqlclient-dev"
+  - CONFIGURE_ARGS="--without-cr" EXTRA="libldap2-dev libnet-ldap-server-perl libmysqlclient-dev"
+  - CONFIGURE_ARGS="--without-ldap --without-cr" EXTRA="libmysqlclient-dev"
 script: tests/aux/build-and-test.sh
-matrix:
+jobs:
+  install: travis_wait 30 mvn install
   include:
     - compiler: gcc
       os: linux
-      env: COVERAGE="--enable-coverage" EXTRA="libldap2-dev libykpers-1-dev libnet-ldap-server-perl lcov"
+      env: COVERAGE="--enable-coverage" EXTRA="libldap2-dev libykpers-1-dev libnet-ldap-server-perl lcov libmysqlclient-dev"

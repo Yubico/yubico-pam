@@ -75,6 +75,19 @@ AC_ARG_WITH([ldap],
                  [libldap not found, will not be compiled (--without-ldap to disable ldap support)])],
               [])])
 
+AC_ARG_WITH([mysql],
+            [AS_HELP_STRING([--without-mysql],
+              [disable support for mysql])],
+            [],
+            [with_mysql=yes])
+AS_IF([test "x$with_mysql" != xno],
+  [
+    PKG_CHECK_MODULES([MYSQL], [mysqlclient],
+    [AC_DEFINE([HAVE_MYSQL], [1],[Define if you have mysqlclient])],
+    [AC_MSG_WARN(
+                 [libmysqlclient not found, will not be compiled (--without-mysql to disable mysql support)])])
+  ])
+AM_CONDITIONAL(MYSQL_SUPPORT,test "x$with_mysql" != xno)
 
 AC_LIB_HAVE_LINKFLAGS([ykclient],, [#include <ykclient.h>],
                       [ykclient_set_proxy(0, 0)])
