@@ -40,8 +40,10 @@
 #include <fcntl.h>
 #include <glob.h>
 #include <unistd.h>
+#include <mysql.h>
 
 #include "util.h"
+
 
 #if HAVE_CR
 /* for yubikey_hex_decode and yubikey_hex_p */
@@ -117,6 +119,46 @@ check_user_token (const char *authfile,
   int fd;
   struct stat st;
   FILE *opwfile;
+  MYSQL *con = NULL;
+
+  //Check Mysql Librairie
+  if (mysql_library_init(0, NULL, NULL)) {
+    if(verbose)
+	  D (debug_file, "could not initialize MySQL client library\n");
+  }
+
+  con = mysql_init(con);
+
+  if (!con) {
+    if(verbose)
+	  D (debug_file, "out of memorys\n");
+  }
+
+  mysql_options(con, MYSQL_READ_DEFAULT_FILE, (void *)"./mariadb.cnf");
+
+  if (mysql_real_connect(con, "database", "otp", "otp",
+          "otp", 0, NULL, 0) == NULL)
+  {
+    if(verbose)
+	  D (debug_file, "Connection failed ...\n");
+  }
+ 
+  mysql_query(con, "SELECT * FROM radcheck");
+  MYSQL_RES *result = mysql_store_result(con);
+  int num_fields = mysql_num_fields(result);
+    MYSQL_ROW row;
+    while ((row = mysql_fetch_row(result)))
+    {
+        for(int i = 0; i < num_fields; i++)
+        {
+            printf("%s ", row[i] ? row[i] : "NULL");
+        }
+        printf("\n");
+    }
+
+  mysql_free_result(result);
+  mysql_close(con);
+  mysql_library_end();
 
   fd = open(authfile, O_RDONLY | O_CLOEXEC, 0);
   if (fd < 0) {

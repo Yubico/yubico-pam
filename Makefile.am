@@ -31,6 +31,8 @@ SUBDIRS = . tests
 ACLOCAL_AMFLAGS = -I m4
 
 AM_CFLAGS = $(WARN_CFLAGS)
+#Benjamin
+AM_CFLAGS += @MYSQL_CFLAGS@
 AM_CPPFLAGS = @YKPERS_CFLAGS@
 
 libdir = $(PAMDIR)
@@ -43,9 +45,11 @@ pam_yubico_la_LIBADD = @LTLIBYUBIKEY@ @LTLIBYKCLIENT@ @LIBLDAP@ @LIBPAM@
 pam_yubico_la_LIBADD += libpam_util.la libpam_real.la
 pam_yubico_la_LDFLAGS = -module -avoid-version
 
+
+
 noinst_LTLIBRARIES = libpam_util.la libpam_real.la
 libpam_util_la_SOURCES = util.c util.h
-libpam_util_la_LIBADD = @LTLIBYUBIKEY@ @YKPERS_LIBS@
+libpam_util_la_LIBADD = @LTLIBYUBIKEY@ @YKPERS_LIBS@ @MYSQL_LIBS@
 
 libpam_real_la_SOURCES = pam_yubico.c
 

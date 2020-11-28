@@ -164,7 +164,7 @@ authorize_user_token (struct cfg *cfg,
 		      pam_handle_t *pamh)
 {
   int retval = AUTH_ERROR;
-
+  DBG ("HELLLLLOOOO BENJAMINNNNNNN");
   if (cfg->auth_file)
     {
       /* Administrator had configured the file and specified is name

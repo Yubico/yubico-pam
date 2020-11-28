@@ -183,6 +183,12 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[]],
 
 AC_CONFIG_FILES(Makefile)
 AC_CONFIG_FILES(tests/Makefile)
+
+#Benjamin
+WITH_MYSQL()
+MYSQL_USE_CLIENT_API()
+MYSQL_SUBST()
+
 AC_OUTPUT
 
 AC_MSG_NOTICE([Summary of build options:
