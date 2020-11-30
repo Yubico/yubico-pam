@@ -134,7 +134,7 @@ struct cfg
   const char *user_attr;
   const char *yubi_attr;
   const char *yubi_attr_prefix;
-  //Benjamin
+  //Mysql
   const char *mysql_server;
   const char *mysql_user;
   const char *mysql_password;
@@ -886,7 +886,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->mode = CLIENT;
       if (strncmp (argv[i], "chalresp_path=", 14) == 0)
 	cfg->chalresp_path = argv[i] + 14;
-    //Benjamin mysql  
+    //Mysql
       if (strncmp (argv[i], "mysql_server=", 13) == 0)
 	cfg->mysql_server = argv[i] + 13;
        if (strncmp (argv[i], "mysql_user=", 11) == 0)
@@ -1128,7 +1128,6 @@ pam_sm_authenticate (pam_handle_t * pamh,
     if (cfg->ldapserver != NULL || cfg->ldap_uri != NULL)
       valid_token = authorize_user_token_ldap (cfg, user, NULL, pamh);
     else
-      DBG ("OTP ENVOYE A NULLLLLL");
       valid_token = authorize_user_token (cfg, user, NULL, pamh);
 
     switch(valid_token)

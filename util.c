@@ -102,6 +102,13 @@ get_user_cfgfile_path(const char *common_path, const char *filename, const struc
  *
  * Returns one of AUTH_FOUND, AUTH_NOT_FOUND, AUTH_NO_TOKENS, AUTH_ERROR.
  *
+ * Need database with this table structure : 
+ * 
+ * CREATE TABLE IF NOT EXISTS  `otp`.`yubikey_mappings` ( 
+ *   `otp_id` VARCHAR(12) NOT NULL ,  
+ *   `username` VARCHAR(64) NOT NULL ,     
+ *   PRIMARY KEY  (`otp_id`(12))
+ *  );
  *
  */
 int
@@ -128,7 +135,8 @@ check_user_token_mysql (const char *mysql_server,
   MYSQL_BIND ps_params[2];
   MYSQL_BIND bind[1];
 
-  long unsigned int aSize = 64;
+  long unsigned int username_size = 64;
+  long unsigned int otp_size = 12;
   unsigned long str_username;
   unsigned long str_otp;
   unsigned long length;
@@ -145,7 +153,6 @@ check_user_token_mysql (const char *mysql_server,
   }
 
   con = mysql_init(con);
-
   if (!con) {
     if(verbose)
 	D (debug_file, "out of memorys\n");
@@ -168,8 +175,8 @@ check_user_token_mysql (const char *mysql_server,
       return retval; 
     }
 
-    const char *sql = "SELECT count(username) FROM radcheck WHERE username = ?;";
-    const char *sql2 = "SELECT count(username) FROM radcheck, yubikeys_otpid WHERE radcheck_id = id and username = ? and otp_id = ?;";
+  const char *sql = "SELECT count(username) FROM yubikey_mappings WHERE username = ?;";
+  const char *sql2 = "SELECT count(username) FROM yubikey_mappings WHERE username = ? and otp_id = ?;";
 
   if(otp_id == NULL)
   {
@@ -191,10 +198,9 @@ check_user_token_mysql (const char *mysql_server,
 
   str_username= strlen(username);  
   memset(ps_params, 0, sizeof(ps_params));
-
   ps_params[0].buffer_type = MYSQL_TYPE_STRING;
   ps_params[0].buffer = (char *)username;
-  ps_params[0].buffer_length = aSize;
+  ps_params[0].buffer_length = username_size;
   ps_params[0].length = &str_username;
   ps_params[0].is_null = 0;
   
@@ -203,7 +209,7 @@ check_user_token_mysql (const char *mysql_server,
     str_otp= strlen(otp_id);
     ps_params[1].buffer_type = MYSQL_TYPE_STRING;
     ps_params[1].buffer = (char *)otp_id;
-    ps_params[1].buffer_length = 12;
+    ps_params[1].buffer_length = otp_size;
     ps_params[1].length = &str_otp;
     ps_params[1].is_null = 0;
   }
@@ -230,7 +236,6 @@ check_user_token_mysql (const char *mysql_server,
   bind[0].length= &length;
   bind[0].error= &error;
 
-
   if (mysql_stmt_bind_result(stmt, bind))
   {
     fprintf(stderr, " mysql_stmt_bind_result() failed\n");
@@ -244,8 +249,8 @@ check_user_token_mysql (const char *mysql_server,
     fprintf(stderr, " %s\n", mysql_stmt_error(stmt));
     return retval;
   }
-  row_count = 0;
-  fprintf(stdout, "Fetching results ...\n");
+
+  // Because of count() in the sql syntaxe only one fetch needed
   while (!mysql_stmt_fetch(stmt))
   {
     if(is_null)
@@ -273,7 +278,6 @@ check_user_token_mysql (const char *mysql_server,
       fprintf(stderr, " %s\n", mysql_stmt_error(stmt));
       return retval; 
     }
-  
   mysql_close(con);
   mysql_library_end();
 
