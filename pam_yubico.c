@@ -169,15 +169,14 @@ authorize_user_token (struct cfg *cfg,
 		      pam_handle_t *pamh)
 {
   int retval = AUTH_ERROR;
-
   if (cfg->mysql_server)
-  {
-      /* Administrator had configured the database and specified is name
-         as an argument for this module.
-       */
-      DBG ("Using Mariadb or Mysql Database %s", cfg->auth_file);
+    {
+        /* Administrator had configured the database and specified is name
+          as an argument for this module.
+        */
+      DBG ("Using Mariadb or Mysql Database %s", otp_id);
       retval = check_user_token_mysql(cfg->mysql_server, cfg->mysql_user, cfg->mysql_password, cfg->mysql_database, username, otp_id, cfg->debug, cfg->debug_file);
-  }
+    }
   else if (cfg->auth_file)
     {
       /* Administrator had configured the file and specified is name
@@ -1129,6 +1128,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
     if (cfg->ldapserver != NULL || cfg->ldap_uri != NULL)
       valid_token = authorize_user_token_ldap (cfg, user, NULL, pamh);
     else
+      DBG ("OTP ENVOYE A NULLLLLL");
       valid_token = authorize_user_token (cfg, user, NULL, pamh);
 
     switch(valid_token)

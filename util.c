@@ -54,6 +54,8 @@
 #include <ykdef.h>
 #endif /* HAVE_CR */
 
+#define STRING_SIZE 64
+
 int
 get_user_cfgfile_path(const char *common_path, const char *filename, const struct passwd *user, char **fn)
 {
@@ -112,13 +114,28 @@ check_user_token_mysql (const char *mysql_server,
 		int verbose,
     FILE *debug_file)
 {
-  char *s_user, *s_token;
+
   //DEFAULT !
   int retval = AUTH_ERROR;
   int fd;
   struct stat st;
   FILE *opwfile;
+
+  // Mysql
   MYSQL *con = NULL;
+  MYSQL_STMT *stmt;
+
+  MYSQL_BIND ps_params[2];
+  MYSQL_BIND bind[1];
+
+  long unsigned int aSize = 64;
+  unsigned long str_username;
+  unsigned long str_otp;
+  unsigned long length;
+  int int_data;
+  int row_count;
+  bool is_null;
+  bool error;
 
   //Check Mysql Librairie
   if (mysql_library_init(0, NULL, NULL)) {
@@ -135,28 +152,128 @@ check_user_token_mysql (const char *mysql_server,
     return retval;
   }
 
-  if (mysql_real_connect(con,"database","otp","otp","otp", 0, NULL, 0) == NULL)
+
+  if (mysql_real_connect(con, mysql_server,mysql_user,mysql_password,mysql_database, 0, NULL, 0) == NULL)
   {
     if(verbose)
-	D (debug_file, "Connection failed ...\n");
-    return retval;
+	  D (debug_file, "Connection failed ...\n");
+    return retval; 
   }
- 
-  retval = AUTH_NO_TOKENS;
-  mysql_query(con, "SELECT * FROM radcheck");
-  MYSQL_RES *result = mysql_store_result(con);
-  int num_fields = mysql_num_fields(result);
-    MYSQL_ROW row;
-    while ((row = mysql_fetch_row(result)))
+  
+  stmt = mysql_stmt_init(con);
+  if (!stmt)
     {
-        for(int i = 0; i < num_fields; i++)
-        {
-            printf("%s ", row[i] ? row[i] : "NULL");
-        }
-        printf("\n");
+      if(verbose)
+	    D (debug_file, "Connection failed ... 2 \n");
+      return retval; 
     }
 
-  mysql_free_result(result);
+    const char *sql = "SELECT count(username) FROM radcheck WHERE username = ?;";
+    const char *sql2 = "SELECT count(username) FROM radcheck, yubikeys_otpid WHERE radcheck_id = id and username = ? and otp_id = ?;";
+
+  if(otp_id == NULL)
+  {
+    if (mysql_stmt_prepare(stmt, sql, strlen(sql)))
+    {
+      fprintf(stderr, " mysql_stmt_prepare() failed\n");
+      fprintf(stderr, " %s\n", mysql_stmt_error(stmt));
+      return retval; 
+    }
+  }else{
+    if (mysql_stmt_prepare(stmt, sql2, strlen(sql2)))
+    {
+      fprintf(stderr, " mysql_stmt_prepare() failed\n");
+      fprintf(stderr, " %s\n", mysql_stmt_error(stmt));
+      return retval; 
+    }
+  }
+
+
+  str_username= strlen(username);  
+  memset(ps_params, 0, sizeof(ps_params));
+
+  ps_params[0].buffer_type = MYSQL_TYPE_STRING;
+  ps_params[0].buffer = (char *)username;
+  ps_params[0].buffer_length = aSize;
+  ps_params[0].length = &str_username;
+  ps_params[0].is_null = 0;
+  
+  if(otp_id != NULL)
+  {
+    str_otp= strlen(otp_id);
+    ps_params[1].buffer_type = MYSQL_TYPE_STRING;
+    ps_params[1].buffer = (char *)otp_id;
+    ps_params[1].buffer_length = 12;
+    ps_params[1].length = &str_otp;
+    ps_params[1].is_null = 0;
+  }
+
+
+  if (mysql_stmt_bind_param(stmt, ps_params))
+  {
+    fprintf(stderr, " mysql_stmt_bind_param() failed\n");
+    fprintf(stderr, " %s\n", mysql_stmt_error(stmt));
+    return retval; 
+  }
+
+  if (mysql_stmt_execute(stmt))
+  {
+    fprintf(stderr, " mysql_stmt_execute(), failed\n");
+    fprintf(stderr, " %s\n", mysql_stmt_error(stmt));
+    return retval; 
+  }
+
+  memset(bind, 0, sizeof(bind));
+  bind[0].buffer_type = MYSQL_TYPE_LONG;
+  bind[0].buffer = (char *)&int_data;
+  bind[0].is_null= &is_null;
+  bind[0].length= &length;
+  bind[0].error= &error;
+
+
+  if (mysql_stmt_bind_result(stmt, bind))
+  {
+    fprintf(stderr, " mysql_stmt_bind_result() failed\n");
+    fprintf(stderr, " %s\n", mysql_stmt_error(stmt));
+    return retval; 
+  }
+
+  if (mysql_stmt_store_result(stmt))
+  {
+    fprintf(stderr, " mysql_stmt_store_result() failed\n");
+    fprintf(stderr, " %s\n", mysql_stmt_error(stmt));
+    return retval;
+  }
+  row_count = 0;
+  fprintf(stdout, "Fetching results ...\n");
+  while (!mysql_stmt_fetch(stmt))
+  {
+    if(is_null)
+      fprintf(stdout, " NULL\n");
+    else
+    {
+      if(otp_id != NULL){
+        if(int_data)
+          return AUTH_FOUND;
+        else
+          return AUTH_NOT_FOUND;
+        
+      }else if (otp_id == NULL){
+        if(int_data)
+          return AUTH_NOT_FOUND;
+        else
+          return AUTH_NO_TOKENS; 
+      }
+    }  
+  }
+
+  if (mysql_stmt_close(stmt))
+    {
+      fprintf(stderr, " failed while closing the statement\n");
+      fprintf(stderr, " %s\n", mysql_stmt_error(stmt));
+      return retval; 
+    }
+  
   mysql_close(con);
   mysql_library_end();
 
