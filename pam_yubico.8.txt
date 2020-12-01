@@ -116,6 +116,18 @@ CA certitificate file for the LDAP connection.
 *chalresp_path*=_path_::
 Path of a system-wide directory where challenge-response files can be found for users. Default location is `$HOME/.yubico/`.
 
+*mysql_server*=_mysqlserver_::
+Uri of mysql server. Example 10.0.0.1
+
+*mysql_user*=_mysqluser_::
+User for accessing to the database. Strongly recommended to use a specific user with read only access.
+
+*mysql_password*=_mysqlpassword_::
+Mysql password associated to the user.
+
+*mysql_database*=_mysqldatabase_::
+the name of the database. Example : otp
+
 == EXAMPLES
 
   auth sufficient pam_yubico.so id=16 debug
