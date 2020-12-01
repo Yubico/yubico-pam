@@ -30,6 +30,7 @@ jobs:
 
     - name: Build yubico-pam
       run: |
+        sudo apt update
         sudo apt install -y libykclient-dev libykpers-1-dev libyubikey-dev \
           libpam-dev help2man asciidoc-base
         autoreconf --install
