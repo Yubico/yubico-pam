@@ -7,7 +7,7 @@ autoreconf -i
 if [ "x$TRAVIS_OS_NAME" != "xosx" ]; then
     sudo add-apt-repository -y ppa:yubico/stable
     sudo apt-get update -qq || true
-    sudo apt-get install -qq -y --no-install-recommends libykclient-dev libpam0g-dev libyubikey-dev asciidoc docbook-xsl xsltproc libxml2-utils $EXTRA
+    sudo apt-get install -qq -y --no-install-recommends libykclient-dev libpam0g-dev libyubikey-dev asciidoc docbook-xsl xsltproc libxml2-utils libmysqlclient-dev $EXTRA
 else
     brew update
     brew install pkg-config
@@ -17,6 +17,7 @@ else
     brew install libyubikey
     brew install ykclient
     brew install ykpers
+    brew install mysql-connector-c #Mysql
     cpanp install Net::LDAP::Server
 
     # this is required so asciidoc can find the xml catalog

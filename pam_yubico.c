@@ -134,6 +134,11 @@ struct cfg
   const char *user_attr;
   const char *yubi_attr;
   const char *yubi_attr_prefix;
+  const char *mysql_server;
+  const char *mysql_user;
+  const char *mysql_password;
+  const char *mysql_database;
+
   unsigned int token_id_length;
   enum key_mode mode;
   const char *chalresp_path;
@@ -164,8 +169,19 @@ authorize_user_token (struct cfg *cfg,
 		      pam_handle_t *pamh)
 {
   int retval = AUTH_ERROR;
-
-  if (cfg->auth_file)
+  if (cfg->mysql_server)
+    {
+#ifdef HAVE_MYSQL
+      /* Administrator had configured the database and specified is name
+        as an argument for this module.
+      */
+      DBG ("Using Mariadb or Mysql Database");
+      retval = check_user_token_mysql(cfg->mysql_server, cfg->mysql_user, cfg->mysql_password, cfg->mysql_database, username, otp_id, cfg->debug, cfg->debug_file);
+#else
+      DBG (("Trying to use MYSQL, but this function is not compiled in pam_yubico!!"));
+#endif
+    }
+  else if (cfg->auth_file)
     {
       /* Administrator had configured the file and specified is name
          as an argument for this module.
@@ -874,6 +890,15 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->mode = CLIENT;
       if (strncmp (argv[i], "chalresp_path=", 14) == 0)
 	cfg->chalresp_path = argv[i] + 14;
+      if (strncmp (argv[i], "mysql_server=", 13) == 0)
+	cfg->mysql_server = argv[i] + 13;
+       if (strncmp (argv[i], "mysql_user=", 11) == 0)
+	cfg->mysql_user = argv[i] + 11;
+       if (strncmp (argv[i], "mysql_password=", 15) == 0)
+	cfg->mysql_password = argv[i] + 15;
+      if (strncmp (argv[i], "mysql_database=", 15) == 0)
+	cfg->mysql_database = argv[i] + 15;
+
       if (strncmp (argv[i], "debug_file=", 11) == 0)
         {
           const char *filename = argv[i] + 11;
@@ -939,6 +964,9 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
   DBG ("token_id_length=%u", cfg->token_id_length);
   DBG ("mode=%s", cfg->mode == CLIENT ? "client" : "chresp" );
   DBG ("chalresp_path=%s", cfg->chalresp_path ? cfg->chalresp_path : "(null)");
+  DBG ("mysql_server=%s", cfg->mysql_server ? cfg->mysql_server : "(null)");
+  DBG ("mysql_user=%s", cfg->mysql_user ? cfg->mysql_user : "(null)");
+  DBG ("mysql_database=%s", cfg->mysql_database ? cfg->mysql_database : "(null)");
 
   if (fd != -1)
     close(fd);

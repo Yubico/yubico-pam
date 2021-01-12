@@ -45,7 +45,12 @@ pam_yubico_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = libpam_util.la libpam_real.la
 libpam_util_la_SOURCES = util.c util.h
-libpam_util_la_LIBADD = @LTLIBYUBIKEY@ @YKPERS_LIBS@
+libpam_util_la_LIBADD = @LTLIBYUBIKEY@ @YKPERS_LIBS@ 
+
+# if MYSQL_SUPPORT
+AM_CFLAGS += @MYSQL_CFLAGS@
+libpam_util_la_LIBADD += @MYSQL_LIBS@
+# endif
 
 libpam_real_la_SOURCES = pam_yubico.c
 
