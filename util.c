@@ -136,8 +136,8 @@ check_user_token_mysql(const char *mysql_server,
   long unsigned int length;
   int int_data;
   int row_count;
-  bool is_null;
-  bool error;
+  my_bool is_null;
+  my_bool error;
 
   if(mysql_library_init(0, NULL, NULL)){
     if(verbose){
