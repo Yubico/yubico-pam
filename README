@@ -3,7 +3,7 @@ image:https://travis-ci.org/Yubico/yubico-pam.svg?branch=master["Build Status", 
 
 The Yubico PAM module provides an easy way to integrate the YubiKey
 into your existing user authentication infrastructure. PAM is used by
-GNU/Linux, Solaris and Mac OS X (up to 10.14) for user authentication, and by other
+GNU/Linux, Solaris and Mac OS X (up to 10.13) for user authentication, and by other
 specialized applications such as NCSA MyProxy.
 
 Status and Roadmap
