@@ -6,7 +6,7 @@ authentication possible with newer YubiKeys working on Mac OS X up to 10.13. Sta
 === Getting yubico-pam ===
 
 First you will have to install yubico-pam and its dependencies
-required for challenge-response authentication. Note that PAM does not work on Mac PS 10.15 or above Use your
+required for challenge-response authentication. Note that PAM does not work on Mac OS 10.14 or above. Use your
 distribution's package manager to get it, or build from source. If
 you're on OS X you can use http://www.macports.org[MacPorts] to
 install yubico-pam:
