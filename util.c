@@ -136,8 +136,6 @@ check_user_token_mysql(const char *mysql_server,
   long unsigned int length;
   int int_data;
   int row_count;
-  my_bool is_null;
-  my_bool error;
 
   if(mysql_library_init(0, NULL, NULL)){
     if(verbose){
@@ -195,7 +193,6 @@ check_user_token_mysql(const char *mysql_server,
   ps_params[0].buffer = (char *)username;
   ps_params[0].buffer_length = str_username;
   ps_params[0].length = &str_username;
-  ps_params[0].is_null = 0;
 
   if(otp_id != NULL)
   {
@@ -204,7 +201,6 @@ check_user_token_mysql(const char *mysql_server,
     ps_params[1].buffer = (char *)otp_id;
     ps_params[1].buffer_length = str_otp;
     ps_params[1].length = &str_otp;
-    ps_params[1].is_null = 0;
   }
 
   if(mysql_stmt_bind_param(stmt, ps_params))
@@ -225,8 +221,6 @@ check_user_token_mysql(const char *mysql_server,
   bind[0].buffer_type = MYSQL_TYPE_LONG;
   bind[0].buffer = (char *)&int_data;
   bind[0].length = &length;
-  bind[0].is_null = &is_null;
-  bind[0].error = &error;
 
   if(mysql_stmt_bind_result(stmt, bind))
   {
@@ -243,7 +237,7 @@ check_user_token_mysql(const char *mysql_server,
 
   while(!mysql_stmt_fetch(stmt))
   {
-    if(is_null)
+    if(bind[0].is_null_value)
     {
       D (debug_file, "mysql_stmt_fetch() failed");
     }
