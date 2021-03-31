@@ -23,6 +23,10 @@ jobs:
             cc: gcc-10
             config_args: "--without-ldap --without-cr --without-mysql"
             extra: ""
+          - os: ubuntu-20.04
+            cc: gcc-10
+            config_args: ""
+            extra: "libldap2-dev libykpers-1-dev libnet-ldap-server-perl libmysqlclient-dev"
     steps:
       - uses: actions/checkout@v1
       - name: Build and test
