@@ -27,6 +27,14 @@ jobs:
             cc: gcc-10
             config_args: ""
             extra: "libldap2-dev libykpers-1-dev libnet-ldap-server-perl libmysqlclient-dev"
+          - os: ubuntu-18.04
+            cc: gcc-8
+            config_args: ""
+            extra: "libldap2-dev libykpers-1-dev libnet-ldap-server-perl libmysqlclient-dev"
+          - os: ubuntu-16.04
+            cc: gcc-5
+            config_args: ""
+            extra: "libldap2-dev libykpers-1-dev libnet-ldap-server-perl libmysqlclient-dev"
     steps:
       - uses: actions/checkout@v1
       - name: Build and test
