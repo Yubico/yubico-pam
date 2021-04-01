@@ -22,17 +22,40 @@ jobs:
           - os: ubuntu-20.04
             config_args: ""
             extra: "libldap2-dev libykpers-1-dev libnet-ldap-server-perl libmysqlclient-dev"
+            mysql: true
           - os: ubuntu-18.04
             config_args: ""
             extra: "libldap2-dev libykpers-1-dev libnet-ldap-server-perl libmysqlclient-dev"
+            mysql: true
           - os: ubuntu-16.04
             config_args: ""
             extra: "libldap2-dev libykpers-1-dev libnet-ldap-server-perl libmysqlclient-dev"
+            mysql: true
+    services:
+      mariadb:
+        image: mariadb:latest
+        ports:
+          - 3306
+        env:
+          MYSQL_USER: user
+          MYSQL_PASSWORD: password
+          MYSQL_DATABASE: test
+          MYSQL_ROOT_PASSWORD: password
+        options: --health-cmd="mysqladmin ping" --health-interval=5s --health-timeout=2s --health-retries=3
     steps:
       - uses: actions/checkout@v1
+      - name: Setup Database
+        if: ${{ matrix.mysql }}
+        env:
+          MYSQL_PORT: ${{ job.services.mariadb.ports[3306] }}
+        run: |
+          while ! mysqladmin ping -h"127.0.0.1" -P"$MYSQL_PORT" --silent; do
+            sleep 1
+          done
       - name: Build and test
         env:
           CONFIGURE_ARGS: ${{ matrix.config_args }}
           EXTRA: ${{ matrix.extra }}
+          MYSQL_PORT: ${{ job.services.mariadb.ports[3306] }}
         run: |
           tests/aux/build-and-test.sh
