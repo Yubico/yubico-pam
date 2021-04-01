@@ -114,6 +114,7 @@ get_user_cfgfile_path(const char *common_path, const char *filename, const struc
  */
 int
 check_user_token_mysql(const char *mysql_server,
+      int mysql_port,
       const char *mysql_user,
       const char *mysql_password,
       const char *mysql_database,
@@ -152,7 +153,7 @@ check_user_token_mysql(const char *mysql_server,
     return retval;
   }
 
-  if(mysql_real_connect(con, mysql_server,mysql_user,mysql_password,mysql_database, 0, NULL, 0) == NULL)
+  if(mysql_real_connect(con, mysql_server,mysql_user,mysql_password,mysql_database, mysql_port, NULL, 0) == NULL)
   {
     if(verbose)
 	  D (debug_file, "Connection failed ...");
