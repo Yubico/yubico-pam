@@ -1,0 +1,46 @@
+name: Build and Test
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-20.04
+            cc: gcc-10
+            config_args: "--without-mysql"
+            extra: "libldap2-dev libykpers-1-dev libnet-ldap-server-perl"
+          - os: ubuntu-20.04
+            cc: gcc-10
+            config_args: "--without-ldap --without-mysql"
+            extra: "libykpers-1-dev"
+          - os: ubuntu-20.04
+            cc: gcc-10
+            config_args: "--without-cr --without-mysql"
+            extra: "libldap2-dev libnet-ldap-server-perl"
+          - os: ubuntu-20.04
+            cc: gcc-10
+            config_args: "--without-ldap --without-cr --without-mysql"
+            extra: ""
+          - os: ubuntu-20.04
+            cc: gcc-10
+            config_args: ""
+            extra: "libldap2-dev libykpers-1-dev libnet-ldap-server-perl libmysqlclient-dev"
+          - os: ubuntu-18.04
+            cc: gcc-8
+            config_args: ""
+            extra: "libldap2-dev libykpers-1-dev libnet-ldap-server-perl libmysqlclient-dev"
+          - os: ubuntu-16.04
+            cc: gcc-5
+            config_args: ""
+            extra: "libldap2-dev libykpers-1-dev libnet-ldap-server-perl libmysqlclient-dev"
+    steps:
+      - uses: actions/checkout@v1
+      - name: Build and test
+        env:
+          CC: ${{ matrix.cc }}
+          CONFIGURE_ARGS: ${{ matrix.config_args }}
+          EXTRA: ${{ matrix.extra }}
+        run: |
+          tests/aux/build-and-test.sh
