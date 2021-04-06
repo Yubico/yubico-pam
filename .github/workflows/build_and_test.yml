@@ -39,7 +39,7 @@ jobs:
         env:
           MYSQL_USER: user
           MYSQL_PASSWORD: password
-          MYSQL_DATABASE: test
+          MYSQL_DATABASE: otp
           MYSQL_ROOT_PASSWORD: password
         options: --health-cmd="mysqladmin ping" --health-interval=5s --health-timeout=2s --health-retries=3
     steps:
@@ -52,6 +52,8 @@ jobs:
           while ! mysqladmin ping -h"127.0.0.1" -P"$MYSQL_PORT" --silent; do
             sleep 1
           done
+          mysql --user=user --password=password --host=127.0.0.1 --port=$MYSQL_PORT otp < yubikey_mapping.sql
+          mysql --user=user --password=password --host=127.0.0.1 --port=$MYSQL_PORT otp < tests/aux/auth_mapping.sql
       - name: Build and test
         env:
           CONFIGURE_ARGS: ${{ matrix.config_args }}
