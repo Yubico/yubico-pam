@@ -61,3 +61,10 @@ jobs:
           MYSQL_PORT: ${{ job.services.mariadb.ports[3306] }}
         run: |
           tests/aux/build-and-test.sh
+      - name: Display logs
+        if: ${{ always() }}
+        run: |
+          for log in tests/*.log; do
+          echo $log
+          cat $log
+          done
