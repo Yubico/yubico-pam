@@ -56,6 +56,10 @@ pam_sm_authenticate (pam_handle_t * pamh,
 #define YKVAL_PORT2 "30559"
 #define LDAP_PORT "52825"
 
+#ifndef TEST_MYSQL_PORT
+#define TEST_MYSQL_PORT "3306"
+#endif
+
 #define YKVAL SRCDIR"/aux/ykval.pl"
 #define LDAP SRCDIR"/aux/ldap.pl"
 #define AUTHFILE SRCDIR"/aux/authfile"
@@ -94,6 +98,17 @@ static const char *ldap_cfg2[] = {
   "ldap_uri=ldap://localhost:"LDAP_PORT,
   "ldap_filter=(uid=%u)",
   "yubi_attr=yubiKeyId",
+  "debug"
+};
+
+static const char *mysql_cfg[] = {
+  "id=1",
+  "urllist=http://localhost:"YKVAL_PORT1"/wsapi/2/verify",
+  "mysql_server=127.0.0.1",
+  "mysql_port="TEST_MYSQL_PORT,
+  "mysql_user=user",
+  "mysql_password=password",
+  "mysql_database=otp",
   "debug"
 };
 
@@ -323,6 +338,14 @@ static int test_authenticate_ldap6(void) {
   return pam_sm_authenticate((pam_handle_t *)7, 0, sizeof(ldap_cfg) / sizeof(char*), ldap_cfg);
 }
 
+static int test_authenticate_mysql1(void) {
+  return pam_sm_authenticate((pam_handle_t *)0, 0, sizeof(mysql_cfg) / sizeof(char*), mysql_cfg);
+}
+
+static int test_fail_authenticate_mysql1(void) {
+  return pam_sm_authenticate((pam_handle_t *)1, 0, sizeof(mysql_cfg) / sizeof(char*), mysql_cfg);
+}
+
 static pid_t run_mock(const char *port, const char *type) {
   pid_t pid = fork();
   if(pid == 0) {
@@ -417,6 +440,16 @@ int main(void) {
   }
   if(test_authenticate_ldap6() != PAM_USER_UNKNOWN) {
     ret = 1008;
+    goto out;
+  }
+#endif
+#ifdef HAVE_MYSQL
+  if(test_authenticate_mysql1() != PAM_SUCCESS) {
+    ret = 2001;
+    goto out;
+  }
+  if(test_fail_authenticate_mysql1() != PAM_USER_UNKNOWN) {
+    ret = 2002;
     goto out;
   }
 #endif
