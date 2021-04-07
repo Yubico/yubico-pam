@@ -52,7 +52,9 @@
 
 int get_user_cfgfile_path(const char *common_path, const char *filename, const struct passwd *user, char **fn);
 #ifdef HAVE_MYSQL
-int check_user_token_mysql(const char *mysql_server,const char *mysql_user,const char *mysql_password,const char *mysql_database,const char *username,const char *otp_id,int verbose,FILE *debug_file);
+int check_user_token_mysql(const char *mysql_server, int mysql_port, const char *mysql_user,
+    const char *mysql_password, const char *mysql_database, const char *username, const char *otp_id, int verbose,
+    FILE *debug_file);
 #endif
 int check_user_token(const char *authfile, const char *username, const char *otp_id, int verbose, FILE *debug_file);
 

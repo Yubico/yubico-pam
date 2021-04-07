@@ -7,7 +7,7 @@ autoreconf -i
 if [ "x$TRAVIS_OS_NAME" != "xosx" ]; then
     sudo add-apt-repository -y ppa:yubico/stable
     sudo apt-get update -qq || true
-    sudo apt-get install -qq -y --no-install-recommends libykclient-dev libpam0g-dev libyubikey-dev asciidoc docbook-xsl xsltproc libxml2-utils libmysqlclient-dev $EXTRA
+    sudo apt-get install -qq -y --no-install-recommends libykclient-dev libpam0g-dev libyubikey-dev asciidoc docbook-xsl xsltproc libxml2-utils $EXTRA
 else
     brew update
     brew install pkg-config
@@ -26,7 +26,12 @@ fi
 
 set -e
 
-./configure $CONFIGURE_ARGS $COVERAGE
+if [ ! -z $MYSQL_PORT ]; then
+    CFLAGS="-DTEST_MYSQL_PORT='\"${MYSQL_PORT}\"'" ./configure $CONFIGURE_ARGS $COVERAGE
+else
+    ./configure $CONFIGURE_ARGS $COVERAGE
+fi
+
 make check check-doc-dist
 if [ "x$COVERAGE" != "x" ]; then
     gem install coveralls-lcov

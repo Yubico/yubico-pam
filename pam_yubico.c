@@ -135,6 +135,7 @@ struct cfg
   const char *yubi_attr;
   const char *yubi_attr_prefix;
   const char *mysql_server;
+  int mysql_port;
   const char *mysql_user;
   const char *mysql_password;
   const char *mysql_database;
@@ -176,7 +177,7 @@ authorize_user_token (struct cfg *cfg,
         as an argument for this module.
       */
       DBG ("Using Mariadb or Mysql Database");
-      retval = check_user_token_mysql(cfg->mysql_server, cfg->mysql_user, cfg->mysql_password, cfg->mysql_database, username, otp_id, cfg->debug, cfg->debug_file);
+      retval = check_user_token_mysql(cfg->mysql_server, cfg->mysql_port, cfg->mysql_user, cfg->mysql_password, cfg->mysql_database, username, otp_id, cfg->debug, cfg->debug_file);
 #else
       DBG (("Trying to use MYSQL, but this function is not compiled in pam_yubico!!"));
 #endif
@@ -892,9 +893,11 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->chalresp_path = argv[i] + 14;
       if (strncmp (argv[i], "mysql_server=", 13) == 0)
 	cfg->mysql_server = argv[i] + 13;
-       if (strncmp (argv[i], "mysql_user=", 11) == 0)
+      if (strncmp (argv[i], "mysql_port=", 11) == 0)
+	sscanf (argv[i], "mysql_port=%u", &cfg->mysql_port);
+      if (strncmp (argv[i], "mysql_user=", 11) == 0)
 	cfg->mysql_user = argv[i] + 11;
-       if (strncmp (argv[i], "mysql_password=", 15) == 0)
+      if (strncmp (argv[i], "mysql_password=", 15) == 0)
 	cfg->mysql_password = argv[i] + 15;
       if (strncmp (argv[i], "mysql_database=", 15) == 0)
 	cfg->mysql_database = argv[i] + 15;
@@ -965,6 +968,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
   DBG ("mode=%s", cfg->mode == CLIENT ? "client" : "chresp" );
   DBG ("chalresp_path=%s", cfg->chalresp_path ? cfg->chalresp_path : "(null)");
   DBG ("mysql_server=%s", cfg->mysql_server ? cfg->mysql_server : "(null)");
+  DBG ("mysql_port=%d", cfg->mysql_port);
   DBG ("mysql_user=%s", cfg->mysql_user ? cfg->mysql_user : "(null)");
   DBG ("mysql_database=%s", cfg->mysql_database ? cfg->mysql_database : "(null)");
 
