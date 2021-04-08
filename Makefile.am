@@ -52,7 +52,7 @@ AM_CFLAGS += @MYSQL_CFLAGS@
 libpam_util_la_LIBADD += @MYSQL_LIBS@
 # endif
 
-libpam_real_la_SOURCES = pam_yubico.c
+libpam_real_la_SOURCES = pam_yubico.c ykbzero.h
 
 # The command line tools.
 
