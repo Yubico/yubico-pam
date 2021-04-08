@@ -346,6 +346,10 @@ static int test_fail_authenticate_mysql1(void) {
   return pam_sm_authenticate((pam_handle_t *)1, 0, sizeof(mysql_cfg) / sizeof(char*), mysql_cfg);
 }
 
+static int test_fail_authenticate_mysql2(void) {
+  return pam_sm_authenticate((pam_handle_t *)5, 0, sizeof(mysql_cfg) / sizeof(char*), mysql_cfg);
+}
+
 static pid_t run_mock(const char *port, const char *type) {
   pid_t pid = fork();
   if(pid == 0) {
@@ -450,6 +454,10 @@ int main(void) {
   }
   if(test_fail_authenticate_mysql1() != PAM_USER_UNKNOWN) {
     ret = 2002;
+    goto out;
+  }
+  if(test_fail_authenticate_mysql2() != PAM_AUTH_ERR) {
+    ret = 2003;
     goto out;
   }
 #endif
