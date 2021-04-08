@@ -2,6 +2,18 @@ pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
 * Version 2.27 (unreleased)
 
+** Add always_prompt configuration option.
+
+** Add client certificate support for ldap.
+
+** Add starttls support for ldap.
+
+** Add ldap_bind_as_user support.
+
+** Parsing, cleanliness and string fixes.
+
+** Documentation and spelling fixes.
+
 * Version 2.26 (released 2018-04-20)
 
 ** Make sure to close authfile (CVE-2018-9275).
