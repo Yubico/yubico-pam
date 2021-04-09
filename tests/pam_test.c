@@ -447,7 +447,7 @@ int main(void) {
     goto out;
   }
 #endif
-#ifdef RUN_MYSQL_TESTS
+#if defined(RUN_MYSQL_TESTS) && defined(HAVE_MYSQL)
   if(test_authenticate_mysql1() != PAM_SUCCESS) {
     ret = 2001;
     goto out;
