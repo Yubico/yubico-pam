@@ -291,6 +291,21 @@ directory). This location should be only readable and writable by root. Refer
 to `Authentication_Using_Challenge-Response.adoc` for more information about
 such a setup.
 
+mysql_server::
+Hostname/Adress of mysql server to use for mapping.
+
+mysql_port::
+Network port of mysql server.
+
+mysql_user::
+User for accessing the mysql database.
+
+mysql_password::
+Password for the mysql user.
+
+mysql_database::
+The mysql database to use.
+
 If you are using "debug" you may find it useful to create a
 world-writable log file:
 
