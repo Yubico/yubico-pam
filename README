@@ -1,5 +1,4 @@
 == Yubico PAM module
-image:https://travis-ci.org/Yubico/yubico-pam.svg?branch=master["Build Status", link="https://travis-ci.org/Yubico/yubico-pam"]
 
 The Yubico PAM module provides an easy way to integrate the YubiKey
 into your existing user authentication infrastructure. PAM is used by
