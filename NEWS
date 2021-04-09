@@ -1,5 +1,7 @@
 pam_yubico NEWS -- History of user-visible changes.             -*- outline -*-
 
+* Version 2.28 (unreleased)
+
 * Version 2.27 (released 2021-04-09)
 
 ** Add always_prompt configuration option.
