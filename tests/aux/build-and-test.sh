@@ -27,7 +27,7 @@ fi
 set -e
 
 if [ ! -z $MYSQL_PORT ]; then
-    CFLAGS="-DTEST_MYSQL_PORT='\"${MYSQL_PORT}\"'" ./configure $CONFIGURE_ARGS $COVERAGE
+    CFLAGS="-DTEST_MYSQL_PORT='\"${MYSQL_PORT}\"' -DRUN_MYSQL_TESTS" ./configure $CONFIGURE_ARGS $COVERAGE
 else
     ./configure $CONFIGURE_ARGS $COVERAGE
 fi
