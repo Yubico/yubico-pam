@@ -124,6 +124,7 @@ struct cfg
   const char *urllist;
   const char *ldapserver;
   const char *ldap_uri;
+  int ldap_connection_timeout;
   const char *ldap_bind_user;
   const char *ldap_bind_password;
   const char *ldap_filter;
@@ -321,6 +322,13 @@ authorize_user_token_ldap (struct cfg *cfg,
 
   ldap_set_option(ld, LDAP_OPT_REFERRALS, LDAP_OPT_OFF);
   ldap_set_option (ld, LDAP_OPT_PROTOCOL_VERSION, &protocol);
+
+  if(cfg->ldap_connection_timeout > 0) {
+    struct timeval network_timeout;
+    network_timeout.tv_usec = 0;
+    network_timeout.tv_sec = cfg->ldap_connection_timeout;
+    ldap_set_option(ld, LDAP_OPT_NETWORK_TIMEOUT, &network_timeout);
+  }
 
   if (cfg->ldap_uri && cfg->ldap_cacertfile) {
     /* Set CA CERTFILE. This makes ldaps work when using ldap_uri */
@@ -863,6 +871,8 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->ldapserver = argv[i] + 11;
       if (strncmp (argv[i], "ldap_uri=", 9) == 0)
 	cfg->ldap_uri = argv[i] + 9;
+      if (strncmp (argv[i], "ldap_connection_timeout=", 24) == 0)
+	sscanf (argv[i], "ldap_connection_timeout=%u", &cfg->ldap_connection_timeout);
       if (strncmp (argv[i], "ldap_bind_user=", 15) == 0)
 	cfg->ldap_bind_user = argv[i] + 15;
       if (strncmp (argv[i], "ldap_bind_password=", 19) == 0)
@@ -949,6 +959,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
   DBG ("authfile=%s", cfg->auth_file ? cfg->auth_file : "(null)");
   DBG ("ldapserver=%s", cfg->ldapserver ? cfg->ldapserver : "(null)");
   DBG ("ldap_uri=%s", cfg->ldap_uri ? cfg->ldap_uri : "(null)");
+  DBG ("ldap_connection_timeout=%d", cfg->ldap_connection_timeout);
   DBG ("ldap_bind_user=%s", cfg->ldap_bind_user ? cfg->ldap_bind_user : "(null)");
   DBG ("ldap_bind_password=%s", cfg->ldap_bind_password ? cfg->ldap_bind_password : "(null)");
   DBG ("ldap_filter=%s", cfg->ldap_filter ? cfg->ldap_filter : "(null)");
