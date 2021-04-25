@@ -103,4 +103,7 @@ int challenge_response(YK_KEY *yk, int slot,
 size_t filter_result_len(const char *filter, const char *user, char *output);
 char *filter_printf(const char *filter, const char *user);
 
+size_t rfc4515_length ( const char* in, char* out );
+char* rfc4515_replace ( const char* in );
+
 #endif /* __PAM_YUBICO_UTIL_H_INCLUDED__ */
