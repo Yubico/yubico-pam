@@ -279,8 +279,29 @@ static void test_filter_printf(void) {
     printf("test_filter_printf OK\n");
 }
 
+static void test_rfc4515_replace(void) {
+    assert(rfc4515_length("", NULL) == 1);
+    assert(rfc4515_length(" ", NULL) == 2);
+    assert(rfc4515_length("test1234567890_.", NULL) == 17);
+    assert(rfc4515_length("\\test\\test\\", NULL) == 18);
+    assert(rfc4515_length("*test*test*", NULL) == 18);
+    assert(rfc4515_length("(test(test(", NULL) == 18);
+    assert(rfc4515_length(")test)test)", NULL) == 18);
+    assert(rfc4515_length("\\\\**(())", NULL) == 25);
+
+    assert(!strcmp(rfc4515_replace(""), ""));
+    assert(!strcmp(rfc4515_replace(" "), " "));
+    assert(!strcmp(rfc4515_replace("test1234567890_."), "test1234567890_."));
+    assert(!strcmp(rfc4515_replace("\\test\\test\\"), "\\5Ctest\\5Ctest\\5C"));
+    assert(!strcmp(rfc4515_replace("*test*test*"), "\\2Atest\\2Atest\\2A"));
+    assert(!strcmp(rfc4515_replace("(test(test("), "\\28test\\28test\\28"));
+    assert(!strcmp(rfc4515_replace(")test)test)"), "\\29test\\29test\\29"));
+    assert(!strcmp(rfc4515_replace("\\\\**(())"), "\\5C\\5C\\2A\\2A\\28\\28\\29\\29"));
+    printf("test_rfc4515_replace OK\n");
+}
 int main (void) {
   test_filter_printf();
+  test_rfc4515_replace();
   test_get_user_cfgfile_path();
   test_check_user_token();
 #if HAVE_CR

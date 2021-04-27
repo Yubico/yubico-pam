@@ -783,7 +783,66 @@ size_t filter_result_len(const char *filter, const char *user, char *output) {
 }
 
 char *filter_printf(const char *filter, const char *user) {
-  char *result = malloc(filter_result_len(filter, user, NULL));
-  filter_result_len(filter, user, result);
+  char *user_rfc4515 = rfc4515_replace(user);
+  char *result = malloc(filter_result_len(filter, user_rfc4515, NULL));
+  filter_result_len(filter, user_rfc4515, result);
+  free(user_rfc4515);
   return result;
+}
+
+size_t rfc4515_length (const char* in, char* out)
+{
+    const char* pos = NULL;
+    size_t result = 0;
+    const char specials[] = "\\*()";
+
+    do
+    {
+        pos = strpbrk(in, specials);
+
+        size_t len = 0;
+        if(pos != NULL)
+        {
+            len = pos - in;
+        }
+        else
+        {
+            len = strlen(in);
+        }
+
+        if(out != NULL)
+        {
+            strncpy(out, in, len);
+            out += len;
+        }
+
+        result += len;
+        in += len;
+
+        if(pos != NULL)
+        {
+            if(out != NULL)
+            {
+              snprintf(out, 4, "%c%02X", 0x5c, *pos);
+              out += 3;
+            }
+
+            in += sizeof(char);
+            result += 3;
+        }
+    } while (pos != NULL);
+
+    if(out != NULL)
+    {
+        *out = '\0';
+    }
+
+    return (result + sizeof(char));
+}
+
+char* rfc4515_replace(const char* in)
+{
+    char* result = (char*)malloc(rfc4515_length(in, NULL));
+    rfc4515_length (in, result);
+    return result;
 }
