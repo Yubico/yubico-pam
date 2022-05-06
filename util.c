@@ -138,16 +138,16 @@ check_user_token_mysql(const char *mysql_server,
   int int_data;
   int row_count;
 
-  if(mysql_library_init(0, NULL, NULL)){
-    if(verbose){
-      D (debug_file, "could not initialize MySQL client library");
-    }
-
+  if(mysql_library_init(0, NULL, NULL))
+  {
+    if(verbose)
+    D (debug_file, "could not initialize MySQL client library");
     return retval;
   }
 
   con = mysql_init(con);
-  if(!con) {
+  if(!con)
+  {
     if(verbose)
 	  D (debug_file, "out of memorys");
     return retval;
@@ -164,12 +164,13 @@ check_user_token_mysql(const char *mysql_server,
   if(!stmt)
   {
     if(verbose)
-    D (debug_file, "Connection failed ... 2");
-    return retval;
+    D (debug_file, "Handler failed ...");
+    
+    goto end_connection;
   }
 
-  const char *sql = "SELECT count(username) FROM yubikey_mappings WHERE username = ?;";
-  const char *sql2 = "SELECT count(username) FROM yubikey_mappings WHERE username = ? and otp_id = ?;";
+  const char *sql = "SELECT count(username) FROM yubikey_mappings WHERE username = ?";
+  const char *sql2 = "SELECT count(username) FROM yubikey_mappings WHERE username = ? and otp_id = ?";
 
   if(otp_id == NULL)
   {
@@ -177,14 +178,16 @@ check_user_token_mysql(const char *mysql_server,
     {
       if(verbose)
 	    D (debug_file, "mysql_stmt_prepare() failed %s", mysql_stmt_error(stmt));
-      return retval;
+      goto end_connection;
     }
-  }else{
+  }
+  else
+  {
     if(mysql_stmt_prepare(stmt, sql2, strlen(sql2)))
     {
       if(verbose)
 	    D (debug_file, "mysql_stmt_prepare() failed %s", mysql_stmt_error(stmt));
-      return retval;
+      goto end_connection;
     }
   }
 
@@ -208,14 +211,14 @@ check_user_token_mysql(const char *mysql_server,
   {
     if(verbose)
     D (debug_file, "mysql_stmt_bind_param() failed %s", mysql_stmt_error(stmt));
-    return retval;
+    goto end_connection;
   }
 
   if(mysql_stmt_execute(stmt))
   {
     if(verbose)
     D (debug_file, "mysql_stmt_execute() failed %s", mysql_stmt_error(stmt));
-    return retval;
+    goto end_connection;
   }
 
   memset(bind, 0, sizeof(bind));
@@ -227,57 +230,60 @@ check_user_token_mysql(const char *mysql_server,
   {
     if(verbose)
     D (debug_file, "mysql_stmt_bind_result() failed %s", mysql_stmt_error(stmt));
+    goto end_connection;
   }
 
   if(mysql_stmt_store_result(stmt))
   {
     if(verbose)
     D (debug_file, "mysql_stmt_store_result() failed %s", mysql_stmt_error(stmt));
-    return retval;
-  }
-
-  while(!mysql_stmt_fetch(stmt))
-  {
-    if(bind[0].is_null_value)
-    {
-      D (debug_file, "mysql_stmt_fetch() failed");
-    }
-    else
-    {
-      if(otp_id != NULL){
-        if(int_data)
-        {
-          return AUTH_FOUND;
-        }
-        else
-        {
-          return AUTH_NOT_FOUND;
-        }
-      }
-      else if(otp_id == NULL)
-      {
-        if(int_data)
-        {
-          return AUTH_NOT_FOUND;
-        }
-        else
-        {
-          return AUTH_NO_TOKENS;
-        }
-      }
-    }
+    goto end_connection;
   }
 
   if(mysql_stmt_close(stmt))
   {
     if(verbose)
     D (debug_file, "mysql_stmt_close() failed %s", mysql_stmt_error(stmt));
-    return retval;
+    goto end_connection;
   }
 
+  while(!mysql_stmt_fetch(stmt))
+  {
+    if(bind[0].is_null_value)
+    {
+      if(verbose)
+      D (debug_file, "mysql_stmt_fetch() failed");
+      goto end_connection;
+    }
+    else
+    {
+      if(otp_id != NULL){
+        if(int_data)
+        {
+          retval = AUTH_FOUND; /* User and token verified */
+        }
+        else
+        {
+          retval = AUTH_NOT_FOUND; /* User ok but bad token */
+        }
+      }
+      else if(otp_id == NULL)
+      {
+        if(int_data)
+        {
+          retval = AUTH_NOT_FOUND; /* We found at least one line for the user */
+        }
+        else
+        {
+          retval = AUTH_NO_TOKENS; /* We not found at least any line for the user */
+        }
+      }
+    }
+  }
+
+end_connection:
   mysql_close(con);
   mysql_library_end();
-
   return retval;
 }
 #endif

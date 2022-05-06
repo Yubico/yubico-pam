@@ -177,7 +177,7 @@ authorize_user_token (struct cfg *cfg,
       /* Administrator had configured the database and specified is name
         as an argument for this module.
       */
-      DBG ("Using Mariadb or Mysql Database");
+      DBG ("Using Mariadb or Mysql Database V1");
       retval = check_user_token_mysql(cfg->mysql_server, cfg->mysql_port, cfg->mysql_user, cfg->mysql_password, cfg->mysql_database, username, otp_id, cfg->debug, cfg->debug_file);
 #else
       DBG (("Trying to use MYSQL, but this function is not compiled in pam_yubico!!"));
