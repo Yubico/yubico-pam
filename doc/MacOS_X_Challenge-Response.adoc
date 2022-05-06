@@ -1,14 +1,12 @@
 == Setting up your YubiKey for challenge response authentication on Max OS X ==
 
 This article explains the process to get the challenge-response
-authentication possible with newer YubiKeys working on Mac OS X. Since
-Mac OS X uses PAM like most other Unix/POSIX systems do, most of this
-should apply to other operating systems, too.
+authentication possible with newer YubiKeys working on Mac OS X up to 10.13. Starting from 10.14, Mac OS no longer supports PAM. However, these steps may be used in other UNIX/POSIX systems which support PAM.
 
 === Getting yubico-pam ===
 
 First you will have to install yubico-pam and its dependencies
-required for challenge-response authentication. Use your
+required for challenge-response authentication. Note that PAM does not work on Mac OS 10.14 or above. Use your
 distribution's package manager to get it, or build from source. If
 you're on OS X you can use http://www.macports.org[MacPorts] to
 install yubico-pam:
