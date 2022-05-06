@@ -29,7 +29,7 @@ operating system. However, there steps should work on most other Linux
 distributions.
 
 The Yubico PAM module for SSH can be downloaded from
-https://developers.yubico.com/yubico-pam/releases.html[here].
+https://developers.yubico.com/yubico-pam/Releases/[here].
 
 The Yubico PAM module support two factor authentication for SSH.
 The two factor authentication module verifies the user name and password
