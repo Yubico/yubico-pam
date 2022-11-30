@@ -341,7 +341,10 @@ check_user_token (const char *authfile,
     {
       char *saveptr = NULL;
       if (buf[strlen (buf) - 1] == '\n')
+      {
+	s_user = NULL;
 	buf[strlen (buf) - 1] = '\0';
+      }
       if (buf[0] == '#') {
           /* This is a comment and we may skip it. */
           if(verbose)
@@ -364,9 +367,9 @@ check_user_token (const char *authfile,
 	  do
 	    {
 	      s_token = strtok_r (NULL, ":", &saveptr);
-
+	
         /* If the last token was less then 12 bytes */
-        if (strlen(s_token) < 12 && saveptr == NULL)
+        if (s_token != NULL && strlen(s_token) < 12 && saveptr == NULL)
         {
           /* move the file pointer back to the beggining of the token, so it can be read next time */
           fseek(opwfile, ftell(opwfile) - strlen(s_token), SEEK_SET);
