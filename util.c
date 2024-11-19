@@ -335,12 +335,16 @@ check_user_token (const char *authfile,
       return retval;
   }
 
+  s_user = NULL;
   retval = AUTH_NO_TOKENS;
   while (fgets (buf, 1024, opwfile))
     {
       char *saveptr = NULL;
       if (buf[strlen (buf) - 1] == '\n')
+      {
+	s_user = NULL;
 	buf[strlen (buf) - 1] = '\0';
+      }
       if (buf[0] == '#') {
           /* This is a comment and we may skip it. */
           if(verbose)
@@ -349,7 +353,12 @@ check_user_token (const char *authfile,
       }
       if(verbose)
 	  D (debug_file, "Authorization line: %s", buf);
-      s_user = strtok_r (buf, ":", &saveptr);
+      /* Only get user token if it's not defined. */
+      if (s_user == NULL)
+        s_user = strtok_r (buf, ":", &saveptr);
+      else
+        /* If the user is already set, we need to set the savedptr to our current buffer */
+        saveptr = buf;
       if (s_user && strcmp (username, s_user) == 0)
 	{
 	  if(verbose)
@@ -358,6 +367,15 @@ check_user_token (const char *authfile,
 	  do
 	    {
 	      s_token = strtok_r (NULL, ":", &saveptr);
+	
+        /* If the last token was less then 12 bytes */
+        if (s_token != NULL && strlen(s_token) < 12 && saveptr == NULL)
+        {
+          /* move the file pointer back to the beggining of the token, so it can be read next time */
+          fseek(opwfile, ftell(opwfile) - strlen(s_token), SEEK_SET);
+          continue;
+        }
+
 	      if(verbose)
 		  D (debug_file, "Authorization token: %s", s_token);
 	      if (s_token && otp_id && strcmp (otp_id, s_token) == 0)
