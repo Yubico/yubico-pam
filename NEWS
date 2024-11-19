@@ -289,7 +289,6 @@ need to add "try_first_pass" to preserve the same behaviour.
 * Version 1.11 (released 2009-02-11)
 
 ** Added support to store user:keyid mapping in LDAP.
-Contributed by Gregory Brusick <gregory@brusick.ch>.
 
 * Version 1.10 (released 2009-01-13)
 
